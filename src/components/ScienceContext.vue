@@ -40,13 +40,13 @@ const active = computed(() => examples.filter(e => e.id === (
       </template>
       <template v-else-if="item.id === 'optical'">
         <template v-if="!s.regional && !s.globalView">
-          <p>{{ s.siteId === 'gale' ? 'USGS HiRISE 正射影像：原生 0.25 m/pixel，本站約 6.67 m/pixel；彩色覆蓋約 51.5%，其他區域以灰階補足。' : s.siteId === 'jezero-hirise' ? '局部地形使用 HiRISE DTM；光學底圖仍是原 Jezero CTX 正射影像，並非 HiRISE 影像。' : s.siteId === 'valles-ctx' ? 'USGS CTX 正射影像：原生約 20 m/pixel，本站 40 m/pixel；缺值保持透明。' : s.siteId === 'jezero-extended' ? 'USGS CTX 正射影像：只覆蓋中央 9.7×7 km，擴區其他地方沒有局部光學影像。' : 'USGS CTX 正射影像：原生約 5 m/pixel，本站約 8.09 m/pixel；以百分位對比拉伸顯示。' }}</p>
+          <p>{{ s.siteId === 'gale' ? 'USGS HiRISE 正射影像：原生 0.25 m/pixel，本站約 6.67 m/pixel；彩色覆蓋約 51.5%，其他區域以灰階補足。' : s.siteId === 'valles-ctx' ? 'USGS CTX 正射影像：原生約 20 m/pixel，本站 40 m/pixel；缺值保持透明。' : 'USGS CTX 正射影像：顯示原始完整影像範圍；原生約 5 m/pixel，本站約 20 m/pixel。DEM 涵蓋中央 30×30 km。' }}</p>
           <button :disabled="!s.ready || s.regionLoading" @click="s.optical = true; s.layer = 'none'">在地圖查看光學影像</button>
-          <a :href="m.asset(s.siteId === 'gale' ? 'data/gale/optical-source.json' : s.siteId === 'valles-ctx' ? 'data/valles/optical-source.json' : 'data/ctx-source.json')" target="_blank" rel="noopener noreferrer">影像來源與處理紀錄 ↗</a>
+          <a :href="m.asset(s.siteId === 'gale' ? 'data/gale/optical-source.json' : s.siteId === 'valles-ctx' ? 'data/valles/optical-source.json' : 'data/jezero-extended/optical-source.json')" target="_blank" rel="noopener noreferrer">影像來源與處理紀錄 ↗</a>
           <p class="hint">靜態拼圖，非即時影像；目的地若在影像裁切範圍外，無該點影像。</p>
         </template>
         <template v-else>
-          <p class="hint">USGS Viking 全球彩色光學拼圖 · 展示約 10.4 km/pixel；可查看區域地表特徵，無法辨識岩塊。非即時影像。</p>
+          <p class="hint">USGS Viking 全球彩色光學拼圖 · 展示約 10.4 km/pixel；光學影像不提供地形高程，非即時影像。</p>
           <button :disabled="!s.ready" @click="s.optical = true; s.layer = 'none'">在地圖查看光學影像</button>
           <a href="https://astrogeology.usgs.gov/search/map/mars_viking_colorized_global_mosaic_232m" target="_blank" rel="noopener noreferrer">Viking 影像來源 ↗</a>
         </template>

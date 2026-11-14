@@ -762,6 +762,14 @@ details button {
 .layer-controls label { margin: 0; }
 .layer-options { display: grid; gap: 6px; min-width: 0; margin: 0; padding: 0; border: 0; }
 .layer-options legend { margin-bottom: 6px; font-weight: 600; }
+.layer-customization { display: grid; gap: 6px; padding: 8px; border: 1px solid #64736d; border-radius: 6px; }
+.layer-customization__item { display: grid; gap: 5px; padding-top: 6px; border-top: 1px solid #64736d; }
+.layer-customization__heading { display: flex; justify-content: space-between; align-items: center; }
+.layer-customization__heading button { margin-left: 4px; }
+.layer-customization label { display: grid; gap: 3px; }
+.layer-customization input[type="range"] { width: 100%; }
+.layer-customization__range { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.layer-customization__range input { width: 100%; min-width: 0; box-sizing: border-box; }
 .map-layer-status .layer-controls { font-size: 11px; }
 .map-layer-status select { width: 100%; margin-top: 4px; padding: 6px 8px; font-size: 12px; }
 .map-layer-status .checkbox { display: flex; align-items: center; gap: 6px; }
