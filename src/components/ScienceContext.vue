@@ -1,12 +1,12 @@
 <script setup>
 import { computed, inject } from 'vue';
 import { missionKey } from '../useMission';
-import { recordsForSite } from '../science-context.mjs';
 
 const m = inject(missionKey), s = m.state;
 const location = computed(() => s.targets.find(t => t.id === s.destination) || s.poi);
 const point = computed(() => m.scienceAt(location.value));
-const records = computed(() => recordsForSite(s.siteId, s.regional));
+const meta = computed(() => s.scienceMeta);
+const sampled = computed(() => m.scienceValueAt(point.value));
 const value = (n, digits = 0) => Number.isFinite(n) ? n.toFixed(digits) : '無有效資料';
 const examples = [
   { id: 'optical', name: '光學', example: '地表影像、岩塊與可辨識地標', use: '與地形對照，協助辨識目的地周邊的地表特徵。' },
@@ -39,22 +39,45 @@ const active = computed(() => examples.filter(e => e.id === (
         <p v-else class="hint">請先選擇位置，並等待 DEM 載入完成。</p>
       </template>
       <template v-else-if="item.id === 'optical'">
-        <template v-if="!s.regional">
+        <template v-if="!s.regional && !s.globalView">
           <p>{{ s.siteId === 'gale' ? 'USGS HiRISE 正射影像：原生 0.25 m/pixel，本站約 6.67 m/pixel；彩色覆蓋約 51.5%，其他區域以灰階補足。' : 'USGS CTX 正射影像：原生約 5 m/pixel，本站約 8.09 m/pixel；以百分位對比拉伸顯示。' }}</p>
           <button :disabled="!s.ready || s.regionLoading" @click="s.optical = true; s.layer = 'none'">在地圖查看光學影像</button>
           <a :href="m.asset(s.siteId === 'gale' ? 'data/gale/optical-source.json' : 'data/ctx-source.json')" target="_blank" rel="noopener noreferrer">影像來源與處理紀錄 ↗</a>
           <p class="hint">靜態拼圖，非即時影像；目的地若在影像裁切範圍外，無該點影像。</p>
         </template>
-        <p v-else class="hint">全球 MOLA 是高程渲染底圖；此模式沒有接入目的地光學影像。</p>
+        <template v-else>
+          <p class="hint">USGS Viking 全球彩色光學拼圖 · 展示約 10.4 km/pixel；可查看區域地表特徵，無法辨識岩塊。非即時影像。</p>
+          <button :disabled="!s.ready" @click="s.optical = true; s.layer = 'none'">在地圖查看光學影像</button>
+          <a href="https://astrogeology.usgs.gov/search/map/mars_viking_colorized_global_mosaic_232m" target="_blank" rel="noopener noreferrer">Viking 影像來源 ↗</a>
+        </template>
       </template>
       <template v-else>
-        <div v-for="record in records.filter(r => r.id === item.id)" :key="record.url">
-          <p class="hint">{{ record.scope === 'global' ? '跨區研究參考' : record.scope + ' 區域歷史觀測' }} · {{ record.period }}</p>
-          <p>{{ record.text }}</p>
-          <p class="hint">{{ record.limit }}</p>
-          <a :href="record.url" target="_blank" rel="noopener noreferrer">{{ record.source }} ↗</a>
-        </div>
-        <p v-if="!records.some(r => r.id === item.id)" class="hint">目前載入區域尚無已整理的此類觀測，未提供目的地數值。</p>
+        <p class="hint" role="status">{{ s.scienceStatus }}</p>
+        <button v-if="!s.scienceLoading && (!meta || s.scienceStatus.includes('失敗'))" @click="m.retryScience">重試載入科學圖層</button>
+        <template v-if="meta">
+          <template v-if="meta.kind === 'raster'">
+            <p>{{ meta.title }}</p>
+            <div class="science-scale" aria-hidden="true"></div>
+            <p class="hint">{{ meta.scale[0] }} → {{ meta.scale[1] }} {{ meta.unit }} · 缺值透明</p>
+            <p v-if="point" class="science-sample">所選位置：{{ sampled === null ? '此格無有效資料' : value(sampled, 3) + ' ' + meta.unit }}</p>
+            <p class="hint">原生產品最高 {{ meta.native_ppd }} pixels/degree；下載展示 {{ meta.display_ppd }} pixels/degree。游標及所選位置讀取下載格網，不跨缺值內插。</p>
+            <p v-if="item.id === 'geophysical'" class="hint">GMM-3 截至球諧階數 100 的重力異常模型；顯示格距不代表模型能解析同尺度地形。</p>
+            <p v-if="item.id === 'chemical'" class="hint">GRS 鐵濃度是 5° 格網的區域質量百分比，不能解析局部岩樣或小尺度導航障礙。</p>
+            <p v-if="item.id === 'spectral'" class="hint">此疊圖為 TES 熱紅外光譜解混的礦物豐度產品，並非 CRISM 高解析礦物圖。</p>
+            <button @click="m.focusScience">查看全球疊圖</button>
+            <a :href="m.asset(`data/science/${item.id}.bin`)" download>下載數值格網</a>
+          </template>
+          <template v-else>
+            <p>{{ meta.name }}：{{ value(meta.value, 3) }} {{ meta.unit }}</p>
+            <p class="hint">{{ meta.start }}{{ meta.stop ? ' 至 ' + meta.stop : ' 起' }} · {{ meta.count }} 筆有效樣本</p>
+            <p class="hint">範圍 {{ value(meta.min, 3) }}–{{ value(meta.max, 3) }} {{ meta.unit }}</p>
+            <p class="hint">{{ meta.note }}</p>
+            <button @click="m.focusScience">查看測站位置</button>
+            <a :href="m.asset(meta.source.local)" download>下載觀測原表</a>
+            <a :href="meta.coordinate_source" target="_blank" rel="noopener noreferrer">測站座標來源 ↗</a>
+          </template>
+          <p><a :href="meta.source.url" target="_blank" rel="noopener noreferrer">原始資料來源 ↗</a> · <a :href="m.asset('data/science/manifest.json')" target="_blank" rel="noopener noreferrer">座標、處理與 SHA-256 紀錄 ↗</a></p>
+        </template>
       </template>
       <p class="hint">{{ item.use }}</p>
     </article>
@@ -64,4 +87,7 @@ const active = computed(() => examples.filter(e => e.id === (
 
 <style scoped>
 .science-context .detail-card { margin-top: 10px; }
+.science-scale { height: 10px; border-radius: 4px; background: linear-gradient(to right, rgb(35,70,150), rgb(42,180,180), rgb(235,220,100), rgb(210,65,50)); }
+.science-context a { overflow-wrap: anywhere; }
+.science-context button { margin: 4px 8px 4px 0; }
 </style>

@@ -12,6 +12,7 @@ import S from "../skyline.mjs";
 import P from "../planet.mjs";
 import { buildItinerary } from './routePlanner.mjs';
 import { asset, json } from "./asset";
+import { scienceLayerIds, createScienceLoader, sampleScienceGrid } from './science-layers.mjs';
 
 export const missionKey = Symbol("mission");
 export const fmt = (m) =>
@@ -47,6 +48,7 @@ export function useMission() {
     tab: "mission",
     panelOpen: true,
     regional: false,
+    globalView: false,
     siteId: "jezero",
     siteName: "Jezero",
     geologyAvailable: true,
@@ -83,6 +85,9 @@ export function useMission() {
     evaluation: "",
     bearing: "",
     layer: "none",
+    scienceMeta: null,
+    scienceStatus: '',
+    scienceLoading: false,
     optical: true,
     legend: "",
     units: [],
@@ -95,7 +100,7 @@ export function useMission() {
     lng: 77.42,
     coordinateEditing: false,
     regionLoading: false,
-    regionStatus: "全球數值高程於首次建立任務時載入。",
+    regionStatus: "全球數值高程於首次進入總覽或建立任務時載入。",
     elevation: "",
     query: "",
     type: "",
@@ -132,6 +137,8 @@ export function useMission() {
   let routeLayer,
     analysis,
     optical,
+    globalBase,
+    regionalOverview = false,
     estimateMarker,
     truthMarker,
     trail,
@@ -159,6 +166,8 @@ export function useMission() {
     lastScanDistance = -Infinity,
     stroke = false;
   const abort = new AbortController();
+  const scienceLoader = createScienceLoader(asset);
+  let scienceToken = 0, scienceGrid = null;
   const position = computed(() => {
     if (!dem.value || !state.hasStart) return "尚未設定起點";
     const p = C.localToLatLng(state.estimate.x, state.estimate.y);
@@ -912,14 +921,67 @@ export function useMission() {
     ctx.putImageData(img, 0, 0);
     return cv.toDataURL();
   }
+  async function setScienceLayer(kind, token) {
+    state.scienceLoading = true;
+    state.scienceStatus = '正在載入離線科學資料…';
+    try {
+      const loaded = await scienceLoader.load(kind);
+      if (disposed || token !== scienceToken || kind !== state.layer) return;
+      const meta = loaded.meta;
+      scienceGrid = loaded.values;
+      state.scienceMeta = meta;
+      analysis = L.layerGroup().addTo(map);
+      if (meta.kind === 'raster') {
+        for (const offset of [-360, 0, 360]) {
+          const overlay = L.imageOverlay(asset(`data/science/${kind}.png`), [[-90,-180+offset],[90,180+offset]], {
+            opacity: 0.65, className: 'science-raster', interactive: false,
+          });
+          overlay.on('error', () => {
+            if (token === scienceToken) state.scienceStatus = '科學疊圖影像載入失敗，請重試。';
+          });
+          overlay.addTo(analysis);
+        }
+        state.legend = `${meta.title} · ${meta.scale[0]} 至 ${meta.scale[1]} ${meta.unit} · 缺值透明；色階外數值截色`;
+        state.scienceStatus = `已疊加下載格網 · ${360/meta.width}°／格；放大不增加原始解析度。`;
+      } else {
+        for (const offset of [-360,0,360]) {
+          L.circleMarker([meta.lat, meta.lng+offset], { radius: 9, color: '#ffe09a', weight: 2, fillColor: kind === 'radiation' ? '#d24132' : '#2ab4b4', fillOpacity: 0.9 })
+            .bindTooltip(esc(`${meta.name} · ${meta.value.toFixed(2)} ${meta.unit}`))
+            .bindPopup(`<strong>${esc(meta.name)}</strong><p>${esc(meta.value.toFixed(2))} ${esc(meta.unit)}</p><p>${esc(meta.note)}</p>`)
+            .addTo(analysis);
+        }
+        state.legend = `${meta.name} · ${meta.value.toFixed(2)} ${meta.unit} · 歷史測站，非整區格網`;
+        state.scienceStatus = '已疊加實際觀測測站；可查看測站位置與原表。';
+      }
+      estimateMarker?.bringToFront();
+    } catch (error) {
+      if (token !== scienceToken || disposed) return;
+      state.scienceStatus = `科學圖層載入失敗：${error.message}`;
+      state.legend = '此圖層未載入；可重試。';
+    } finally {
+      if (token === scienceToken && !disposed) state.scienceLoading = false;
+    }
+  }
   function setLayer() {
+    const token = ++scienceToken;
+    scienceGrid = null;
+    state.scienceMeta = null;
+    state.scienceStatus = '';
+    state.scienceLoading = false;
     if (!map || !dem.value) return;
     remove(analysis);
     state.units = [];
     const kind = state.layer;
-    if (['thermal', 'spectral', 'geophysical', 'atmospheric', 'radiation', 'chemical'].includes(kind)) {
-      state.legend = '已發布科學觀測；詳見下方來源與範圍。此項無可疊加的空間格網。';
-      estimateMarker?.bringToFront();
+    syncBasemap();
+    if (scienceLayerIds.includes(kind)) {
+      state.legend = '正在載入科學疊圖…';
+      setScienceLayer(kind, token);
+      return;
+    }
+    if (state.globalView && ['none', 'terrain'].includes(kind)) {
+      state.legend = kind === 'terrain' || !state.optical
+        ? 'MOLA 全球高程與地形陰影 · −8,200 至 21,800 m；游標讀取 16 ppd 數值高程'
+        : 'USGS Viking 全球彩色光學拼圖 · 展示約 10.4 km/pixel；非即時影像';
       return;
     }
     if (kind === "geology") {
@@ -981,7 +1043,8 @@ export function useMission() {
       }
     } else
       state.legend = state.regional
-        ? "MOLA 全球地形陰影 · 16 ppd，赤道約 3.7 km/格"
+        ? (state.optical ? "USGS Viking 全球彩色光學拼圖 · 展示約 10.4 km/pixel；非即時影像" : "MOLA 全球地形陰影 · 16 ppd，赤道約 3.7 km/格")
+        : !state.optical ? "光學影像關閉 · 背景為 MOLA 全球地形陰影"
         : state.siteId === "gale" ? "USGS HiRISE 正射影像 · 展示約 6.67 m/pixel；約 51.5% 彩色，其餘灰階補足，非地質分區" : "CTX 光學影像 · 原生 5 m，展示約 8.1 m/pixel";
     estimateMarker.bringToFront();
   }
@@ -1238,7 +1301,9 @@ export function useMission() {
   function filterNames() {
     if (!namesLayer) return;
     namesLayer.clearLayers();
-    for (const p of displayed.value)
+    const points = map.getZoom() < 4 && !state.query && !state.type
+      ? displayed.value.filter(p => p.featured) : displayed.value;
+    for (const p of points)
       L.circleMarker([p.lat, p.lng], {
         radius: p.featured ? 6 : 4,
         color: "#f2ed48",
@@ -1272,13 +1337,26 @@ export function useMission() {
       { maxZoom: 10, animate: false },
     );
   }
+  function syncBasemap() {
+    globalBase?.eachLayer(layer => layer.setUrl(asset(
+      state.optical && state.layer !== 'terrain' ? 'data/mars-global-optical.jpg' : 'data/mars-global-dem.jpg'
+    )));
+  }
   function scope() {
     if (!dem.value) return;
+    if (regionalOverview && map.getZoom() >= 4) regionalOverview = false;
     const c = map.getCenter(),
-      isLocal = state.regional || (
+      isLocal = (state.regional && !regionalOverview) || (!state.regional &&
         inDem({ lat: c.lat, lng: c.lng }) &&
         map.getZoom() >=
           8);
+    const changed = state.globalView !== !isLocal;
+    state.globalView = !isLocal;
+    if (changed) {
+      if (state.globalView) overviewHeights();
+      if (state.globalView && ['slope', 'hillshade', 'roughness', 'geology'].includes(state.layer)) state.layer = 'none';
+      setLayer();
+    }
     for (const layer of [estimateMarker, trail, routeLayer, poiLayer]) {
       if (!layer) continue;
       if (isLocal && (layer === poiLayer || state.hasStart)) layer.addTo(map);
@@ -1290,14 +1368,26 @@ export function useMission() {
       ? state.regional
         ? `MOLA 區域 / ${dem.value.origin.lat.toFixed(2)}°, ${dem.value.origin.lng.toFixed(2)}°`
         : `${state.siteName} / ${C.LAT0.toFixed(2)}°, ${C.LON0.toFixed(2)}°`
-      : "火星地理導覽 / MGS MOLA";
+      : "火星全球總覽";
     state.mapContext = isLocal
       ? state.regional
         ? (inDem(c) ? `MOLA 格距 ${fmt(cellMeters())} · 未校準定位` : "視野中心超出任務 DEM · 選點與路線將自動擴大覆蓋")
         : `${state.siteName} 正射影像 · DEM 導航有效區`
-      : "全球彩色地形陰影 · 可建立區域任務";
+      : `${state.optical && state.layer !== "terrain" ? "Viking 全球光學影像" : "MOLA 全球高程"} · 可建立區域任務`;
+  }
+  async function overviewHeights() {
+    if (!planet) state.elevation = '正在載入全球數值高程…';
+    try {
+      const grid = await loadPlanet();
+      if (disposed || !state.globalView) return;
+      const center = map.getCenter();
+      state.elevation = `視野中心高程 ${grid.sample(center.lat, center.lng).toFixed(1)} m · MOLA 16 ppd`;
+    } catch (error) {
+      if (!disposed && state.globalView) state.elevation = `全球高程載入失敗：${error.message}；再次點擊全覽可重試`;
+    }
   }
   function overview() {
+    regionalOverview = true;
     stop();
     cancel();
     stopDrawing();
@@ -1311,6 +1401,7 @@ export function useMission() {
       ],
       { animate: false },
     );
+    overviewHeights();
   }
   async function loadPlanet() {
     if (planet) return planet;
@@ -1330,6 +1421,7 @@ export function useMission() {
     return pendingPlanet;
   }
   function refreshMission() {
+    regionalOverview = false;
     state.hasStart = false;
     state.pickingStart = false;
     state.expedition = [];
@@ -1706,12 +1798,15 @@ export function useMission() {
     trail = L.polyline([], { color: "#eeb584", weight: 2 }).addTo(map);
     map.on("mousemove", (e) => {
       const p = local(e),
-        localZ = C.demAt(p.x, p.y),
+        localZ = state.globalView ? NaN : C.demAt(p.x, p.y),
         z = Number.isFinite(localZ)
           ? localZ
           : planet?.sample(e.latlng.lat, e.latlng.lng),
         height = Number.isFinite(z) ? `高度 ${z.toFixed(1)} m` : "高度：無資料";
       state.coords = `${e.latlng.lat.toFixed(5)}°N ${e.latlng.lng.toFixed(5)}°E · ${height} · ${unitLabel(unitAt(p))}`;
+      const scienceValue = sampleScienceGrid(state.scienceMeta, scienceGrid, e.latlng.lat, e.latlng.lng);
+      if (scienceValue !== null) state.coords += ` · ${scienceValue.toFixed(3)} ${state.scienceMeta.unit}`;
+      else if (state.scienceMeta?.kind === 'raster') state.coords += ' · 科學格網：無資料';
       state.elevation = Number.isFinite(z)
         ? `游標高程 ${z.toFixed(1)} m · ${Number.isFinite(localZ) && !state.regional ? state.siteName + " DEM" : "MOLA 16 ppd"}`
         : "游標高程：無資料";
@@ -1746,6 +1841,7 @@ export function useMission() {
       else if (state.drawMode === "points") append(local(e));
     });
     map.on("moveend zoomend", scope);
+    map.on("zoomend", filterNames);
     map.on("moveend", () => {
       if (!state.coordinateEditing) {
         state.lat = Number(map.getCenter().lat.toFixed(4));
@@ -1834,16 +1930,17 @@ export function useMission() {
         optical.on("error", () => {
           state.warning = "正射影像裁切載入失敗；地圖不可視為影像底圖。";
         });
+        globalBase = L.layerGroup().addTo(map);
         for (const offset of [-360, 0, 360])
           L.imageOverlay(
-            asset("data/mars-global-dem.jpg"),
+            asset("data/mars-global-optical.jpg"),
             [
               [-90, -180 + offset],
               [90, 180 + offset],
             ],
             { zIndex: -1, interactive: false },
           )
-            .addTo(map)
+            .addTo(globalBase)
             .on("error", () => {
               state.namesError = "全球底圖載入失敗，請重新載入。";
             });
@@ -1864,13 +1961,15 @@ export function useMission() {
     }
   }
   watch(displayed, filterNames);
-  watch(() => state.layer, setLayer);
+  watch(() => state.layer, () => { setLayer(); if (map) scope(); });
   watch(
     () => state.optical,
     (v) => {
       if (!map || !optical) return;
       if (v && !state.regional) optical.addTo(map);
       else remove(optical);
+      setLayer();
+      scope();
     },
   );
   watch(
@@ -1949,6 +2048,14 @@ export function useMission() {
       return { ...geo, height, slope: Number.isFinite(height) ? C.slopeDeg(point.x, point.y) : NaN,
         unit: unit ? unitLabel(unit) : null, cellMeters: C.demInfo()?.cellMeters,
         source: dem.value.source?.url };
+    },
+    scienceValueAt: (point) => sampleScienceGrid(state.scienceMeta, scienceGrid, point?.lat, point?.lng),
+    retryScience: () => setLayer(),
+    focusScience: () => {
+      const meta = state.scienceMeta;
+      if (!meta || !map) return;
+      if (meta.kind === 'station') map.setView([meta.lat, meta.lng], 9, { animate: false });
+      else map.setView([0,0], 2, { animate: false });
     },
     position,
     errorDistance,

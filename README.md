@@ -32,6 +32,8 @@ npm run preview
 
 ## 原始碼與資產
 
+「圖層 → 疊加資料」可疊加已下載的 TES 熱慣量、TES 橄欖石豐度、GMM-3 重力異常及 GRS 鐵濃度格網，並讀取游標／目的地的格網值；MEDA 氣壓與 RAD 吸收劑量以 Sol 1 歷史測站呈現。所有資料由本站靜態提供，保留缺值、格距、原表與來源雜湊。`scripts/prepare-science.py` 可重建 `data/science/`，來源與限制見 `docs/SOURCES.md`。這些科學觀測不改寫 DEM 路線成本。
+
 「探索」可載入 Gale 10×10 km 的 USGS 高解析區域：原生格距 1 m DEM 經官方 overview 取樣為 20 m；25 cm 正射來源展示約 6.67 m/pixel，彩色未涵蓋處使用灰階影像。支援高程、坡度、地形陰影、粗糙度圖層與返回 Jezero；Gale 尚無地質單元圖。來源及處理方式見 `docs/SOURCES.md`。
 
 - `src/`：Vue 元件、共用任務狀態與定位 Worker。

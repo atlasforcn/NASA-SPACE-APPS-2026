@@ -85,6 +85,20 @@ try {
   await page.goto(url);
   if (process.env.PRODUCTION_SMOKE === "1") {
     await page.waitForFunction(() => !document.getElementById("pick-start").disabled);
+    await page.locator('#mars-overview').click();
+    await page.waitForFunction(() => /視野中心高程 -?\d+\.\d m/.test(document.querySelector('.map-height')?.textContent || ''));
+    await page.locator('#map-analysis-layer').selectOption('terrain');
+    assert.equal(await page.locator('#analysis-layer').inputValue(), 'terrain');
+    await page.waitForFunction(() => [...document.images].some(i => i.src.endsWith('/data/mars-global-dem.jpg') && i.complete && i.naturalWidth > 0));
+    await page.screenshot({path: 'test-results/overview-height.png'});
+    await page.locator('#map-analysis-layer').selectOption('none');
+    await page.waitForFunction(() => [...document.images].some(i => i.src.endsWith('/data/mars-global-optical.jpg') && i.complete && i.naturalWidth === 2048));
+    await page.setViewportSize({width: 390, height: 844});
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    await page.screenshot({path: 'test-results/overview-mobile.png'});
+    await page.setViewportSize({width: 1600, height: 1000});
+    await page.goto(url);
+    await page.waitForFunction(() => !document.getElementById('pick-start').disabled);
     assert(await page.locator("#scan").isDisabled());
     await chooseStart();
     assert.equal(
@@ -109,12 +123,29 @@ try {
     await page.getByRole('button', { name: '圖層', exact: true }).click();
     const science = page.locator('.science-context');
     await page.locator('#analysis-layer').selectOption('atmospheric');
-    assert((await science.textContent()).includes('718 Pa'));
+    await page.waitForFunction(() => document.querySelector('.science-context')?.textContent.includes('715.002'));
+    assert((await science.textContent()).includes('MEDA'));
     assert.equal(await science.locator('input[type="checkbox"]').count(), 0);
+    for (const layer of ['thermal','spectral','geophysical','chemical']) {
+      await page.locator('#analysis-layer').selectOption(layer);
+      await page.waitForFunction(() => document.querySelector('.science-context')?.textContent.includes('已疊加下載格網'));
+      await page.waitForFunction(() => {
+        const images = [...document.querySelectorAll('img.science-raster')];
+        return images.length === 3 && images.every(img => img.complete && img.naturalWidth > 0);
+      });
+      assert((await science.locator('.science-sample').textContent()).includes('所選位置：'));
+    }
+    await science.getByRole('button', { name: '查看全球疊圖' }).click();
+    await page.screenshot({path:'test-results/science-global-chemical.png'});
+    await page.locator('#analysis-layer').selectOption('radiation');
+    await page.waitForFunction(() => document.querySelector('.science-context')?.textContent.includes('8.925'));
+    assert.equal(await page.locator('img.science-raster').count(), 0);
+    await science.getByRole('button', { name: '查看測站位置' }).click();
+    await page.screenshot({path:'test-results/science-rad-station.png'});
     await page.locator('#analysis-layer').selectOption('terrain');
     assert((await science.textContent()).includes('DEM 高程：'));
     assert(!(await science.textContent()).includes('0.67 mSv'));
-    assert(!(await science.textContent()).includes('718 Pa'));
+    assert(!(await science.textContent()).includes('715.002'));
     assert.deepEqual(errors, []);
     assert.deepEqual(missing, []);
     assert.deepEqual(external, []);
@@ -562,6 +593,35 @@ try {
     }
     await page.goto(url);
     await page.waitForFunction(() => window.__mission?.state.ready);
+    // Both controls share state; overview has optical imagery and numeric heights
+    // before creating a regional mission.
+    await page.locator('#mars-overview').click();
+    await page.waitForFunction(() => window.__mission.state.globalView);
+    await page.waitForFunction(() => [...document.images].some(i => i.src.endsWith('/data/mars-global-optical.jpg') && i.complete && i.naturalWidth === 2048));
+    await page.getByRole('button', {name: '任務', exact: true}).click();
+    await page.locator('#map-analysis-layer').selectOption('terrain');
+    assert.equal(await page.locator('#analysis-layer').inputValue(), 'terrain');
+    await page.waitForFunction(() => [...document.images].some(i => i.src.endsWith('/data/mars-global-dem.jpg') && i.complete && i.naturalWidth > 0));
+    const overviewMap = await page.locator('#map').boundingBox();
+    await page.waitForTimeout(500);
+    await page.mouse.move(overviewMap.x + overviewMap.width / 2, overviewMap.y + overviewMap.height / 2);
+    await page.waitForFunction(() => window.__mission.state.elevation.includes('MOLA 16 ppd'));
+    await page.getByRole('button', {name: '圖層', exact: true}).click();
+    assert.equal(await page.locator('.map-layer-status').count(), 0);
+    await page.locator('#analysis-layer').selectOption('none');
+    await page.getByRole('button', {name: '任務', exact: true}).click();
+    assert.equal(await page.locator('#map-analysis-layer').inputValue(), 'none');
+    await page.locator('#map-optical').uncheck();
+    assert.equal(await page.locator('#optical').isChecked(), false);
+    await page.getByRole('button', {name: '圖層', exact: true}).click();
+    await page.locator('#optical').check();
+    await page.getByRole('button', {name: '任務', exact: true}).click();
+    assert.equal(await page.locator('#map-optical').isChecked(), true);
+    await page.screenshot({path: 'test-results/overview-optical.png'});
+    await inspect(() => window.__mission.restore());
+    await page.getByRole('button', {name: '任務', exact: true}).click();
+
+
     assert.equal(await inspect(() => window.__mission.state.tab), "mission");
     await page.locator("#pick-start").click();
     const reloadedMap = await page.locator("#map").boundingBox();

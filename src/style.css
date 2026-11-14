@@ -219,7 +219,41 @@ input[type="checkbox"] {
   top: 24px;
   right: 24px;
   display: flex;
+  align-items: flex-start;
   gap: 7px;
+}
+.map-layer-status {
+  display: grid;
+  gap: 5px;
+  width: min(280px, 32vw);
+  padding: 12px 14px;
+  border: 1px solid #435752;
+  border-radius: 9px;
+  background: #112028ed;
+  box-shadow: 0 8px 30px #0002;
+}
+.map-layer-status__label {
+  color: var(--muted);
+  font-size: 9px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+.map-layer-status strong { color: var(--mint); font-size: 13px; }
+.map-layer-status__detail {
+  color: #adc0bc;
+  font-size: 10px;
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.map-layer-status button {
+  justify-self: start;
+  margin-top: 3px;
+  padding: 6px 9px;
+  color: var(--mint);
+  font-size: 11px;
 }
 .map-caption {
   position: absolute;
@@ -590,6 +624,7 @@ details button {
     left: 20px;
     right: auto;
   }
+  .map-layer-status { width: min(270px, 34vw); }
   .localization {
     grid-template-columns: 310px minmax(0, 1fr);
   }
@@ -641,11 +676,15 @@ details button {
     font-size: 14px;
   }
   .map-actions {
-    left: 14px;
-    right: auto;
-    top: auto;
-    bottom: 225px;
+    left: auto;
+    right: 12px;
+    top: 14px;
+    bottom: auto;
+    flex-direction: column;
+    align-items: flex-end;
   }
+  .map-layer-status { width: min(230px, 62vw); padding: 9px 11px; }
+  .map-layer-status__detail { -webkit-line-clamp: 2; }
   .map-actions button {
     font-size: 11px;
     padding: 8px;
@@ -711,4 +750,19 @@ details button {
   .leaflet-control-attribution {
     max-width: 270px;
   }
+}
+.science-raster { image-rendering: pixelated; }
+
+.layer-controls { display: grid; gap: 8px; }
+.layer-controls label { margin: 0; }
+.map-layer-status .layer-controls { font-size: 11px; }
+.map-layer-status select { width: 100%; margin-top: 4px; padding: 6px 8px; font-size: 12px; }
+.map-layer-status .checkbox { display: flex; align-items: center; gap: 6px; }
+.map-height { color: var(--mint); font-size: 11px; line-height: 1.5; }
+
+@media (max-width: 700px) {
+  .map-actions { top: 100px; }
+  .map-layer-status { width: min(210px, 55vw); gap: 4px; }
+  .map-layer-status__detail { display: none; }
+  .map-layer-status .layer-controls { gap: 4px; }
 }
