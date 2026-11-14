@@ -1,0 +1,36 @@
+{
+  "start": {
+    "x": -1400,
+    "y": -820
+  },
+  "startUnit": "Jezero floor unit",
+  "policy": "Simulated mission locations selected on official geologic units; not historical rover traverse or formal place names.",
+  "targets": [
+    {
+      "id": "s1",
+      "name": "科學觀測站 A",
+      "x": -2200,
+      "y": -800,
+      "unit": "Upper etched unit",
+      "symbol": "Nue",
+      "unitCode": "10",
+      "sourceObjectId": 967,
+      "science": "Volcanic ash deposit that drapes underlying units Nnp1, cr, and Nle. Could also be other clastic deposit of volcanic or eolian origin. The three distinct surface expressions could result from differential erosion or cementation, as no clear or systematic stratigraphic contacts are discernable between the three surface expressions. Ridges in the ridged Nue unit are yardangs (Day and Dorn, 2019). Long linear occurrences of the light-toned rugged Nue unit could have formed through infilling of preexisting fractures created by the Isidis impact.",
+      "routeLength": 856.2762895175899,
+      "maxSlope": 6.305846186706464
+    },
+    {
+      "id": "s2",
+      "name": "科學觀測站 B",
+      "x": -600,
+      "y": -800,
+      "unit": "Jezero floor unit",
+      "symbol": "Njf",
+      "unitCode": "2",
+      "sourceObjectId": 1150,
+      "science": "Volcanic ash or eolian airfall deposit that drapes underlying topography. Correlates with unit Nnp2 based on common stratigraphic position and shared textural and morphologic characteristics. Emplaced during the Late Noachian before deposition of unit NHjf1. May have been modified by subsequent lacustrine activity during deposition of units NHjf1 and NHjf2. Dark, smooth surface texture near unit NHjf2 is due to a dark mantle deposit or erosional lag derived from erosion of unit NHjf2. Previously interpreted by Schon and others (2012) and Goudge and others (2015) as an extrusive volcanic flow.",
+      "routeLength": 861.7865182346263,
+      "maxSlope": 4.162552609784832
+    }
+  ]
+}

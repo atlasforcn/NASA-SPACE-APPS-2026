@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+data/*.tif
+data/*.zip
+data/raw/
+artifacts/browser-profile/
+artifacts/video/
+.cache/
+.build/
+
+data/mola16.img

@@ -1,0 +1,1145 @@
+{
+  "method": "Same DEM simulation and matching; not real camera accuracy. Fixed split, no held-out threshold tuning.",
+  "demSha256": "ba7f706ea1b5d63a562f28a7dcf7a7f3c79bce7f048e6974b57e8a33c30d1ba2",
+  "thresholds": {
+    "version": "v1",
+    "maxRms": 0.2,
+    "minCoverage": 0.5,
+    "minOverlap": 0.95,
+    "minGap": 0.04,
+    "minRelief": 0.2
+  },
+  "calibrationPolicy": "v1 conservative thresholds frozen before first held-out run; calibration rows reported for audit, not fit to held-out data.",
+  "summary": {
+    "heldoutTop3HitRate": 1,
+    "heldoutRejectRate": 0,
+    "falseAcceptRate": 0,
+    "meanMilliseconds": 853,
+    "target": 0.9,
+    "passed": true
+  },
+  "rows": [
+    {
+      "kind": "calibration",
+      "index": 0,
+      "pose": {
+        "x": -1400,
+        "y": -820,
+        "heading": 45
+      },
+      "bounds": {
+        "minX": -2400,
+        "maxX": 0,
+        "minY": -2120,
+        "maxY": 280
+      },
+      "status": "good",
+      "reason": "殘差、覆蓋與候選差距通過門檻",
+      "top1": {
+        "position": 0,
+        "heading": 0
+      },
+      "hit": true,
+      "accepted": true,
+      "falseAccept": false,
+      "milliseconds": 563,
+      "candidates": [
+        {
+          "x": -1400,
+          "y": -820,
+          "heading": 45,
+          "score": 0.014260083417172978,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": -1462.5,
+          "y": -1095,
+          "heading": 40.125,
+          "score": 0.5015649031250204,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": -1243.75,
+          "y": -670,
+          "heading": 45.5625,
+          "score": 0.5352607444856406,
+          "coverage": 1,
+          "overlap": 1
+        }
+      ]
+    },
+    {
+      "kind": "calibration",
+      "index": 1,
+      "pose": {
+        "x": 800,
+        "y": 600,
+        "heading": 171
+      },
+      "bounds": {
+        "minX": -200,
+        "maxX": 2200,
+        "minY": -700,
+        "maxY": 1700
+      },
+      "status": "good",
+      "reason": "殘差、覆蓋與候選差距通過門檻",
+      "top1": {
+        "position": 0,
+        "heading": 0
+      },
+      "hit": true,
+      "accepted": true,
+      "falseAccept": false,
+      "milliseconds": 495,
+      "candidates": [
+        {
+          "x": 800,
+          "y": 600,
+          "heading": 171,
+          "score": 0.014992109615406016,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": 2178.125,
+          "y": 1081.25,
+          "heading": 325.875,
+          "score": 0.5640047967651101,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": -43.75,
+          "y": 484.375,
+          "heading": 190.5,
+          "score": 0.6630387285861042,
+          "coverage": 1,
+          "overlap": 1
+        }
+      ]
+    },
+    {
+      "kind": "calibration",
+      "index": 2,
+      "pose": {
+        "x": -600,
+        "y": 1500,
+        "heading": 302
+      },
+      "bounds": {
+        "minX": -1600,
+        "maxX": 800,
+        "minY": 200,
+        "maxY": 2600
+      },
+      "status": "lost",
+      "reason": "觀測與候選地形不相符",
+      "top1": {
+        "position": 1011.0570350504465,
+        "heading": 53.875
+      },
+      "hit": false,
+      "accepted": false,
+      "falseAccept": false,
+      "milliseconds": 480,
+      "candidates": [
+        {
+          "x": -1596.875,
+          "y": 1668.75,
+          "heading": 355.875,
+          "score": 0.4845785823517397,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": -637.5,
+          "y": 1493.75,
+          "heading": 283.875,
+          "score": 0.5607430336333692,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": -275,
+          "y": 2225,
+          "heading": 253.125,
+          "score": 0.5892670883890014,
+          "coverage": 1,
+          "overlap": 1
+        }
+      ]
+    },
+    {
+      "kind": "heldout",
+      "index": 0,
+      "pose": {
+        "x": -1200,
+        "y": -600,
+        "heading": 12
+      },
+      "bounds": {
+        "minX": -2200,
+        "maxX": 200,
+        "minY": -1900,
+        "maxY": 500
+      },
+      "status": "good",
+      "reason": "殘差、覆蓋與候選差距通過門檻",
+      "top1": {
+        "position": 0,
+        "heading": 0
+      },
+      "hit": true,
+      "accepted": true,
+      "falseAccept": false,
+      "milliseconds": 452,
+      "candidates": [
+        {
+          "x": -1200,
+          "y": -600,
+          "heading": 12,
+          "score": 0.014260083417173022,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": -1515.625,
+          "y": -765.625,
+          "heading": 13.875,
+          "score": 0.5571540696252851,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": -1731.25,
+          "y": -800,
+          "heading": 4.5,
+          "score": 0.66090744928057,
+          "coverage": 1,
+          "overlap": 1
+        }
+      ]
+    },
+    {
+      "kind": "heldout",
+      "index": 1,
+      "pose": {
+        "x": -800,
+        "y": -1000,
+        "heading": 67
+      },
+      "bounds": {
+        "minX": -1800,
+        "maxX": 600,
+        "minY": -2300,
+        "maxY": 100
+      },
+      "status": "good",
+      "reason": "殘差、覆蓋與候選差距通過門檻",
+      "top1": {
+        "position": 6.987712429686843,
+        "heading": 0.25
+      },
+      "hit": true,
+      "accepted": true,
+      "falseAccept": false,
+      "milliseconds": 436,
+      "candidates": [
+        {
+          "x": -793.75,
+          "y": -1003.125,
+          "heading": 66.75,
+          "score": 0.046554204083627114,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": 196.875,
+          "y": -1862.5,
+          "heading": 83.0625,
+          "score": 0.4129634084258986,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": -600,
+          "y": -1100,
+          "heading": 57,
+          "score": 0.4140428684210295,
+          "coverage": 1,
+          "overlap": 1
+        }
+      ]
+    },
+    {
+      "kind": "heldout",
+      "index": 2,
+      "pose": {
+        "x": -400,
+        "y": 200,
+        "heading": 123
+      },
+      "bounds": {
+        "minX": -1400,
+        "maxX": 1000,
+        "minY": -1100,
+        "maxY": 1300
+      },
+      "status": "good",
+      "reason": "殘差、覆蓋與候選差距通過門檻",
+      "top1": {
+        "position": 0,
+        "heading": 0
+      },
+      "hit": true,
+      "accepted": true,
+      "falseAccept": false,
+      "milliseconds": 646,
+      "candidates": [
+        {
+          "x": -400,
+          "y": 200,
+          "heading": 123,
+          "score": 0.015032507817173787,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": -300,
+          "y": 50,
+          "heading": 151.125,
+          "score": 0.6989970523743024,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": -596.875,
+          "y": 271.875,
+          "heading": 79.875,
+          "score": 1.0215494461777845,
+          "coverage": 1,
+          "overlap": 1
+        }
+      ]
+    },
+    {
+      "kind": "heldout",
+      "index": 3,
+      "pose": {
+        "x": 0,
+        "y": -500,
+        "heading": 178
+      },
+      "bounds": {
+        "minX": -1000,
+        "maxX": 1400,
+        "minY": -1800,
+        "maxY": 600
+      },
+      "status": "good",
+      "reason": "殘差、覆蓋與候選差距通過門檻",
+      "top1": {
+        "position": 0,
+        "heading": 0.0625
+      },
+      "hit": true,
+      "accepted": true,
+      "falseAccept": false,
+      "milliseconds": 519,
+      "candidates": [
+        {
+          "x": 0,
+          "y": -500,
+          "heading": 177.9375,
+          "score": 0.042601592081476576,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": 81.25,
+          "y": 528.125,
+          "heading": 76.3125,
+          "score": 0.6968067468288665,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": 1193.75,
+          "y": -381.25,
+          "heading": 148.875,
+          "score": 0.7378493365475902,
+          "coverage": 1,
+          "overlap": 1
+        }
+      ]
+    },
+    {
+      "kind": "heldout",
+      "index": 4,
+      "pose": {
+        "x": 400,
+        "y": 900,
+        "heading": 231
+      },
+      "bounds": {
+        "minX": -600,
+        "maxX": 1800,
+        "minY": -400,
+        "maxY": 2000
+      },
+      "status": "good",
+      "reason": "殘差、覆蓋與候選差距通過門檻",
+      "top1": {
+        "position": 0,
+        "heading": 0
+      },
+      "hit": true,
+      "accepted": true,
+      "falseAccept": false,
+      "milliseconds": 571,
+      "candidates": [
+        {
+          "x": 400,
+          "y": 900,
+          "heading": 231,
+          "score": 0.013743417525834606,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": 600,
+          "y": 1000,
+          "heading": 228,
+          "score": 0.46716766105547375,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": 790.625,
+          "y": 1240.625,
+          "heading": 220.5,
+          "score": 0.5484716968386689,
+          "coverage": 1,
+          "overlap": 1
+        }
+      ]
+    },
+    {
+      "kind": "heldout",
+      "index": 5,
+      "pose": {
+        "x": 1000,
+        "y": -700,
+        "heading": 287
+      },
+      "bounds": {
+        "minX": 0,
+        "maxX": 2400,
+        "minY": -2000,
+        "maxY": 400
+      },
+      "status": "good",
+      "reason": "殘差、覆蓋與候選差距通過門檻",
+      "top1": {
+        "position": 0,
+        "heading": 0.25
+      },
+      "hit": true,
+      "accepted": true,
+      "falseAccept": false,
+      "milliseconds": 443,
+      "candidates": [
+        {
+          "x": 1000,
+          "y": -700,
+          "heading": 287.25,
+          "score": 0.03733973758660486,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": 1568.75,
+          "y": -431.25,
+          "heading": 323.0625,
+          "score": 0.25507860973221785,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": 106.25,
+          "y": -1959.375,
+          "heading": 295.5,
+          "score": 0.2825571367358294,
+          "coverage": 1,
+          "overlap": 1
+        }
+      ]
+    },
+    {
+      "kind": "heldout",
+      "index": 6,
+      "pose": {
+        "x": 1500,
+        "y": 400,
+        "heading": 342
+      },
+      "bounds": {
+        "minX": 500,
+        "maxX": 2900,
+        "minY": -900,
+        "maxY": 1500
+      },
+      "status": "good",
+      "reason": "殘差、覆蓋與候選差距通過門檻",
+      "top1": {
+        "position": 0,
+        "heading": 0
+      },
+      "hit": true,
+      "accepted": true,
+      "falseAccept": false,
+      "milliseconds": 555,
+      "candidates": [
+        {
+          "x": 1500,
+          "y": 400,
+          "heading": 342,
+          "score": 0.014143836411007464,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": 1753.125,
+          "y": 1262.5,
+          "heading": 352.5,
+          "score": 0.4930738760000843,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": 2496.875,
+          "y": 706.25,
+          "heading": 52.875,
+          "score": 0.49371211047628777,
+          "coverage": 1,
+          "overlap": 1
+        }
+      ]
+    },
+    {
+      "kind": "heldout",
+      "index": 7,
+      "pose": {
+        "x": -1800,
+        "y": 900,
+        "heading": 99
+      },
+      "bounds": {
+        "minX": -2800,
+        "maxX": -400,
+        "minY": -400,
+        "maxY": 2000
+      },
+      "status": "good",
+      "reason": "殘差、覆蓋與候選差距通過門檻",
+      "top1": {
+        "position": 0,
+        "heading": 0
+      },
+      "hit": true,
+      "accepted": true,
+      "falseAccept": false,
+      "milliseconds": 499,
+      "candidates": [
+        {
+          "x": -1800,
+          "y": 900,
+          "heading": 99,
+          "score": 0.014440647267821117,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": -1771.875,
+          "y": 1068.75,
+          "heading": 115.125,
+          "score": 0.704588018114179,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": -2603.125,
+          "y": 1400,
+          "heading": 90.5625,
+          "score": 0.8301912471819402,
+          "coverage": 1,
+          "overlap": 1
+        }
+      ]
+    },
+    {
+      "kind": "heldout",
+      "index": 8,
+      "pose": {
+        "x": 600,
+        "y": -1400,
+        "heading": 204
+      },
+      "bounds": {
+        "minX": -400,
+        "maxX": 2000,
+        "minY": -2700,
+        "maxY": -300
+      },
+      "status": "good",
+      "reason": "殘差、覆蓋與候選差距通過門檻",
+      "top1": {
+        "position": 69.03350635742039,
+        "heading": 0.1875
+      },
+      "hit": true,
+      "accepted": true,
+      "falseAccept": false,
+      "milliseconds": 544,
+      "candidates": [
+        {
+          "x": 531.25,
+          "y": -1393.75,
+          "heading": 203.8125,
+          "score": 0.06449052874930103,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": 331.25,
+          "y": -1356.25,
+          "heading": 202.875,
+          "score": 0.17255679639496582,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": 1040.625,
+          "y": -1137.5,
+          "heading": 202.875,
+          "score": 0.21978242202767606,
+          "coverage": 1,
+          "overlap": 1
+        }
+      ]
+    },
+    {
+      "kind": "heldout",
+      "index": 9,
+      "pose": {
+        "x": 1800,
+        "y": -1200,
+        "heading": 33
+      },
+      "bounds": {
+        "minX": 800,
+        "maxX": 3200,
+        "minY": -2500,
+        "maxY": -100
+      },
+      "status": "good",
+      "reason": "殘差、覆蓋與候選差距通過門檻",
+      "top1": {
+        "position": 0,
+        "heading": 0
+      },
+      "hit": true,
+      "accepted": true,
+      "falseAccept": false,
+      "milliseconds": 454,
+      "candidates": [
+        {
+          "x": 1800,
+          "y": -1200,
+          "heading": 33,
+          "score": 0.01551741378641183,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": 1531.25,
+          "y": -2043.75,
+          "heading": 40.125,
+          "score": 0.2128768701892033,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": 1378.125,
+          "y": -1878.125,
+          "heading": 38.0625,
+          "score": 0.2517283723671591,
+          "coverage": 1,
+          "overlap": 1
+        }
+      ]
+    },
+    {
+      "kind": "occluded",
+      "index": 0,
+      "pose": {
+        "x": -1200,
+        "y": -600,
+        "heading": 12
+      },
+      "bounds": {
+        "minX": -2200,
+        "maxX": 200,
+        "minY": -1900,
+        "maxY": 500
+      },
+      "status": "lost",
+      "reason": "有效觀測視角或共同覆蓋不足",
+      "top1": {
+        "position": 150.03254855197255,
+        "heading": 7.874999999999998
+      },
+      "hit": false,
+      "accepted": false,
+      "falseAccept": false,
+      "milliseconds": 515,
+      "candidates": [
+        {
+          "x": -1078.125,
+          "y": -512.5,
+          "heading": 4.125,
+          "score": 0.09535321326784263,
+          "coverage": 0.09166666666666666,
+          "overlap": 1
+        },
+        {
+          "x": -1296.875,
+          "y": -659.375,
+          "heading": 16.125,
+          "score": 0.11531297065726262,
+          "coverage": 0.09166666666666666,
+          "overlap": 1
+        },
+        {
+          "x": -806.25,
+          "y": 500,
+          "heading": 276.75,
+          "score": 0.2543073800912161,
+          "coverage": 0.09166666666666666,
+          "overlap": 1
+        }
+      ]
+    },
+    {
+      "kind": "occluded",
+      "index": 1,
+      "pose": {
+        "x": -800,
+        "y": -1000,
+        "heading": 67
+      },
+      "bounds": {
+        "minX": -1800,
+        "maxX": 600,
+        "minY": -2300,
+        "maxY": 100
+      },
+      "status": "lost",
+      "reason": "有效觀測視角或共同覆蓋不足",
+      "top1": {
+        "position": 43.75,
+        "heading": 2
+      },
+      "hit": true,
+      "accepted": false,
+      "falseAccept": false,
+      "milliseconds": 568,
+      "candidates": [
+        {
+          "x": -800,
+          "y": -956.25,
+          "heading": 69,
+          "score": 0.01289944929309645,
+          "coverage": 0.08333333333333333,
+          "overlap": 1
+        },
+        {
+          "x": -762.5,
+          "y": -1156.25,
+          "heading": 60,
+          "score": 0.030320755927002587,
+          "coverage": 0.08333333333333333,
+          "overlap": 1
+        },
+        {
+          "x": -818.75,
+          "y": -590.625,
+          "heading": 87.375,
+          "score": 0.03924623779692288,
+          "coverage": 0.08333333333333333,
+          "overlap": 1
+        }
+      ]
+    },
+    {
+      "kind": "occluded",
+      "index": 2,
+      "pose": {
+        "x": -400,
+        "y": 200,
+        "heading": 123
+      },
+      "bounds": {
+        "minX": -1400,
+        "maxX": 1000,
+        "minY": -1100,
+        "maxY": 1300
+      },
+      "status": "lost",
+      "reason": "有效觀測視角或共同覆蓋不足",
+      "top1": {
+        "position": 9.375,
+        "heading": 0.37500000000000006
+      },
+      "hit": true,
+      "accepted": false,
+      "falseAccept": false,
+      "milliseconds": 6109,
+      "candidates": [
+        {
+          "x": -400,
+          "y": 190.625,
+          "heading": 122.625,
+          "score": 0.013310762892427035,
+          "coverage": 0.075,
+          "overlap": 1
+        },
+        {
+          "x": -581.25,
+          "y": -443.75,
+          "heading": 83.25,
+          "score": 0.08782457155526818,
+          "coverage": 0.075,
+          "overlap": 1
+        },
+        {
+          "x": -746.875,
+          "y": -812.5,
+          "heading": 64.125,
+          "score": 0.11078887512745599,
+          "coverage": 0.075,
+          "overlap": 1
+        }
+      ]
+    },
+    {
+      "kind": "noise",
+      "index": 0,
+      "pose": {
+        "x": 0,
+        "y": -500,
+        "heading": 178
+      },
+      "bounds": {
+        "minX": -1000,
+        "maxX": 1400,
+        "minY": -1800,
+        "maxY": 600
+      },
+      "status": "lost",
+      "reason": "觀測與候選地形不相符",
+      "top1": {
+        "position": 11.267347735824966,
+        "heading": 1
+      },
+      "hit": true,
+      "accepted": false,
+      "falseAccept": false,
+      "milliseconds": 2489,
+      "candidates": [
+        {
+          "x": 9.375,
+          "y": -506.25,
+          "heading": 177,
+          "score": 0.8477127310814264,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": 87.5,
+          "y": 525,
+          "heading": 79.3125,
+          "score": 1.0847120861432453,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": 1193.75,
+          "y": -384.375,
+          "heading": 148.875,
+          "score": 1.0865016930618376,
+          "coverage": 1,
+          "overlap": 1
+        }
+      ]
+    },
+    {
+      "kind": "noise",
+      "index": 1,
+      "pose": {
+        "x": 400,
+        "y": 900,
+        "heading": 231
+      },
+      "bounds": {
+        "minX": -600,
+        "maxX": 1800,
+        "minY": -400,
+        "maxY": 2000
+      },
+      "status": "lost",
+      "reason": "觀測與候選地形不相符",
+      "top1": {
+        "position": 11.267347735824966,
+        "heading": 0.37500000000000006
+      },
+      "hit": true,
+      "accepted": false,
+      "falseAccept": false,
+      "milliseconds": 537,
+      "candidates": [
+        {
+          "x": 390.625,
+          "y": 893.75,
+          "heading": 231.375,
+          "score": 0.8971105881004735,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": 600,
+          "y": 1000,
+          "heading": 231,
+          "score": 1.0203934794115723,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": 778.125,
+          "y": 1215.625,
+          "heading": 223.875,
+          "score": 1.0651744731427983,
+          "coverage": 1,
+          "overlap": 1
+        }
+      ]
+    },
+    {
+      "kind": "noise",
+      "index": 2,
+      "pose": {
+        "x": 1000,
+        "y": -700,
+        "heading": 287
+      },
+      "bounds": {
+        "minX": 0,
+        "maxX": 2400,
+        "minY": -2000,
+        "maxY": 400
+      },
+      "status": "lost",
+      "reason": "觀測與候選地形不相符",
+      "top1": {
+        "position": 694.5800214878053,
+        "heading": 38.12500000000001
+      },
+      "hit": true,
+      "accepted": false,
+      "falseAccept": false,
+      "milliseconds": 503,
+      "candidates": [
+        {
+          "x": 1621.875,
+          "y": -390.625,
+          "heading": 325.125,
+          "score": 0.8963932135952949,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": 1012.5,
+          "y": -671.875,
+          "heading": 285.9375,
+          "score": 0.9020375868211137,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": 71.875,
+          "y": -1968.75,
+          "heading": 293.625,
+          "score": 0.9052008223787337,
+          "coverage": 1,
+          "overlap": 1
+        }
+      ]
+    },
+    {
+      "kind": "outside",
+      "index": 0,
+      "pose": {
+        "x": -1200,
+        "y": -600,
+        "heading": 12
+      },
+      "bounds": {
+        "minX": 400,
+        "maxX": 1400,
+        "minY": 600,
+        "maxY": 1600
+      },
+      "status": "lost",
+      "reason": "觀測與候選地形不相符",
+      "top1": {
+        "position": 2099.5000334901165,
+        "heading": 7.6875
+      },
+      "hit": false,
+      "accepted": false,
+      "falseAccept": false,
+      "milliseconds": 365,
+      "candidates": [
+        {
+          "x": 400,
+          "y": 759.375,
+          "heading": 4.3125,
+          "score": 0.6873295047577517,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": 640.625,
+          "y": 940.625,
+          "heading": 7.125,
+          "score": 0.8143715584464596,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": 621.875,
+          "y": 640.625,
+          "heading": 10.5,
+          "score": 0.8444643878390176,
+          "coverage": 1,
+          "overlap": 1
+        }
+      ]
+    },
+    {
+      "kind": "outside",
+      "index": 1,
+      "pose": {
+        "x": -800,
+        "y": -1000,
+        "heading": 67
+      },
+      "bounds": {
+        "minX": 800,
+        "maxX": 1800,
+        "minY": 200,
+        "maxY": 1200
+      },
+      "status": "lost",
+      "reason": "觀測與候選地形不相符",
+      "top1": {
+        "position": 2778.378081835696,
+        "heading": 21.25
+      },
+      "hit": false,
+      "accepted": false,
+      "falseAccept": false,
+      "milliseconds": 314,
+      "candidates": [
+        {
+          "x": 1400,
+          "y": 696.875,
+          "heading": 45.75,
+          "score": 0.5654973451072339,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": 1518.75,
+          "y": 740.625,
+          "heading": 58.875,
+          "score": 0.589025619258846,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": 1440.625,
+          "y": 215.625,
+          "heading": 44.0625,
+          "score": 0.6382212859552779,
+          "coverage": 1,
+          "overlap": 1
+        }
+      ]
+    },
+    {
+      "kind": "outside",
+      "index": 2,
+      "pose": {
+        "x": -400,
+        "y": 200,
+        "heading": 123
+      },
+      "bounds": {
+        "minX": 1200,
+        "maxX": 2200,
+        "minY": 1400,
+        "maxY": 2400
+      },
+      "status": "lost",
+      "reason": "觀測與候選地形不相符",
+      "top1": {
+        "position": 2519.129934124082,
+        "heading": 64.3125
+      },
+      "hit": false,
+      "accepted": false,
+      "falseAccept": false,
+      "milliseconds": 716,
+      "candidates": [
+        {
+          "x": 1368.75,
+          "y": 1993.75,
+          "heading": 187.3125,
+          "score": 1.75417928439139,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": 1231.25,
+          "y": 1628.125,
+          "heading": 181.875,
+          "score": 1.7851844733853401,
+          "coverage": 1,
+          "overlap": 1
+        },
+        {
+          "x": 1668.75,
+          "y": 2081.25,
+          "heading": 173.625,
+          "score": 1.7891658777494395,
+          "coverage": 1,
+          "overlap": 1
+        }
+      ]
+    }
+  ]
+}

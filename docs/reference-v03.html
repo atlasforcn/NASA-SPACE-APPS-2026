@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="color-scheme" content="dark" />
+<title>山頂相儀 | Martian Navigator — NASA Space Apps DEM v0.3</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="mark">✳</span><div><strong>山頂相儀</strong><span class="brand-en">SHĀNDǏNG XIĀNGYÍ / MARTIAN NAVIGATOR</span></div></div>
+  <div class="top-mid"><span class="status-dot"></span> JEZERO CRATER — MARS <span class="sep"></span><span>GPS-DENIED NAVIGATION SIMULATION</span></div>
+  <div class="top-actions"><span class="chip">NASA SPACE APPS 2026</span><button id="reset" class="subtle small">↻ 重設 Demo</button></div>
+</header>
+<main class="workspace">
+<aside class="sidebar">
+  <section class="group"><div class="overline">MISSION CONTROL / 01</div><h1>地圖與任務規劃</h1><p class="hint">延用 NASA Mars Trek WMTS；可載入 USGS Jezero CTX 真實數值 DEM，或使用標明的合成場景。</p></section>
+  <section class="group"><div class="section-heading">NASA 觀測底圖 <span>OFFICIAL IMAGERY</span></div>
+    <div class="layer-control"><label><input type="checkbox" id="toggle-mola" checked><span class="color-dot mola"></span> MOLA 地形陰影</label><input type="range" id="alpha-mola" min="0" max="100" value="100"><div class="layer-status" id="status-mola">等待連線</div></div>
+    <div class="layer-control"><label><input type="checkbox" id="toggle-ctx" checked><span class="color-dot ctx"></span> CTX 軌道影像</label><input type="range" id="alpha-ctx" min="0" max="100" value="75"><div class="layer-status" id="status-ctx">等待連線</div></div>
+    <div class="layer-control"><label><input type="checkbox" id="toggle-hirise" checked><span class="color-dot hirise"></span> HiRISE Jezero 影像</label><input type="range" id="alpha-hirise" min="0" max="100" value="90"><div class="layer-status" id="status-hirise">等待連線</div></div>
+    <div class="btn-row"><button id="map-home" class="subtle">定位示範區</button><button id="map-hirise" class="subtle">HiRISE 範圍</button></div>
+  </section>
+  <section class="group"><div class="section-heading">USGS 真實高程 <span id="dem-mode">SYNTHETIC FALLBACK</span></div>
+    <p class="hint">匯入經 <code>prepare_jezero_dem.py</code> 裁切的 Jezero CTX DEM JSON；若 <code>data/jezero_dem.json</code> 存在則自動讀取。</p>
+    <div class="dem-upload"><label for="dem-file" class="field-label">載入已處理的 DEM 網格（.json）</label><input type="file" id="dem-file" accept=".json,application/json" />
+      <button class="subtle small" id="dem-clear" disabled>移除 DEM / 合成備援</button></div>
+    <div id="dem-state" class="dem-state">真實 DEM 未載入；目前使用合成場景。</div><div id="dem-source" class="layer-status">官方數值 DEM 尚未載入</div>
+    <p class="hint"><a href="https://astrogeology.usgs.gov/search/map/mars_2020_science_investigation_ctx_dem_mosaic" target="_blank" rel="noopener noreferrer">USGS 原始 DEM 與資料介紹</a> · <a href="https://planetarymaps.usgs.gov/mosaic/mars2020_trn/CTX/ScienceInvestigationMaps_JPL/M20_JezeroCrater_CTXDEM_20m.tif" target="_blank" rel="noopener noreferrer">官方 GeoTIFF</a></p>
+  </section>
+  <section class="group"><div class="section-heading">分析圖層 <span id="layer-source-label">合成地形 / 模擬環境層</span></div><div class="select-wrap"><select id="analysis-layer" aria-label="選擇分析圖層"><option value="terrain">地形 · 合成高程</option><option value="geology">地質 · 示範分類</option><option value="landform">地貌 · 坡度與粗糙度</option><option value="temperature">溫度 · 示範場</option><option value="magnetic">磁場 · 示範場</option><option value="none">不顯示分析圖層</option></select></div><div class="range-inline"><span>疊圖透明度</span><input id="analysis-opacity" type="range" value="58" min="0" max="100"><span id="analysis-alpha-label">58%</span></div><div class="legend"><div id="legend-bar" class="legend-bar"></div><div class="legend-ends"><span id="legend-min">低海拔</span><span id="legend-max">高海拔</span></div></div><p class="disclaimer">載入 DEM 後只有高程、坡度及衍生地貌指標採用實際 DEM；地質、溫度、磁場仍是合成示意。</p></section>
+  <section class="group"><div class="section-heading">路徑模擬 <span>A* / RISK COST</span></div><label class="field-label" for="destination">目標位置</label><select id="destination"><option value="s1">採樣站 A · 東北側</option><option value="s2">採樣站 B · 西北側</option><option value="s3">採樣站 C · 南方低地</option></select><div class="btn-row"><button class="primary" id="plan">▤ 計算安全路徑</button><button class="subtle" id="simulate">▶ 開始行進</button></div><div class="mini-stats"><div><small>規劃路徑</small><strong id="path-distance">—</strong></div><div><small>局部坡度</small><strong id="slope-reading">—</strong></div></div><div id="route-status" class="event-line">尚未規劃路徑</div></section>
+  <section class="group poi-group"><div class="section-heading">地點與特殊狀態 <span>LANDMARKS</span></div><div id="poi-list" class="poi-list"></div></section>
+</aside>
+<section class="map-pane">
+  <div id="map" role="region" aria-label="火星 Jezero 地圖"></div>
+  <div class="map-badge"><div class="overline">2D PLAN VIEW</div><strong>Jezero / 18.44°N, 77.42°E</strong><span><span id="map-data-badge">NASA 影像 + 合成高程</span></span></div>
+  <div class="north">N <span>↑</span></div>
+  <div class="map-bottom"><span id="mouse-coords">移動滑鼠查看火星座標</span><span>R = 3396.19 km</span></div>
+  <div id="map-error" class="map-error" hidden>NASA 圖磚目前不可用，已切換至合成 2D 地圖；連上網路即可使用官方底圖。</div>
+</section>
+<section class="viewer-pane">
+  <div class="viewer-head"><div><div class="overline">NAVIGATION / 02</div><h2>山頂相儀 <span>峰頂視角定位</span></h2></div><span class="chip faint">DEM / 360° VIEWSHED</span></div>
+  <div class="mode-switch"><button id="mode-panorama" class="mode active">球形視角</button><button id="mode-matching" class="mode">特徵匹配</button></div>
+  <div class="render-wrap"><canvas id="panorama" aria-label="合成火星地形 3D 類球形全景視角"></canvas><div class="view-overlay"><div><span class="tiny-dot"></span> <span id="viewer-data-label">SYNTHETIC TERRAIN RENDER</span></div><span id="heading-hud">000°</span></div><div class="crosshair">+</div><div class="panorama-footer"><span id="fov-hud">FOV 90°</span><span id="horizon-hud">CAMERA 1.7m · 360° HORIZON</span></div></div>
+  <div class="view-controls"><div class="control-head"><label for="heading">觀測方向 · 航向角</label><strong id="heading-value">045°</strong></div><input type="range" id="heading" min="0" max="359" value="45" step="1"><div class="compass-labels"><span>0° N</span><span>90° E</span><span>180° S</span><span>270° W</span><span>359°</span></div><div class="control-head fov-head"><label for="fov">水平視角 / Field of View</label><strong id="fov-value">90°</strong></div><input type="range" id="fov" min="35" max="125" value="90" step="5"></div>
+  <div class="match-panel" id="match-panel"><div class="section-heading">多峰特徵配對 <span>NO GPS NEEDED</span></div><div class="match-description">從 DEM 自動提取候選峰，產生<b>模擬相機觀測</b>與 descriptor matching，並以多個方位角反求位置及航向；尚未支援實際攝影機辨識。</div><div class="btn-row"><button id="scan" class="primary">◎ 掃描 360° 並定位</button><button id="drift" class="subtle">⊕ 注入里程計偏差</button></div><div class="match-stats"><div><small>配對峰頂</small><strong id="match-count">0 / 7</strong></div><div><small>定位誤差</small><strong id="match-error">—</strong></div><div><small>方位 RMS</small><strong id="match-rms">—</strong></div></div><div id="match-msg" class="match-msg">尚未執行 360° 掃描。即使在無 GPS 的情況下，也可利用已知地標重新校正。</div><div class="match-table-wrap"><table class="match-table"><thead><tr><th>地標</th><th>距離</th><th>預估視角大小</th><th>方位</th></tr></thead><tbody id="landmark-rows"></tbody></table></div></div>
+  <div class="telemetry"><div class="section-heading">導航遙測 <span>LIVE POSITION</span></div><div class="telemetry-grid"><div><small>LATITUDE</small><strong id="rover-lat">—</strong></div><div><small>LONGITUDE</small><strong id="rover-lng">—</strong></div><div><small>LOCAL ALTITUDE</small><strong id="rover-alt">—</strong></div><div><small>DEAD RECKONING</small><strong id="dr-state">漂移待校正</strong></div></div></div>
+  <footer class="viewer-notice"><strong>DEMO DATA NOTICE</strong>　<span id="dem-notice">目前尚未載入真實數值 DEM；地形、山峰和定位皆為合成模擬。NASA 影像只是背景參考。</span></footer>
+</section>
+</main>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="core.js"></script>
+<script src="main.js"></script>
+</body>
+</html>
