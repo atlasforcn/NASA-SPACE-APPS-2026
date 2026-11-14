@@ -44,7 +44,9 @@ jobs:
         id: pages
       - run: npm run build
         env:
-          PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}/
+          # This repository's Pages site redirects to mars.chuan.one, whose
+          # asset URLs must be rooted at the custom domain, not /<repo>/.
+          PAGES_BASE_PATH: /
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
