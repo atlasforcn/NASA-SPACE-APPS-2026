@@ -11,6 +11,7 @@ export function createNavigationOverlay(map) {
       tile.width = size.x; tile.height = size.y;
       tile.className = 'navigation-risk-tile';
       const ctx = tile.getContext('2d'), step = 8;
+      const edge = (C.demInfo()?.cellMeters || 0) * 2;
       for (let y = 0; y < size.y; y += step) for (let x = 0; x < size.x; x += step) {
         const geo = map.unproject(L.point(coords.x * size.x + x + step/2, coords.y * size.y + y + step/2), coords.z);
         if (Math.abs(geo.lat) > 90) continue;
@@ -18,6 +19,9 @@ export function createNavigationOverlay(map) {
         if (p.x < C.LIMIT.minX || p.x > C.LIMIT.maxX || p.y < C.LIMIT.minY || p.y > C.LIMIT.maxY || !Number.isFinite(p.x + p.y)) continue;
         const risk = C.risk(p.x, p.y);
         if (!risk.blocked) continue;
+        // Hide the clipped DEM perimeter; keep interior no-data holes visible.
+        if (risk.unknown && (p.x - C.LIMIT.minX < edge || C.LIMIT.maxX - p.x < edge ||
+          p.y - C.LIMIT.minY < edge || C.LIMIT.maxY - p.y < edge)) continue;
         ctx.fillStyle = risk.unknown ? '#eab45a66' : '#ff514b77';
         ctx.fillRect(x, y, step, step);
       }

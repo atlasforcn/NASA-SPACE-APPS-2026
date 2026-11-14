@@ -34,15 +34,15 @@ const active = computed(() => examples.filter(e => e.id === (
           <p>DEM 高程：{{ value(point.height) }} m<br />DEM 衍生坡度：{{ value(point.slope, 1) }}°<br />格距：約 {{ value(point.cellMeters) }} m</p>
           <p v-if="point.unit">USGS 地質單元：{{ point.unit }}</p>
           <a v-if="point.source" :href="point.source" target="_blank" rel="noopener noreferrer">數值 DEM 原始產品 ↗</a>
-          <p class="hint">高程為 DEM 內插值；坡度依格距估算。缺值與邊界不外推，格網無法判定車輪尺度障礙。地質為 1:75,000 解釋圖。</p>
+          <p class="hint">高程為 DEM 內插值；坡度依格距估算。缺值與邊界不外推，格網無法判定車輪尺度障礙。<span v-if="s.geologyAvailable">地質為 1:75,000 解釋圖。</span></p>
         </template>
         <p v-else class="hint">請先選擇位置，並等待 DEM 載入完成。</p>
       </template>
       <template v-else-if="item.id === 'optical'">
         <template v-if="!s.regional && !s.globalView">
-          <p>{{ s.siteId === 'gale' ? 'USGS HiRISE 正射影像：原生 0.25 m/pixel，本站約 6.67 m/pixel；彩色覆蓋約 51.5%，其他區域以灰階補足。' : 'USGS CTX 正射影像：原生約 5 m/pixel，本站約 8.09 m/pixel；以百分位對比拉伸顯示。' }}</p>
+          <p>{{ s.siteId === 'gale' ? 'USGS HiRISE 正射影像：原生 0.25 m/pixel，本站約 6.67 m/pixel；彩色覆蓋約 51.5%，其他區域以灰階補足。' : s.siteId === 'jezero-hirise' ? '局部地形使用 HiRISE DTM；光學底圖仍是原 Jezero CTX 正射影像，並非 HiRISE 影像。' : s.siteId === 'valles-ctx' ? 'USGS CTX 正射影像：原生約 20 m/pixel，本站 40 m/pixel；缺值保持透明。' : s.siteId === 'jezero-extended' ? 'USGS CTX 正射影像：只覆蓋中央 9.7×7 km，擴區其他地方沒有局部光學影像。' : 'USGS CTX 正射影像：原生約 5 m/pixel，本站約 8.09 m/pixel；以百分位對比拉伸顯示。' }}</p>
           <button :disabled="!s.ready || s.regionLoading" @click="s.optical = true; s.layer = 'none'">在地圖查看光學影像</button>
-          <a :href="m.asset(s.siteId === 'gale' ? 'data/gale/optical-source.json' : 'data/ctx-source.json')" target="_blank" rel="noopener noreferrer">影像來源與處理紀錄 ↗</a>
+          <a :href="m.asset(s.siteId === 'gale' ? 'data/gale/optical-source.json' : s.siteId === 'valles-ctx' ? 'data/valles/optical-source.json' : 'data/ctx-source.json')" target="_blank" rel="noopener noreferrer">影像來源與處理紀錄 ↗</a>
           <p class="hint">靜態拼圖，非即時影像；目的地若在影像裁切範圍外，無該點影像。</p>
         </template>
         <template v-else>

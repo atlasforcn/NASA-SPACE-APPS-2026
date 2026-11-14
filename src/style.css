@@ -190,6 +190,11 @@ input[type="checkbox"] {
   background: #332c28;
   z-index: 0;
 }
+.map .local-dem-image {
+  mask-image: linear-gradient(to right, transparent, #000 4%, #000 96%, transparent),
+    linear-gradient(to bottom, transparent, #000 4%, #000 96%, transparent);
+  mask-composite: intersect;
+}
 .map.drawing {
   cursor: crosshair;
   touch-action: none;
@@ -755,6 +760,8 @@ details button {
 
 .layer-controls { display: grid; gap: 8px; }
 .layer-controls label { margin: 0; }
+.layer-options { display: grid; gap: 6px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.layer-options legend { margin-bottom: 6px; font-weight: 600; }
 .map-layer-status .layer-controls { font-size: 11px; }
 .map-layer-status select { width: 100%; margin-top: 4px; padding: 6px 8px; font-size: 12px; }
 .map-layer-status .checkbox { display: flex; align-items: center; gap: 6px; }

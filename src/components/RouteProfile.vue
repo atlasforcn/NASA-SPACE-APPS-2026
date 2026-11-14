@@ -29,6 +29,6 @@ const m = inject(missionKey), s = m.state;
     <p v-for="item in s.profileLegend" :key="item.name" class="hint" :style="{ color: item.color }">{{ item.name }} · {{ item.length }}</p>
     <p class="hint" role="status">{{ s.profileHover || "在剖面上移動滑鼠，查看距離、高程與地圖位置。" }}</p>
     <p class="hint">{{ s.profileInfo }}</p>
-    <p class="hint">{{ s.regional ? "MOLA 公里級地形；格距隨覆蓋範圍調整。" : s.siteId === 'gale' ? "Gale 原生格距 1 m，本站 DEM 取樣 20 m；並非全域 1 m 精度。" : "CTX 原生 20 m、衍生約 40 m DEM。" }} 無法判斷岩塊與腳下路況。</p>
+    <p class="hint">{{ s.regional ? "MOLA 公里級地形；格距隨覆蓋範圍調整。" : s.siteId === 'gale' ? "Gale 原生格距 1 m，本站 DEM 取樣 20 m；並非全域 1 m 精度。" : s.siteId === 'jezero-hirise' ? "HiRISE 原生格距 1 m，本站 DEM 取樣 5 m；缺值不外推。" : "CTX 原生約 20 m、本站取樣 40 m DEM。" }} 無法判斷岩塊與腳下路況。</p>
   </section>
 </template>
