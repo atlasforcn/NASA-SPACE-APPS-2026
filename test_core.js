@@ -1,6 +1,7 @@
 'use strict';
 const assert=require('node:assert/strict');
 const c=require('./core.mjs').default;
+c.setSlopeLimit(24); // Legacy synthetic-route fixtures exercise the permissive scenario explicitly.
 function test(name,fn){try{fn();console.log('✓',name);}catch(err){console.error('✗',name);throw err;}}
 test('Mars lat/lng local projection round trip',()=>{for(const p of [{x:0,y:0},{x:2500,y:-1200},{x:-4400,y:3100}]){const ll=c.localToLatLng(p.x,p.y),back=c.latLngToLocal(ll.lat,ll.lng);assert(c.distance(p,back)<1e-5);}});
 test('All analytic DEM & risk outputs are finite',()=>{for(let x=-4500;x<=4500;x+=900)for(let y=-3300;y<=3300;y+=1100){assert(Number.isFinite(c.elevation(x,y)));const r=c.risk(x,y);assert(Number.isFinite(r.cost));assert(r.slope>=0);}});

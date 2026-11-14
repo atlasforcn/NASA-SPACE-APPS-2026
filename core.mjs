@@ -90,7 +90,9 @@ function setDEM(input){
   if(!Number.isInteger(width)||!Number.isInteger(height)||width<3||height<3||width*height>3000000)throw Error('DEM 網格尺寸異常');
   if(![xMin,xMax,yMin,yMax].every(Number.isFinite)||xMax<=xMin||yMax<=yMin||(!regional&&!localGrid&&(xMin> -4850||xMax<4850||yMin> -3500||yMax<3500)))throw Error('DEM 未涵蓋示範全區');
   if(!Array.isArray(input.heights)||input.heights.length!==width*height)throw Error('DEM 格網長度不正確');
-  const values=Float64Array.from(input.heights.map(v=>v===null?NaN:Number(v)));
+  // Convert directly into the typed grid; avoid a second full-size array while
+  // loading the regional DEM (up to three million cells).
+  const values=Float64Array.from(input.heights,v=>v===null?NaN:Number(v));
   if(values.some(v=>Number.isFinite(v)&&Math.abs(v)>(regional?30000:12000)))throw Error('高程不合理，請檢查 Mars 垂直基準與單位');
   const validCount=values.reduce((n,v)=>n+(Number.isFinite(v)?1:0),0);
   if(validCount<width*height*.4)throw Error('DEM 有效區域不足 40%');
@@ -117,7 +119,7 @@ function slopeDeg(x,y){const s=realDEM?Math.max(20,realDEM.cellMeters):40;const 
 let navigationContext=null;
 function setNavigationContext(context=null){navigationContext=context;}
 function navigationAt(x,y){return navigationContext?.sample(x,y)||{blocked:false,factor:1,reasons:[],unknown:false};}
-let slopeLimit=24,roughnessLimit=1;
+let slopeLimit=15,roughnessLimit=1;
 function setRoughnessLimit(value){if(!Number.isFinite(value)||value<0||value>1)throw Error('粗糙度上限須介於 0–1');roughnessLimit=value;}
 function setSlopeLimit(value){if(!Number.isFinite(value)||value<1||value>45)throw Error('坡度門檻須介於 1–45°');slopeLimit=value;}
 function risk(x,y){const slope=slopeDeg(x,y),rough=roughness(x,y),navigation=navigationAt(x,y);const hazard=realDEM?false:((x+150)**2/680**2+(y-350)**2/370**2)<1;const unknown=!Number.isFinite(slope)||!Number.isFinite(rough);return {slope,rough,hazard,unknown,navigation,blocked:navigation.blocked||unknown||slope>slopeLimit||rough>roughnessLimit||hazard,cost:unknown?Infinity:1+2.1*rough+2*Math.pow(slope/slopeLimit,2)+(navigation.factor-1)};}

@@ -66,9 +66,9 @@ export function useMission() {
     routeOptions: null,
     selectedRoute: 'energy',
     stopIds: [],
-    planner: { speedKmh: 3, riskWeight: 1, highSlope: 15, roundTrip: false, stopMinutes: 15, budgetHours: 8, uphillPenalty: 10, downhillSaving: 5 },
+    planner: { speedKmh: 3, riskWeight: 1, highSlope: 10, roundTrip: false, stopMinutes: 15, budgetHours: 8, uphillPenalty: 10, downhillSaving: 5 },
     targetName: "",
-    slope: 24,
+    slope: 15,
     roughnessLimit: 1,
     showNavigationRisk: true,
     navigation: {geologyEnabled:true, thermalEnabled:false, sandFactor:1.8, rockFactor:1.25, unknownFactor:1.1, thermalThreshold:200, thermalFactor:1.2},
@@ -296,7 +296,7 @@ export function useMission() {
     state.type = "";
     state.selected = null;
     state.poi = null;
-    state.slope = 24;
+    state.slope = 15;
     state.layer = "none";
     resetDrawing();
     state.scenario = kind;
