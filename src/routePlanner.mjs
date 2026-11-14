@@ -53,7 +53,22 @@ export function buildItinerary(start, stops, options = {}) {
       legs.push({ name: target.name, ...stats, stopMinutes: target.returnLeg ? 0 : stopMinutes });
       from = target;
     }
-    const stats = measureRoute(path, {...options,speedKmh,highSlope});
+    // Legs partition the same path. Reuse their sampled metrics instead of
+    // walking every DEM cell a second time for the itinerary summary.
+    const totals = new Map();
+    for (const leg of legs) for (const { reason, distance } of leg.navigationReasons)
+      totals.set(reason, (totals.get(reason) || 0) + distance);
+    const stats = {
+      energy: 0, materialEnergy: 0, unknownMaterialDistance: 0,
+      length: 0, surface: 0, gain: 0, loss: 0, maxSlope: 0,
+      steep: 0, riskDistance: 0, hours: 0,
+      navigationReasons: [...totals].map(([reason, distance]) => ({ reason, distance })),
+    };
+    for (const leg of legs) {
+      for (const key of ['energy', 'materialEnergy', 'unknownMaterialDistance', 'length', 'surface', 'gain', 'loss', 'steep', 'riskDistance', 'hours']) stats[key] += leg[key];
+      stats.maxSlope = Math.max(stats.maxSlope, leg.maxSlope);
+    }
+    stats.riskScore = stats.length ? stats.riskDistance / stats.length : 0;
     const totalHours = stats.hours + stops.length*stopMinutes/60;
     return { path, ...stats, reachable: true, legs, stopIndices, totalHours, marginHours: budgetHours-totalHours, options: {...options} };
   }

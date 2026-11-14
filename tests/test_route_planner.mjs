@@ -16,6 +16,9 @@ for (const route of Object.values(plan)) {
   assert(Math.abs(route.totalHours-route.hours-40/60)<1e-8);
   assert.equal(route.legs.at(-1).stopMinutes,0);
   assert(route.surface>=route.length && route.gain>0 && route.loss>0);
+  const sampled = measureRoute(route.path, options);
+  for (const key of ['energy', 'materialEnergy', 'unknownMaterialDistance', 'length', 'surface', 'gain', 'loss', 'maxSlope', 'steep', 'riskDistance', 'hours', 'riskScore'])
+    assert(Math.abs(route[key] - sampled[key]) < 1e-6, `${key} must match full-path sampling`);
 }
 assert(plan.shortest.surface<=plan.safer.surface+1e-6);
 assert(plan.safer.riskDistance<=plan.shortest.riskDistance+1e-6);
