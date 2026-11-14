@@ -20,7 +20,7 @@ const m = inject(missionKey),
         <li :class="{ complete: !!s.route }">03 比較路線</li>
       </ol>
       <p v-if="!s.hasStart" class="hint" role="status">尚未設定起點；選定後才會顯示導航位置並啟用規劃與定位。</p>
-      <p class="hint">① 選起點、停靠點與終點 → ② 比較最短與較低風險路線 → ③ 選擇方案並行進。</p>
+      <p class="hint">① 選起點、停靠點與終點 → ② 比較最低耗電、最短與較低風險路線 → ③ 選擇方案並行進。</p>
       <button id="pick-start" :disabled="!s.ready" :aria-pressed="s.pickingStart" @click="m.beginStart">{{ s.pickingStart ? '取消選起點' : '在地圖選起點' }}</button>
         <label>目的地名稱<input id="target-name" v-model="s.targetName" maxlength="80" placeholder="輸入自訂名稱（可留空）" /></label>
         <div class="button-row">
@@ -29,7 +29,7 @@ const m = inject(missionKey),
         </div>
         <p class="hint" role="status">{{ s.pickingTarget ? "點選地圖設定位置；遠處會自動擴大 MOLA 覆蓋範圍。" : "自行命名並點選地圖新增目的地，再選擇目的地規劃路線。" }}</p>
       <label
-        >自訂目的地<select
+        >任務目的地<select
           id="destination"
           v-model="s.destination"
         >
@@ -39,6 +39,18 @@ const m = inject(missionKey),
           </option>
         </select></label
       >
+      <section class="navigation-safety detail-card">
+        <h3>路線會避開哪些地方？</h3>
+        <label class="checkbox"><input id="task-navigation-risk" v-model="s.showNavigationRisk" type="checkbox" />在地圖標示避開區域</label>
+        <div class="button-row">
+          <button type="button" @click="s.layer = 'slope'" :disabled="s.globalView">查看坡度</button>
+          <button type="button" @click="s.layer = 'roughness'" :disabled="s.regional || s.globalView">查看粗糙度</button>
+          <button type="button" @click="s.tab = 'layers'; s.panelOpen = true">對照其他圖層 ↗</button>
+        </div>
+        <p class="hint">紅色：坡度超過 {{ s.slope }}°，或粗糙度超過 {{ s.roughnessLimit }}。黃色：地形資料不足，無法判定能否通行。三種路線都會避開這些位置。取消勾選只隱藏標記，規劃仍會避開。</p>
+        <label>粗糙度上限 {{ s.roughnessLimit }}<input id="roughness-limit" v-model.number="s.roughnessLimit" type="range" min="0" max="1" step="0.05" /></label>
+        <p class="hint">調低上限可排除較粗糙地形；1 表示不額外排除粗糙度。光學、地質與科學圖層可供位置對照，尚未作為通行判定。遮罩為顯示取樣，路線會沿途細分檢查。</p>
+      </section>
       <PlannerControls />
       <label
         >示範坡度上限（非車輛工程規格）<input
@@ -55,7 +67,7 @@ const m = inject(missionKey),
           :disabled="!s.ready || !s.hasStart || !s.destination || s.regionLoading"
           @click="m.plan"
         >
-          建立並評估兩條路線</button
+          建立並評估三條路線</button
         ><button
           id="simulate"
           :disabled="!s.route?.reachable"
@@ -95,7 +107,7 @@ const m = inject(missionKey),
       <p id="route-status" class="hint" role="status">{{ s.routeStatus }}</p>
       <details class="planning-assumptions">
         <summary>規劃假設與資料限制</summary>
-        <p class="hint">黃色直線只用於距離對照；最短與較低風險方案都使用 A* 搜尋。最短方案最小化格網三維距離，較低風險方案加入坡度與粗糙度成本；結果受搜尋格網限制，不保證連續地形上的全域最優。</p>
+        <p class="hint">黃色直線只用於距離對照；三種方案都使用 A* 搜尋。最短方案最小化格網三維距離，較低風險方案加入坡度與粗糙度成本；最低耗電方案逐段考慮上坡增耗與下坡省電。結果受搜尋格網限制，不保證連續地形上的全域最優。</p>
         <p class="hint">{{ s.regional ? '全球 MOLA 為公里尺度高程，遠距結果僅供粗略模擬。' : '區域 DEM 的格距與取樣尺度限制了坡度判讀。' }}缺測與越界區段不視為可通行；未納入車輪尺度障礙、能源及真實任務時程。</p>
         <a href="https://www.momar.si/planner/" target="_blank" rel="noopener noreferrer">路線規劃介面參考：MOMAR ↗</a>
       </details>

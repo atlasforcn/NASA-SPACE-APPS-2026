@@ -766,3 +766,14 @@ details button {
   .map-layer-status__detail { display: none; }
   .map-layer-status .layer-controls { gap: 4px; }
 }
+
+/* Leaflet safety tiles must not inherit the chart canvas background. */
+canvas.navigation-risk-tile {
+  background: transparent;
+  border-radius: 0;
+  max-width: none;
+}
+.navigation-risk-key { display: flex; flex-wrap: wrap; gap: 5px 12px; font-size: 11px; line-height: 1.6; color: #c8d6d1; }
+.navigation-risk-key span { display: inline-flex; align-items: center; gap: 5px; }
+.navigation-risk-key i { width: 10px; height: 10px; border-radius: 2px; background: #ff736e; }
+.navigation-risk-key .missing { background: #eab45a; }

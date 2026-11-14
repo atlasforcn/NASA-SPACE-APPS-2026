@@ -115,7 +115,12 @@ function selectRegion(event) {
           {{ s.selected.eastLongitude.toFixed(4) }}°E · 尺度
           {{ s.selected.diameterKm }} km
         </p>
-        <p class="hint">目錄中心不是入口、峰頂或可抵達目標。</p>
+        <p class="hint">加入任務時採用目錄中心；是否可達由地形與避險門檻檢查。</p>
+        <div class="button-row">
+          <button id="named-add-stop" :disabled="!s.ready || s.regionLoading" @click="m.addNamedTarget(s.selected, 'stop')">加入停靠順序</button>
+          <button id="named-set-destination" :disabled="!s.ready || s.regionLoading" @click="m.addNamedTarget(s.selected, 'destination')">設為終點</button>
+        </div>
+        <p class="hint" role="status">{{ s.namedTargetStatus }}</p>
         <a :href="s.selected.url" target="_blank" rel="noopener noreferrer"
           >USGS／IAU 資料 ↗</a
         ><button

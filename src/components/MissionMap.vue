@@ -57,6 +57,8 @@ onUnmounted(() => observer?.disconnect());
       <span><i class="legend-line red"></i>紅色線段：超出通行條件</span>
       <span><i class="legend-line orange"></i>橘色線：行進軌跡</span>
       <span><i class="legend-dot orange"></i>橘色圓點：模擬真值（開啟時）</span>
+      <span><i class="legend-dot red"></i>紅色區域：超出通行上限</span>
+      <span>黃色區域：地形資料不足</span>
       <span><i class="legend-ring"></i>圓環：定位候選，青色為首選</span>
     </div>
   </details>
