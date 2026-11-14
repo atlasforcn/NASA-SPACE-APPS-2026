@@ -1,0 +1,258 @@
+{
+  "schema": "mars-science-v1",
+  "datasets": {
+    "thermal": {
+      "id": "thermal",
+      "kind": "raster",
+      "layer": "TES_Thermal_Inertia_numeric",
+      "width": 2880,
+      "height": 1440,
+      "bounds": [
+        -180,
+        -90,
+        180,
+        90
+      ],
+      "crs": "Mars planetocentric, positive-East; simple cylindrical",
+      "dtype": "float32 little-endian",
+      "pixel_registration": "area; centres: lon=-180+(col+0.5)*360/width, lat=90-(row+0.5)*180/height",
+      "native_ppd": 8,
+      "display_ppd": 8.0,
+      "unit": "J m⁻² K⁻¹ s⁻½",
+      "scale": [
+        0,
+        1000
+      ],
+      "valid_range": [
+        0,
+        5000
+      ],
+      "nodata": "NaN; transparent",
+      "valid_fraction": 1.0,
+      "min": 25.0,
+      "max": 602.0,
+      "source": {
+        "url": "https://ms-mars.mars.asu.edu/TES_Thermal_Inertia_numeric?SERVICE=WMS&REQUEST=GetMap&FORMAT=image/vicar&WIDTH=2880&HEIGHT=1440&SRS=JMARS:4&BBOX=0,-90,360,90&STYLES=&VERSION=1.1.1&LAYERS=TES_Thermal_Inertia_numeric",
+        "sha256": "b95d5eb418e9a967ab69e0f60083b0cc98f03cd117016d0b2761dde8477b735a",
+        "bytes": 16600320,
+        "vicar_header": "LBLSIZE=11520                     HOST='PC'  INTFMT='LOW'  REALFMT='RIEEE'  FORMAT='FULL'  TYPE='IMAGE'  BUFSIZ=24576  DIM=2  EOL=0  RECSIZE=11520  ORG='BSQ'  NL=1440  NS=2880  NB=1  N1=2880  N2=1440  N3=1  N4=0  NBB=0  NLB=0  BHOST='PC'  BINTFMT='LOW'  BREALFMT='IEEE'  BLTYPE=''  TASK='IOMEDLEY'  USER='nobody'  DAT_TIM='Sat Nov 14 07:12:27 2026'                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  \u0000\u0000"
+      },
+      "title": "TES Thermal Inertia (Christensen) - Numeric",
+      "citation": "Citation: Christensen, P. R., and H. J. Moore (1992), The martian surface layer, in Mars, edited by H. H. Kieffer, et al., pp. 686-729, University of Arizona Press, Tucson, AZ.",
+      "keywords": [
+        "units:J m-2 K-1 sec-1/2",
+        "maxPPD:8.000",
+        "numeric",
+        "mars",
+        "jmarsCategory:By Instrument//TES",
+        "jmarsCategory:By Type//Surface Properties"
+      ],
+      "processing": "WMS numerical VICAR; rotate longitude columns; source null/invalid values to NaN; nearest-cell display; fixed colour ramp, clipped at legend limits.",
+      "retrieved": "2026-11-14"
+    },
+    "spectral": {
+      "id": "spectral",
+      "kind": "raster",
+      "layer": "TES_Olivine_numeric",
+      "width": 1440,
+      "height": 720,
+      "bounds": [
+        -180,
+        -90,
+        180,
+        90
+      ],
+      "crs": "Mars planetocentric, positive-East; simple cylindrical",
+      "dtype": "float32 little-endian",
+      "pixel_registration": "area; centres: lon=-180+(col+0.5)*360/width, lat=90-(row+0.5)*180/height",
+      "native_ppd": 4,
+      "display_ppd": 4.0,
+      "unit": "abundance",
+      "scale": [
+        0,
+        0.25
+      ],
+      "valid_range": [
+        0,
+        1
+      ],
+      "nodata": "NaN; transparent",
+      "valid_fraction": 0.7226726466049382,
+      "min": 0.0,
+      "max": 0.17419886589050293,
+      "source": {
+        "url": "https://ms-mars.mars.asu.edu/TES_Olivine_numeric?SERVICE=WMS&REQUEST=GetMap&FORMAT=image/vicar&WIDTH=1440&HEIGHT=720&SRS=JMARS:4&BBOX=0,-90,360,90&STYLES=&VERSION=1.1.1&LAYERS=TES_Olivine_numeric",
+        "sha256": "f4469be1703eab9f2d7799bfd9d9e4316526a09d6566b55a452e1b1dfb047200",
+        "bytes": 4152960,
+        "vicar_header": "LBLSIZE=5760                      HOST='PC'  INTFMT='LOW'  REALFMT='RIEEE'  FORMAT='REAL'  TYPE='IMAGE'  BUFSIZ=24576  DIM=2  EOL=0  RECSIZE=5760  ORG='BSQ'  NL=720  NS=1440  NB=1  N1=1440  N2=720  N3=1  N4=0  NBB=0  NLB=0  BHOST='PC'  BINTFMT='LOW'  BREALFMT='IEEE'  BLTYPE=''  TASK='IOMEDLEY'  USER='nobody'  DAT_TIM='Sat Nov 14 07:12:27 2026'                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     \u0000\u0000"
+      },
+      "title": "TES Olivine Abundance (Bandfield, 2002) - Numeric",
+      "citation": "Citation: Bandfield, J. L., Global mineral distributions on Mars, J. Geophys. Res., 107, 10.1029/2001JE001510, 2002.",
+      "keywords": [
+        "units:abundance",
+        "jmarsCategory:By Instrument//TES Mineral Maps",
+        "jmarsCategory:By Type//Composition//Mineral Composition//Olivine",
+        "numeric",
+        "mars",
+        "NullValue:-1",
+        "maxPPD:4",
+        "NullValue:-1.0"
+      ],
+      "processing": "WMS numerical VICAR; rotate longitude columns; source null/invalid values to NaN; nearest-cell display; fixed colour ramp, clipped at legend limits.",
+      "retrieved": "2026-11-14"
+    },
+    "geophysical": {
+      "id": "geophysical",
+      "kind": "raster",
+      "layer": "grav_ggmro_120_anom_100",
+      "width": 720,
+      "height": 360,
+      "bounds": [
+        -180,
+        -90,
+        180,
+        90
+      ],
+      "crs": "Mars planetocentric, positive-East; simple cylindrical",
+      "dtype": "float32 little-endian",
+      "pixel_registration": "area; centres: lon=-180+(col+0.5)*360/width, lat=90-(row+0.5)*180/height",
+      "native_ppd": 16,
+      "display_ppd": 2.0,
+      "unit": "mGal",
+      "scale": [
+        -500,
+        500
+      ],
+      "valid_range": [
+        -5000,
+        5000
+      ],
+      "nodata": "NaN; transparent",
+      "valid_fraction": 1.0,
+      "min": -725.8411254882812,
+      "max": 3149.669677734375,
+      "source": {
+        "url": "https://ms-mars.mars.asu.edu/grav_ggmro_120_anom_100?SERVICE=WMS&REQUEST=GetMap&FORMAT=image/vicar&WIDTH=720&HEIGHT=360&SRS=JMARS:4&BBOX=0,-90,360,90&STYLES=&VERSION=1.1.1&LAYERS=grav_ggmro_120_anom_100",
+        "sha256": "81042c0ed0ec2d03e02a64e1129a37e417f11a3c0142d0b4e624ad32d6ee2d01",
+        "bytes": 1039680,
+        "vicar_header": "LBLSIZE=2880                      HOST='PC'  INTFMT='LOW'  REALFMT='RIEEE'  FORMAT='REAL'  TYPE='IMAGE'  BUFSIZ=24576  DIM=2  EOL=0  RECSIZE=2880  ORG='BSQ'  NL=360  NS=720  NB=1  N1=720  N2=360  N3=1  N4=0  NBB=0  NLB=0  BHOST='PC'  BINTFMT='LOW'  BREALFMT='IEEE'  BLTYPE=''  TASK='IOMEDLEY'  USER='nobody'  DAT_TIM='Sat Nov 14 07:13:28 2026'                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       \u0000\u0000"
+      },
+      "title": "Mars Gravity Anomaly (degree 100, GSFC)",
+      "citation": "This map contains a digital representation of the Mars gravity anomalies derived from spherical harmonic coefficients of the NASA GMM-3 gravity field. Each point gives the Mars gravity anomaly  in milligals, which is the anomaly of the model gravity defined with respect to the reference ellipsoid with semi-major-axis = 3396.0 km, GM = 0.4282837285418775E+05 km**3/s**2, 1/flattening = 196.877360, and rotation rate = 7.088218066303858D-05 rad/s. The GMM3_120_ANOM_100 gravity anomaly map is computed from a truncated GMM-3 solution (from degree 2 up to degree 100). This map is in simple cylindrical projection at a resolution of 16 pixels per degree. Source data: ggmro_120_anom_100.lbl, ggmro_120_anom_100.img Date of ASU ingest: 11/18/24",
+      "keywords": [
+        "units:Milligals",
+        "numeric",
+        "mars",
+        "maxPPD:16",
+        "jmarsCategory:By Type//Surface Properties//Gravity//GSFC Products"
+      ],
+      "processing": "WMS numerical VICAR; rotate longitude columns; source null/invalid values to NaN; nearest-cell display; fixed colour ramp, clipped at legend limits.",
+      "retrieved": "2026-11-14"
+    },
+    "chemical": {
+      "id": "chemical",
+      "kind": "raster",
+      "layer": "GRS_Fe_conc_numeric",
+      "width": 72,
+      "height": 36,
+      "bounds": [
+        -180,
+        -90,
+        180,
+        90
+      ],
+      "crs": "Mars planetocentric, positive-East; simple cylindrical",
+      "dtype": "float32 little-endian",
+      "pixel_registration": "area; centres: lon=-180+(col+0.5)*360/width, lat=90-(row+0.5)*180/height",
+      "native_ppd": 0.2,
+      "display_ppd": 0.2,
+      "unit": "wt % Fe",
+      "scale": [
+        10,
+        20
+      ],
+      "valid_range": [
+        0.01,
+        100
+      ],
+      "nodata": "NaN; transparent",
+      "valid_fraction": 0.5817901234567902,
+      "min": 10.631999969482422,
+      "max": 19.301000595092773,
+      "source": {
+        "url": "https://ms-mars.mars.asu.edu/GRS_Fe_conc_numeric?SERVICE=WMS&REQUEST=GetMap&FORMAT=image/vicar&WIDTH=72&HEIGHT=36&SRS=JMARS:4&BBOX=0,-90,360,90&STYLES=&VERSION=1.1.1&LAYERS=GRS_Fe_conc_numeric",
+        "sha256": "115a62f77037a814b07d67b2b593faebe9dcc11190942e83352e16aa12077b3c",
+        "bytes": 21312,
+        "vicar_header": "LBLSIZE=576                       HOST='PC'  INTFMT='LOW'  REALFMT='RIEEE'  FORMAT='DOUB'  TYPE='IMAGE'  BUFSIZ=24576  DIM=2  EOL=0  RECSIZE=576  ORG='BSQ'  NL=36  NS=72  NB=1  N1=72  N2=36  N3=1  N4=0  NBB=0  NLB=0  BHOST='PC'  BINTFMT='LOW'  BREALFMT='IEEE'  BLTYPE=''  TASK='IOMEDLEY'  USER='nobody'  DAT_TIM='Sat Nov 14 07:12:27 2026'                                                                                                                                                                                                                                            \u0000\u0000"
+      },
+      "title": "Fe Conc. (wt %) - Numeric",
+      "citation": "Citation:Boynton, W. V., et al. (2007), Concentration of H, Si, Cl, K, Fe, and Th in the low- and mid-latitude regions of Mars // http://grs.lpl.arizona.edu/specials/",
+      "keywords": [
+        "units:weight percent",
+        "maxPPD:0.200",
+        "numeric",
+        "mars",
+        "jmarsCategory:By Instrument//GRS/HEND//Fe Conc.",
+        "jmarsCategory:By Type//Composition//Elemental Composition//Fe Conc."
+      ],
+      "processing": "WMS numerical VICAR; rotate longitude columns; source null/invalid values to NaN; nearest-cell display; fixed colour ramp, clipped at legend limits.",
+      "retrieved": "2026-11-14"
+    },
+    "atmospheric": {
+      "id": "atmospheric",
+      "kind": "station",
+      "name": "Perseverance MEDA · Sol 1",
+      "lat": 18.4446,
+      "lng": 77.4509,
+      "value": 715.0023776824034,
+      "min": 713.91,
+      "max": 716.12,
+      "count": 2330,
+      "unit": "Pa",
+      "start": "2021-02-19T21:35:54.970Z",
+      "stop": "2021-02-19T22:29:54.996Z",
+      "source": {
+        "url": "https://pds-atmospheres.nmsu.edu/PDS/data/PDS4/Mars2020/mars2020_meda/data_derived_env/sol_0000_0089/sol_0001/WE__0001___________DER_PS__________________P02.CSV",
+        "sha256": "600d8d11b26b2127ba66f90889e7ba5621a0b8b788146bf5bf72a02be2e0a16c",
+        "bytes": 125877,
+        "local": "data/science/raw/WE__0001___________DER_PS__________________P02.csv"
+      },
+      "label_source": {
+        "url": "https://pds-atmospheres.nmsu.edu/PDS/data/PDS4/Mars2020/mars2020_meda/data_derived_env/sol_0000_0089/sol_0001/WE__0001___________DER_PS__________________P02.xml",
+        "sha256": "bf91828374f61d9267baf2f35b2784e50ffd44ea4b3559e023295ff075068c91",
+        "bytes": 9326,
+        "local": "data/science/raw/WE__0001___________DER_PS__________________P02.xml"
+      },
+      "coordinate_source": "https://ntrs.nasa.gov/api/citations/20230016428/downloads/Bell%20et%20al%202022sciadv.pdf",
+      "note": "Sol 1 著陸後定點觀測，標示於歷史著陸座標。數值是此檔有效樣本的算術平均，非整日或整區平均。"
+    },
+    "radiation": {
+      "id": "radiation",
+      "kind": "station",
+      "name": "Curiosity RAD · Sol 1",
+      "lat": -4.5895,
+      "lng": 137.4417,
+      "value": 8.925,
+      "min": 7.25298,
+      "max": 9.86733,
+      "count": 14,
+      "unit": "µGy/h (Si)",
+      "start": "2012-08-07T02:25:43Z",
+      "stop": null,
+      "source": {
+        "url": "https://pds-ppi.igpp.ucla.edu/data/MSL-M-RAD-3-RDR-V1.0/DATA/SOL_00000_00089/RAD_RDR_2012_220_02_25_0001_V00.TXT",
+        "sha256": "4d08d57a55b5c48a72eaf61c554e7ebf31d5a3d50f1f7b8327d9bab8d575fc87",
+        "bytes": 6575409,
+        "local": "data/science/raw/RAD_RDR_2012_220_02_25_0001_V00.txt"
+      },
+      "label_source": {
+        "url": "https://pds-ppi.igpp.ucla.edu/data/MSL-M-RAD-3-RDR-V1.0/DATA/SOL_00000_00089/RAD_RDR_2012_220_02_25_0001_V00.LBL",
+        "sha256": "6eb5e69243b26f845ebeda9575048ac92a72a6f2ae084431170452b4a328c25c",
+        "bytes": 128320,
+        "local": "data/science/raw/RAD_RDR_2012_220_02_25_0001_V00.lbl"
+      },
+      "coordinate_source": "https://doi.org/10.1002/2014JE004622",
+      "note": "Sol 1 歷史觀測，標記於 Bradbury Landing（約略座標）。原 RDR 的 ROVER_LAT/LON 為 0 佔位，未採用。數值為標籤指向的有效 B 偵測器吸收劑量率之算術平均；不是 mSv 劑量當量，也不是整區輻射圖。"
+    }
+  }
+}

@@ -124,8 +124,8 @@
     "disposition": "publish",
     "reason": "Website runtime, reference, source record or presentation",
     "path": "docs/SOURCES.md",
-    "bytes": 7275,
-    "sha256": "58472ee66f1ba4ae74458155819fe0f3c597696cd32cfb6fbe2e472c9e1dd427"
+    "bytes": 14456,
+    "sha256": "83c5036f3c17f3df4e446465a6ae3ed6983fb8aac07184d8d27ae3580684b1fb"
   },
   {
     "source": "docs/Leaflet-LICENSE.txt",
@@ -174,5 +174,117 @@
     "path": "favicon.ico",
     "bytes": 4286,
     "sha256": "f413ff0bf3ed40a047b96d3ed5405f68ea6c7b4abafa2c1f11640e3366c4df10"
+  },
+  {
+    "source": "data/science/chemical.bin",
+    "disposition": "publish",
+    "reason": "Downloaded Mars science raster, station observation or provenance record",
+    "path": "data/science/chemical.bin",
+    "bytes": 10368,
+    "sha256": "b3cd9ae1449296148e061e32f332c59cb4ba055d5114d7b986f936a724231b5f"
+  },
+  {
+    "source": "data/science/chemical.png",
+    "disposition": "publish",
+    "reason": "Downloaded Mars science raster, station observation or provenance record",
+    "path": "data/science/chemical.png",
+    "bytes": 3552,
+    "sha256": "c215583927700d0608fc30143ff8813cb254d5e9466612a444789137bc95b3e5"
+  },
+  {
+    "source": "data/science/geophysical.bin",
+    "disposition": "publish",
+    "reason": "Downloaded Mars science raster, station observation or provenance record",
+    "path": "data/science/geophysical.bin",
+    "bytes": 1036800,
+    "sha256": "dffa6bfdcd8c36fa4caaf438b4f7aa2e37e000910a43d17a56fdf203fbb0c7e6"
+  },
+  {
+    "source": "data/science/geophysical.png",
+    "disposition": "publish",
+    "reason": "Downloaded Mars science raster, station observation or provenance record",
+    "path": "data/science/geophysical.png",
+    "bytes": 251680,
+    "sha256": "85259e666f1e10d402ed3dbe3a9b0d06fbaaeb7f88cf388bc0e95302f2e1b2cd"
+  },
+  {
+    "source": "data/science/manifest.json",
+    "disposition": "publish",
+    "reason": "Downloaded Mars science raster, station observation or provenance record",
+    "path": "data/science/manifest.json",
+    "bytes": 31520,
+    "sha256": "71d970898bc85b95ffe158fae97f4e8e2d7aa4bb4dafc385e67d6e6a9d7c33dc"
+  },
+  {
+    "source": "data/science/raw/RAD_RDR_2012_220_02_25_0001_V00.lbl",
+    "disposition": "publish",
+    "reason": "Downloaded Mars science raster, station observation or provenance record",
+    "path": "data/science/raw/RAD_RDR_2012_220_02_25_0001_V00.lbl",
+    "bytes": 126716,
+    "sha256": "85a2014d772f21df8ef88a379d689a8590eedf617a42dddd2bd33f142e3d2c43"
+  },
+  {
+    "source": "data/science/raw/RAD_RDR_2012_220_02_25_0001_V00.txt",
+    "disposition": "publish",
+    "reason": "Downloaded Mars science raster, station observation or provenance record",
+    "path": "data/science/raw/RAD_RDR_2012_220_02_25_0001_V00.txt",
+    "bytes": 6565512,
+    "sha256": "c0e07abcededb20249de98bc1ca72944811514017944e88d1a4f7336462dac00"
+  },
+  {
+    "source": "data/science/raw/WE__0001___________DER_PS__________________P02.csv",
+    "disposition": "publish",
+    "reason": "Downloaded Mars science raster, station observation or provenance record",
+    "path": "data/science/raw/WE__0001___________DER_PS__________________P02.csv",
+    "bytes": 123546,
+    "sha256": "76ae7a9bf189c1e69f232ac3eefbe56336249457a91493b58e18e21564a3e394"
+  },
+  {
+    "source": "data/science/raw/WE__0001___________DER_PS__________________P02.xml",
+    "disposition": "publish",
+    "reason": "Downloaded Mars science raster, station observation or provenance record",
+    "path": "data/science/raw/WE__0001___________DER_PS__________________P02.xml",
+    "bytes": 9132,
+    "sha256": "656e3f02ffeafa90c506b915b51cc81598eaf6d0f9a0be071960ac0d9c8f86d2"
+  },
+  {
+    "source": "data/science/spectral.bin",
+    "disposition": "publish",
+    "reason": "Downloaded Mars science raster, station observation or provenance record",
+    "path": "data/science/spectral.bin",
+    "bytes": 4147200,
+    "sha256": "ace5d2a343689a08ba84e8d1b2e02caf3a035a49cd3e18cbd0a138891a122d6e"
+  },
+  {
+    "source": "data/science/spectral.png",
+    "disposition": "publish",
+    "reason": "Downloaded Mars science raster, station observation or provenance record",
+    "path": "data/science/spectral.png",
+    "bytes": 720531,
+    "sha256": "c1a1f77da0b7c1c9ba500b376e2c7c6ad3138e7d449cad9daed7a1f2dffbc24d"
+  },
+  {
+    "source": "data/science/thermal.bin",
+    "disposition": "publish",
+    "reason": "Downloaded Mars science raster, station observation or provenance record",
+    "path": "data/science/thermal.bin",
+    "bytes": 16588800,
+    "sha256": "4d329520a74c99a0ddb4c204ba29b6ec8f438c92eae4303535fe552f2f57502c"
+  },
+  {
+    "source": "data/science/thermal.png",
+    "disposition": "publish",
+    "reason": "Downloaded Mars science raster, station observation or provenance record",
+    "path": "data/science/thermal.png",
+    "bytes": 3084518,
+    "sha256": "d8d82c59f36c3376853fa9bc6065f4adcde57701fa77442cdc8605c98d2aee74"
+  },
+  {
+    "source": "data/mars-global-optical.jpg",
+    "disposition": "publish",
+    "reason": "USGS Viking global optical basemap; provenance in docs/SOURCES.md",
+    "path": "data/mars-global-optical.jpg",
+    "bytes": 657199,
+    "sha256": "7a08bb47c5061815c2e358d1dc90248bce6919afcbacf5d7cf99a2eebf4b48f7"
   }
 ]

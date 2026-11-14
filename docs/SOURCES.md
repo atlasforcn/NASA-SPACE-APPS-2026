@@ -1,5 +1,42 @@
 # 真實資料與來源
 
+## 可下載科學疊圖
+
+「整合科學圖層 → 疊加資料」提供四份數值格網及兩個歷史測站。資料下載日期為 2026-11-14；網站只讀取本站靜態副本，無執行期外部 WMS 或 PDS 請求。
+
+| 選項 | 實際產品 | 下載格距與限制 |
+|---|---|---|
+| 熱 | NASA MGS/TES 熱慣量，ASU `TES_Thermal_Inertia_numeric` | 8 pixels/degree（0.125°），J m⁻² K⁻¹ s⁻½；不是即時溫度或 THEMIS 高解析產品 |
+| 光譜 | MGS/TES 橄欖石豐度，Bandfield (2002)，`TES_Olivine_numeric` | 4 pixels/degree（0.25°）；熱紅外光譜解混產品，不是逐點岩樣分析或 CRISM 礦物圖 |
+| 地球物理 | GMM-3 重力異常，`grav_ggmro_120_anom_100` | 原產品 16 pixels/degree，本站取樣為 2 pixels/degree（0.5°）；mGal；截至球諧階數 100，模型有效解析度低於顯示格距 |
+| 化學 | Odyssey GRS 鐵濃度，Boynton et al. (2007)，`GRS_Fe_conc_numeric` | 0.2 pixels/degree（5°）；質量百分比 wt % Fe，無法分辨 Jezero 或 Gale 內部局部差異 |
+| 大氣 | Perseverance MEDA Sol 1 衍生氣壓，PDS v2.0 | 2021-02-19 的 2,330 筆有效樣本，平均約 715.002 Pa；不是全天平均。以 Bell et al. (2022) 的歷史著陸座標 18.4446°N、77.4509°E 定位；Sol 1 尚未行進 |
+| 輻射 | Curiosity RAD Sol 1 RDR，PDS v1.0 | B 偵測器的 14 筆有效吸收劑量率，算術平均 8.925 µGy/h（矽）；不是劑量當量 mSv，也不是整日時間加權平均。原表 ROVER_LAT/LON 為 0 佔位，改用 [Vasavada et al. (2014)](https://doi.org/10.1002/2014JE004622) 的 Bradbury Landing 位置 −4.5895°N、137.4417°E（Sol 1 未行進） |
+
+格網下載自 [ASU JMARS WMS](https://ms-mars.mars.asu.edu/?SERVICE=WMS&REQUEST=GetCapabilities)，產品索引見 [ASU 全球資料](https://mars.asu.edu/data/)；重力原產品另見 [NASA PDS Radio Science Digital Maps](https://pds-geosciences.wustl.edu/mro/mro-m-rss-5-sdp-v1/mrors_1xxx/data/rsdmap/)。
+
+`scripts/prepare-science.py` 下載數值 VICAR、依標頭解析型別與位元序，將 0–360°E 欄位循環移成 −180–180°E；不使用地球 CRS。JMARS:4 的軸方向以 Olympus Mons 最大高程位置及與既有 PDS MOLA16 的 108 個粗格點交叉檢查；這只驗證方向與粗略地理對應，不是公尺級配準評估。展示與游標採最近格點，放大不補出細節。來源無效值與超出合理範圍的值轉為 NaN；PNG 對應透明，缺值不內插。
+
+`data/science/manifest.json` 保留完整請求 URL、來源下載大小與 SHA-256、VICAR 標頭、來源 citation／keywords、單位、格距、像素中心定義、有效率及顯示色階；`.bin` 是 little-endian float32 副本，`.png` 為相同格網的固定色階。色階外截色，不截斷數值讀值。大氣與輻射原表及 PDS 標籤保存在 `data/science/raw/`；RAD 依標籤的 1-based byte pointer 讀取 7-byte Total Dose B 值，排除負值及非有限值，不把佔位座標放上地圖。原表未做更進一步科學品質旗標篩選，仍應依任務文件解讀。
+
+所有疊圖附來源，供區域科學背景使用，不改變 DEM 路線成本。測站只標單點，不以單點數值填滿全區；跨區查看測站不會更換目前任務 DEM。
+
+## 目前使用來源總覽
+
+下表列出網站目前載入或展示的外部觀測、地圖產品與衍生資料。原始資料已整理成 `data/` 下的靜態資產；除按需載入的高解析 Gale 區域資料與全球 MOLA 格網外，網站執行時不會向來源服務即時查詢。
+
+| 功能／區域 | 資料來源 | 本機資料與用途 | 類型／限制 |
+|---|---|---|---|
+| 全球導覽、任務座標 | [NASA PDS MOLA MEGDR](https://pds-geosciences.wustl.edu/missions/mgs/megdr.html) | `data/mola16.bin`、`data/mars-global-dem.jpg`；數值高程、全球底圖與自訂座標任務 | MGS 雷射高度計；16 ppd 全球格網，衍生著色圖僅供顯示 |
+| Jezero 任務區 | [USGS CTX DEM](https://astrogeology.usgs.gov/search/map/mars_2020_science_investigation_ctx_dem_mosaic)、[USGS CTX 正射影像](https://asc-pds-services.s3.us-west-2.amazonaws.com/mosaic/mars2020_trn/CTX/ScienceInvestigationMaps_JPL/M20_JezeroCrater_CTXortho_mosaic_5m.tif)、[USGS 地質圖](https://www.usgs.gov/maps/geologic-map-jezero-crater-and-nili-planum-region-mars) | `data/jezero_dem.json`、`data/ctx.png`、`data/geology.json`；地形、影像、地質單元 | MRO CTX 觀測；地質為區域科學解釋，非障礙物實測 |
+| Gale 任務區 | [USGS MSL Gale DEM](https://astrogeology.usgs.gov/search/map/mars_msl_gale_merged_dem_1m)、[USGS Gale 正射影像](https://astrogeology.usgs.gov/search/map/mars_msl_gale_merged_orthophoto_mosaic_25cm) | `data/gale/`；按需載入局部地形與光學影像 | MRO HiRISE／合併產品；本機展示格距較原生像素粗，色彩覆蓋不完整 |
+| 全球科學圖層 | [ASU JMARS 數值圖層服務](https://ms-mars.mars.asu.edu/) | `data/science/*.bin`、`*.png` 與 `manifest.json`；熱慣量、橄欖石豐度、重力異常、鐵含量 | 多任務儀器產品與模型；解析度、有效覆蓋及引用各異，供區域背景探索 |
+| 歷史環境觀測 | [NASA PDS MEDA](https://pds-atmospheres.nmsu.edu/)；[NASA PDS RAD](https://pds-ppi.igpp.ucla.edu/) | `data/science/manifest.json`、`data/science/raw/`；毅力號著陸後 Sol 1 氣壓與好奇號 Sol 1 輻射樣本摘要 | 單站、單日歷史觀測，不代表目前天氣、整日平均或全球風險 |
+| Three Forks 樣本存放 | [NASA PDS Sample Depot](https://pds-geosciences.wustl.edu/m2020/urn-nasa-pds-mars2020_sample_depot_three_forks/) | `data/pds/` CSV/XML 與 `data/three-forks.geojson`；樣本名稱、存放點及時間 | 任務紀錄資料；非地形或材料遙測 |
+| 官方地名與著陸位置 | [USGS／IAU Mars nomenclature GIS](https://planetarynames.wr.usgs.gov/GIS_Downloads)、NASA 與研究論文 | `data/mars-names.json`、`data/mission.json`；地名和歷史著陸標記 | 地名核准資料與歷史位置；標記不代表漫遊車目前位置 |
+
+坡度、粗糙度、陰影、地平線、彩色 DEM 底圖、樣本 GeoJSON 及介面摘要均為本專案計算或格式轉換後的呈現，不應視為額外獨立觀測。模擬車輛位置、漂移與路線成本也不是資料來源。以下各節記錄重要產品細節及限制。
+
 ## Gale 高解析區域資料
 
 「探索 → Gale 高解析 DEM＋正射影像」按需載入 `data/gale/`。中心 planetocentric −4.59°、positive-East 137.44°，範圍東西／南北各 10 km，半徑 3,396,190 m，局部等距經緯度公尺框架。中心是示範任務起點，不是好奇號實際位置。
@@ -44,3 +81,10 @@ DEM 與光學使用 MRO CTX 產品；DEM 的垂直控制依來源產品以 MOLA 
 `data/mola16.bin` 是明確轉為 little-endian 的數值副本；來源與副本 SHA-256、像素中心、垂直基準見 `data/mola16.json`，原始標籤見 `data/mola16.lbl`。區域球面近似半徑沿用 3,396,190 m；產品標籤投影半徑 3396 km 的差異不能用來聲稱精密測地精度。
 
 `data/mars-global-dem.jpg` 以數值高程渲染色階／陰影，原生 5760×2880，原始 0–360° 欄位循環平移成 −180–180° 顯示；它取代原本低解析 WMTS 底圖。陰影與極點緯圈均值為本專案衍生顯示處理，不是新觀測。全球來源解析度不足以驗證輪前障礙、個人步行安全或真實相機定位。
+
+
+### 全球光學底圖（2026-11-14）
+- 產品：[USGS Mars Viking Colorized Global Mosaic 232m](https://astrogeology.usgs.gov/search/map/mars_viking_colorized_global_mosaic_232m)。
+- 下載： https://astrogeology.usgs.gov/ckan/dataset/7131d503-cdc9-45a5-8f83-5126c0fd397e/resource/5ea881c6-01b3-41fa-a7af-42d2131b54f1/download/mars_viking_mdim21_clrmosaic_1km.jpg
+- 將 21339 × 10670 的全球 1 km JPEG 縮為 2048 × 1024，儲存為 `data/mars-global-optical.jpg`；等距圓柱，經度 −180 至 180、緯度 90 至 −90，展示赤道約 10.4 km/pixel。NASA/JPL/USGS，歷史彩色拼圖，非即時影像。
+- 總覽高程沿用 `mars-global-dem.jpg` 地形陰影與色階；游標高度直接取樣 `mola16.bin`，不從顏色反推。首次進入總覽即載入數值格網。

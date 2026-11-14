@@ -1,0 +1,2 @@
+# PDS byte pointers and provenance hashes require the original line endings.
+data/science/raw/* -text
