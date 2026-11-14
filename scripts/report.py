@@ -1,6 +1,6 @@
-"""Build human-readable evaluation and offline slide viewer from checked artifacts."""
+"""Build human-readable evaluation from checked artifacts."""
 from pathlib import Path
-import json,shutil,hashlib,zipfile
+import json
 root=Path(__file__).resolve().parents[1]
 report=json.loads((root/'artifacts/evaluation.json').read_text('utf-8'));summary=report['summary']
 lines=['# 定位與整合驗證報告','', '觀測與匹配使用同一 DEM，結果僅代表模型內模擬。固定分割沒有用保留集調參；v1 門檻事先凍結，另以獨立三個校準位置的完整、遮擋、噪聲、區外情境擬合殘差／候選差距，得到相同部署值（data/localization-thresholds.json）。覆蓋／起伏門檻仍為工程預設，不是統計校準的信心機率。','',f"保留集 Top-3 命中率：{summary['heldoutTop3HitRate']:.0%}（10／10）；目標 ≥90%。命中定義：位置 ≤100 m 且朝向 ≤5°。",'',f"保留集拒絕率：{summary['heldoutRejectRate']:.0%}；全部 22 案例錯誤接受率：{summary['falseAcceptRate']:.0%}；平均搜尋耗時 {summary['meanMilliseconds']} ms。耗時取決於硬體與程序負載。",'', '「錯誤接受」定義為回報 good，但第一候選超出 100 m／5°。遮擋與噪聲案例即使命中 Top-3，也可能因觀測品質不足而拒絕校正。','', '| 集合 | 案例 | 狀態 | 第一候選位置誤差 m | 朝向誤差 ° | Top-3 命中 | 耗時 ms |','|---|---:|---|---:|---:|---|---:|']
@@ -13,8 +13,4 @@ if browser.exists():
 if (root/'artifacts/global-region-results.json').exists():
  lines += ['', '## 全球區域模式', '', '另已通過全球 MOLA 像素中心、位元序、經度循環、全球底圖方向、換日線、兩極、區域路線及 Jezero 恢復驗證。封鎖外部網路的結果見 artifacts/global-region-results.json。', '', 'Jezero 保留集精度不能外推全球。全球 MOLA 來源 16 ppd（赤道約 3.7 km），區域 4 km 格網；只提供未校準定位候選，絕不自動套用。極區經緯度顯示會嚴重變形，全球高解析光學和地質單元尚未接入。']
 (root/'docs/EVALUATION.md').write_text('\n'.join(lines)+'\n',encoding='utf-8')
-slides=root/'deliverables/slides';slides.mkdir(exist_ok=True)
-for file in (root/'.build/slides').glob('*.png'):shutil.copy2(file,slides/file.name)
-html='''<!doctype html><html lang="zh-Hant"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>山頂相儀展示簡報</title><style>body{background:#14242b;color:#fff;font:18px system-ui;margin:0;text-align:center}img{display:block;width:min(100%,1280px);margin:auto}nav{padding:14px}a{color:#9ce5d6}button{padding:8px 20px;margin:8px;background:#28414a;color:white;border:1px solid #76928c;cursor:pointer}</style><nav><a href="index.html">返回探索工具</a> · <a href="deliverables/Martian-Navigator.pptx">下載可編輯 PowerPoint</a> · <a href="docs/DEMO.md">三分鐘講稿</a></nav><img id="slide" src="deliverables/slides/1.png" alt="展示簡報第一頁"><button onclick="show(-1)">上一頁</button><span id="counter">1 / 5</span><button onclick="show(1)">下一頁</button><script>let i=1;function show(d){i=Math.max(1,Math.min(5,i+d));document.getElementById('slide').src='deliverables/slides/'+i+'.png';document.getElementById('slide').alt='展示簡報第'+i+'頁';document.getElementById('counter').textContent=i+' / 5';}document.onkeydown=e=>{if(e.key==='ArrowRight')show(1);if(e.key==='ArrowLeft')show(-1);};</script></html>'''
-(root/'slides.html').write_text(html,encoding='utf-8')
-print('Report and slide viewer ready')
+print('Evaluation report ready')

@@ -1,5 +1,6 @@
 /* Numeric skyline localisation. No simulator truth enters search(). */
-(function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./core.js'):root.MarsCore);if(typeof module==='object'&&module.exports)module.exports=api;root.Skyline=api;})(globalThis,function(C){
+import C from './core.mjs';
+const api = (() => {
 'use strict';
 const defaults={angleStep:3,rayStep:80,maxRange:6000,cameraHeight:1.7};
 function profile(position,options={}){
@@ -50,4 +51,5 @@ async function search(obs,bounds,options={}){
  const candidates=distinct([...refined,...all].sort((a,b)=>a.score-b.score),3,candidateSeparation);onProgress(1);return {candidates,...classify(candidates,obs,thresholds),thresholds};
 }
 return {profile,simulate,score,search,classify,defaults,frozenThresholds};
-});
+})();
+export default api;

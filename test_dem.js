@@ -1,5 +1,5 @@
 'use strict';
-const fs=require('fs');const assert=require('node:assert/strict');const c=require('./core.js');
+const fs=require('fs');const assert=require('node:assert/strict');const c=require('./core.mjs').default;
 const fixture=JSON.parse(fs.readFileSync('./tests/synthetic_test_grid.json','utf8'));
 let n=0;const test=(s,f)=>{f();console.log('✓',s);n++};
 test('Demo starts synthetic and can load real-format numerical grid',()=>{

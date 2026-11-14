@@ -1,5 +1,5 @@
 /* Global MOLA numeric sampling and spherical regional frames; no colour-to-height conversion. */
-(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;root.MarsPlanet=api;})(globalThis,function(){
+const api = (() => {
 'use strict';
 const R=3396190,D=Math.PI/180;
 function localToGeo(origin,x,y){const d=Math.hypot(x,y);if(!d)return {...origin};const a=origin.lat*D,b=origin.lng*D,c=Math.cos(d/R),k=Math.sin(d/R)/d,v=[Math.cos(a)*Math.cos(b)*c+(-Math.sin(b)*x-Math.sin(a)*Math.cos(b)*y)*k,Math.cos(a)*Math.sin(b)*c+(Math.cos(b)*x-Math.sin(a)*Math.sin(b)*y)*k,Math.sin(a)*c+Math.cos(a)*y*k];return {lat:Math.asin(Math.max(-1,Math.min(1,v[2])))/D,lng:Math.atan2(v[1],v[0])/D};}
@@ -9,4 +9,5 @@ function load(buffer,meta){if(meta.schema!=='mars-global-mola-v1'||meta.width!==
  return {sample,region,metadata:meta};
 }
 return {load,localToGeo};
-});
+})();
+export default api;

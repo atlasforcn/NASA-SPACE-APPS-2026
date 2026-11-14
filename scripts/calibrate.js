@@ -1,6 +1,6 @@
 'use strict';
 // Disjoint calibration positions only. Never reads held-out evaluation rows.
-const fs=require('node:fs'),C=require('../core.js'),S=require('../skyline.js');C.setDEM(require('../data/jezero_dem.json'));
+const fs=require('node:fs'),C=require('../core.mjs').default,S=require('../skyline.mjs').default;C.setDEM(require('../data/jezero_dem.json'));
 const poses=[[-1400,-820,45],[800,600,171],[-600,1500,302]];
 (async()=>{const rows=[];for(let i=0;i<poses.length;i++)for(const kind of ['complete','occluded','noise','outside']){const [x,y,heading]=poses[i],pose={x,y,heading},obs=S.simulate(pose,{seed:700+i,noise:kind==='noise'?1.5:.025,fov:kind==='occluded'?60:360,occlusion:kind==='occluded'?.55:0}),bounds=kind==='outside'?{minX:x+1600,maxX:x+2600,minY:y+1200,maxY:y+2200}:{minX:x-1000,maxX:x+1400,minY:y-1300,maxY:y+1100},result=await S.search(obs,bounds),best=result.candidates[0];rows.push({index:i,kind,result,error:best?C.distance(best,pose):null,headingError:best?Math.abs(C.wrapRad((best.heading-heading)*C.DEG))/C.DEG:null});}
  const positives=rows.filter(r=>r.kind==='complete'&&r.error<=100&&r.headingError<=5),maxRms=Math.max(.2,Math.ceil(Math.max(...positives.map(r=>r.result.candidates[0].score))*4/.05)*.05),minGap=Math.min(.04,...positives.map(r=>(r.result.candidates[1].score-r.result.candidates[0].score)/2));const thresholds={...S.frozenThresholds,maxRms,minGap};

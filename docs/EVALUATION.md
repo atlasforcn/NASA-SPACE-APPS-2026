@@ -54,6 +54,6 @@
 
 全球數值來源為 MOLA MEGDR 16 ppd，而不是原本的 WMTS 彩色圖。`tests/test_planet.js` 檢查像素中心、經度循環、換日線、南北極、球面方位等距座標往返、區域路線及恢復 Jezero。`tests/test_global_assets.py` 檢查來源與轉換雜湊、位元序及全球顯示經度方向。
 
-`tests/planet_browser.py` 在封鎖外部網路下，建立奧林帕斯山、換日線、北極、南極區域，檢查圖層、規劃、自由路線、行進、實驗定位、地名 popup 建立區域及恢復 Jezero。資料與畫面無 JavaScript 錯誤；結果見 artifacts/global-region-results.json。
+`npm run test:pages` 在封鎖外部網路下，建立奧林帕斯山、換日線、北極、南極區域，檢查圖層、規劃、自由路線、行進、實驗定位、地名 popup 建立區域及恢復 Jezero。資料與畫面無 JavaScript 錯誤；結果見 artifacts/global-region-results.json。
 
 這些測試驗證流程與座標處理，沒有證明全球定位精度。Jezero 的 10／10 保留集結果不適用全球 MOLA；全球沒有另行宣稱的定位命中率。由於來源約 3.7 km 一格、原始空格含插值、曲率及姿態模型簡化，全球定位一律不回報可自動套用的 good。極區的經緯度顯示嚴重變形，尚未提供專用極投影地圖。全球高解析光學與地質單元尚未接入。

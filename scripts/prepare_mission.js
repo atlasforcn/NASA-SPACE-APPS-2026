@@ -1,5 +1,5 @@
 'use strict';
-const fs=require('node:fs'),C=require('../core.js'),d=require('../data/geology.json');C.setDEM(require('../data/jezero_dem.json'));
+const fs=require('node:fs'),C=require('../core.mjs').default,d=require('../data/geology.json');C.setDEM(require('../data/jezero_dem.json'));
 function inside(p,r){let v=false;for(let i=0,j=r.length-1;i<r.length;j=i++){const a=r[i],b=r[j];if((a[1]>p.y)!==(b[1]>p.y)&&p.x<(b[0]-a[0])*(p.y-a[1])/(b[1]-a[1])+a[0])v=!v;}return v;}
 const unit=p=>d.features.find(f=>f.rings.reduce((v,r)=>v!==inside(p,r),false));
 const start={x:-1400,y:-820},seen=new Set(),targets=[];console.log('start:',unit(start)?.properties.name);

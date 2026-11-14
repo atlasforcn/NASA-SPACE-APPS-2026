@@ -1,5 +1,5 @@
 'use strict';
-const assert=require('node:assert/strict'),fs=require('node:fs'),C=require('../core.js'),S=require('../skyline.js');
+const assert=require('node:assert/strict'),fs=require('node:fs'),C=require('../core.mjs').default,S=require('../skyline.mjs').default;
 (async()=>{
  C.setDEM(JSON.parse(fs.readFileSync('tests/synthetic_test_grid.json','utf8')));
  const pose={x:-1400,y:-820,heading:63},a=S.simulate(pose,{seed:9}),b=S.simulate(pose,{seed:9});assert.deepEqual(a,b);assert(!('x' in a)&&!('heading' in a));

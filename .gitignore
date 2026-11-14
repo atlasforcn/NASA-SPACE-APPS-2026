@@ -7,5 +7,16 @@ artifacts/browser-profile/
 artifacts/video/
 .cache/
 .build/
+node_modules/
+dist/
+public/data/
+public/vendor/
+public/deliverables/
+public/docs/*.md
+public/docs/reference-v03.html
+test-results/
 
 data/mola16.img
+
+# Rebuilt with npm run package:offline
+deliverables/Martian-Navigator-offline.zip

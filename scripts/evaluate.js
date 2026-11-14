@@ -1,5 +1,5 @@
 'use strict';
-const fs=require('node:fs'),C=require('../core.js'),S=require('../skyline.js');
+const fs=require('node:fs'),C=require('../core.mjs').default,S=require('../skyline.mjs').default;
 C.setDEM(JSON.parse(fs.readFileSync('data/jezero_dem.json','utf8')));
 // Fixed before the first evaluation run. Calibration and held-out positions disjoint.
 const calibration=[[-1400,-820,45],[800,600,171],[-600,1500,302]];

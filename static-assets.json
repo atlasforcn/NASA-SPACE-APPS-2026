@@ -1,0 +1,357 @@
+[
+  {
+    "source": "data/ctx-source.json",
+    "disposition": "publish",
+    "reason": "Website runtime, reference, source record or presentation",
+    "path": "data/ctx-source.json",
+    "bytes": 1032,
+    "sha256": "f9122664096ac106867d16b729c43892e268d761b93122a6a5275f3f5f3e6111"
+  },
+  {
+    "source": "data/ctx.png",
+    "disposition": "publish",
+    "reason": "Website runtime, reference, source record or presentation",
+    "path": "data/ctx.png",
+    "bytes": 832803,
+    "sha256": "f5fd48c2a67aa156206953a388be4a9086e9a3c36af069d96721ca751d2358f9"
+  },
+  {
+    "source": "data/geology-raw.json",
+    "disposition": "repository",
+    "reason": "Raw input, intermediate, evaluation output or offline archive"
+  },
+  {
+    "source": "data/geology-service.json",
+    "disposition": "repository",
+    "reason": "Raw input, intermediate, evaluation output or offline archive"
+  },
+  {
+    "source": "data/geology.json",
+    "disposition": "publish",
+    "reason": "Website runtime, reference, source record or presentation",
+    "path": "data/geology.json",
+    "bytes": 1163294,
+    "sha256": "283275acdc5fb16e2effe805c1e0681ef4722842643e45641b944f1be407e030"
+  },
+  {
+    "source": "data/jezero_dem.json",
+    "disposition": "publish",
+    "reason": "Website runtime, reference, source record or presentation",
+    "path": "data/jezero_dem.json",
+    "bytes": 382058,
+    "sha256": "2e53a9e3c109d33e19e15fb2456f36078ca6aac3366cab8fc6ed4a0cf26181dc"
+  },
+  {
+    "source": "data/localization-thresholds.json",
+    "disposition": "publish",
+    "reason": "Website runtime, reference, source record or presentation",
+    "path": "data/localization-thresholds.json",
+    "bytes": 13126,
+    "sha256": "189891f81cefccbbb012aafbce7a4c52d5a0edafeb03edb2655d7812288891d6"
+  },
+  {
+    "source": "data/M20_JezeroCrater_CTXDEM_20m.tif",
+    "disposition": "repository",
+    "reason": "Raw input, intermediate, evaluation output or offline archive"
+  },
+  {
+    "source": "data/M20_JezeroCrater_CTXortho_mosaic_5m.tif",
+    "disposition": "repository",
+    "reason": "Raw input, intermediate, evaluation output or offline archive"
+  },
+  {
+    "source": "data/mars-global-dem.jpg",
+    "disposition": "publish",
+    "reason": "Website runtime, reference, source record or presentation",
+    "path": "data/mars-global-dem.jpg",
+    "bytes": 1195606,
+    "sha256": "d881a2f714c25f473582dc1a22f0bf94648e17fb9561e95ef348d2c915668ecb"
+  },
+  {
+    "source": "data/mars-global-source.json",
+    "disposition": "publish",
+    "reason": "Website runtime, reference, source record or presentation",
+    "path": "data/mars-global-source.json",
+    "bytes": 7901,
+    "sha256": "7031c88149ca6234a00309ecc90665c6ed0bce6967c17257e71a54aefd59c899"
+  },
+  {
+    "source": "data/mars-global.jpg",
+    "disposition": "repository",
+    "reason": "Raw input, intermediate, evaluation output or offline archive"
+  },
+  {
+    "source": "data/mars-names.json",
+    "disposition": "publish",
+    "reason": "Website runtime, reference, source record or presentation",
+    "path": "data/mars-names.json",
+    "bytes": 773708,
+    "sha256": "3c0e264098227f7bdad742cd34b41191041263092f37147981738e6a9127a430"
+  },
+  {
+    "source": "data/mars-names.kmz",
+    "disposition": "repository",
+    "reason": "Raw input, intermediate, evaluation output or offline archive"
+  },
+  {
+    "source": "data/mission.json",
+    "disposition": "publish",
+    "reason": "Website runtime, reference, source record or presentation",
+    "path": "data/mission.json",
+    "bytes": 2001,
+    "sha256": "c035b3bda8cdba2725f0ef52389d647582eb7e7671648ebe52aab5719161bdbc"
+  },
+  {
+    "source": "data/mola-wmts.xml",
+    "disposition": "repository",
+    "reason": "Raw input, intermediate, evaluation output or offline archive"
+  },
+  {
+    "source": "data/mola16.bin",
+    "disposition": "publish",
+    "reason": "Website runtime, reference, source record or presentation",
+    "path": "data/mola16.bin",
+    "bytes": 33177600,
+    "sha256": "9fdb0ddd3db378678326f2f34ea2a8f9220ecd0a0bda3d51aa0d27ac0506cd17"
+  },
+  {
+    "source": "data/mola16.img",
+    "disposition": "repository",
+    "reason": "Raw input, intermediate, evaluation output or offline archive"
+  },
+  {
+    "source": "data/mola16.json",
+    "disposition": "publish",
+    "reason": "Website runtime, reference, source record or presentation",
+    "path": "data/mola16.json",
+    "bytes": 1022,
+    "sha256": "4c2b9106838446e8df54eb8e6069e0ab594348ddafd9099f78ee102cd836edae"
+  },
+  {
+    "source": "data/mola16.lbl",
+    "disposition": "publish",
+    "reason": "Website runtime, reference, source record or presentation",
+    "path": "data/mola16.lbl",
+    "bytes": 4813,
+    "sha256": "0f2bd919dddb86d83489a008d3007bd915507c892a0f22ce49ad5dd5d2fc7d8a"
+  },
+  {
+    "source": "data/pds/sample_drop_timestamps.csv",
+    "disposition": "publish",
+    "reason": "Website runtime, reference, source record or presentation",
+    "path": "data/pds/sample_drop_timestamps.csv",
+    "bytes": 539,
+    "sha256": "afdf6515ed007e211cd7503a455a66c620fcdb457e3f10da886a40defc61262c"
+  },
+  {
+    "source": "data/pds/sample_drop_timestamps.xml",
+    "disposition": "publish",
+    "reason": "Website runtime, reference, source record or presentation",
+    "path": "data/pds/sample_drop_timestamps.xml",
+    "bytes": 4227,
+    "sha256": "af6f1d8d8493190851ece6bc5232fc4704865e6f2575b33c73b1b1cfb5dc9bb4"
+  },
+  {
+    "source": "data/pds/sample_tube_locations.csv",
+    "disposition": "publish",
+    "reason": "Website runtime, reference, source record or presentation",
+    "path": "data/pds/sample_tube_locations.csv",
+    "bytes": 859,
+    "sha256": "089015bb25bc61415cfa69aea7160ddb7f1b5149446dd50dd84332c7660c5d59"
+  },
+  {
+    "source": "data/pds/sample_tube_locations.xml",
+    "disposition": "publish",
+    "reason": "Website runtime, reference, source record or presentation",
+    "path": "data/pds/sample_tube_locations.xml",
+    "bytes": 6402,
+    "sha256": "1b4d14fe315bd2f7fd17584e33b728193682220a71840c446fec218361e9e3c3"
+  },
+  {
+    "source": "data/README.txt",
+    "disposition": "publish",
+    "reason": "Website runtime, reference, source record or presentation",
+    "path": "data/README.txt",
+    "bytes": 240,
+    "sha256": "b6c1ed8c4dcbf666650730dc1360db201d7d7b1fe5273bea027299196ab4a723"
+  },
+  {
+    "source": "data/three-forks.geojson",
+    "disposition": "publish",
+    "reason": "Website runtime, reference, source record or presentation",
+    "path": "data/three-forks.geojson",
+    "bytes": 12126,
+    "sha256": "c2d8114d67c00625cd1eb0e61b74f1c153d1da27225b669c2b2e69e00558e481"
+  },
+  {
+    "source": "vendor/images/layers-2x.png",
+    "disposition": "publish",
+    "reason": "Website runtime, reference, source record or presentation",
+    "path": "vendor/images/layers-2x.png",
+    "bytes": 1259,
+    "sha256": "066daca850d8ffbef007af00b06eac0015728dee279c51f3cb6c716df7c42edf"
+  },
+  {
+    "source": "vendor/images/layers.png",
+    "disposition": "publish",
+    "reason": "Website runtime, reference, source record or presentation",
+    "path": "vendor/images/layers.png",
+    "bytes": 696,
+    "sha256": "1dbbe9d028e292f36fcba8f8b3a28d5e8932754fc2215b9ac69e4cdecf5107c6"
+  },
+  {
+    "source": "vendor/images/marker-icon-2x.png",
+    "disposition": "publish",
+    "reason": "Website runtime, reference, source record or presentation",
+    "path": "vendor/images/marker-icon-2x.png",
+    "bytes": 2464,
+    "sha256": "00179c4c1ee830d3a108412ae0d294f55776cfeb085c60129a39aa6fc4ae2528"
+  },
+  {
+    "source": "vendor/images/marker-icon.png",
+    "disposition": "publish",
+    "reason": "Website runtime, reference, source record or presentation",
+    "path": "vendor/images/marker-icon.png",
+    "bytes": 1466,
+    "sha256": "574c3a5cca85f4114085b6841596d62f00d7c892c7b03f28cbfa301deb1dc437"
+  },
+  {
+    "source": "vendor/images/marker-shadow.png",
+    "disposition": "publish",
+    "reason": "Website runtime, reference, source record or presentation",
+    "path": "vendor/images/marker-shadow.png",
+    "bytes": 618,
+    "sha256": "264f5c640339f042dd729062cfc04c17f8ea0f29882b538e3848ed8f10edb4da"
+  },
+  {
+    "source": "vendor/Leaflet-LICENSE.txt",
+    "disposition": "publish",
+    "reason": "Website runtime, reference, source record or presentation",
+    "path": "vendor/Leaflet-LICENSE.txt",
+    "bytes": 1395,
+    "sha256": "53e8dc25862014e4324741ca18fbe3611e11d42ef69f59f86ea8c5389647d4cb"
+  },
+  {
+    "source": "vendor/leaflet.css",
+    "disposition": "publish",
+    "reason": "Website runtime, reference, source record or presentation",
+    "path": "vendor/leaflet.css",
+    "bytes": 14806,
+    "sha256": "a7837102824184820dfa198d1ebcd109ff6d0ff9a2672a074b9a1b4d147d04c6"
+  },
+  {
+    "source": "vendor/leaflet.js",
+    "disposition": "publish",
+    "reason": "Website runtime, reference, source record or presentation",
+    "path": "vendor/leaflet.js",
+    "bytes": 147552,
+    "sha256": "db49d009c841f5ca34a888c96511ae936fd9f5533e90d8b2c4d57596f4e5641a"
+  },
+  {
+    "source": "docs/DEMO.md",
+    "disposition": "publish",
+    "reason": "Website runtime, reference, source record or presentation",
+    "path": "docs/DEMO.md",
+    "bytes": 2191,
+    "sha256": "fbfe4044b30d252f7e98c5ba08a2b0b039fff517774231add4d1dd618a905682"
+  },
+  {
+    "source": "docs/EVALUATION.md",
+    "disposition": "publish",
+    "reason": "Website runtime, reference, source record or presentation",
+    "path": "docs/EVALUATION.md",
+    "bytes": 4645,
+    "sha256": "759fcd4b45181fd8007e8905558899c427859388f81c79d0cd57426aeaa8b036"
+  },
+  {
+    "source": "docs/PROGRESS.md",
+    "disposition": "publish",
+    "reason": "Website runtime, reference, source record or presentation",
+    "path": "docs/PROGRESS.md",
+    "bytes": 1469,
+    "sha256": "57561b133a06936b6c170342d70219e76028e5cc40c83c1c691b3b065f24a9c6"
+  },
+  {
+    "source": "docs/SOURCES.md",
+    "disposition": "publish",
+    "reason": "Website runtime, reference, source record or presentation",
+    "path": "docs/SOURCES.md",
+    "bytes": 4986,
+    "sha256": "d470d53474e2686678d325bcc0f38f2313eb8a6ba641e6433409fba086739391"
+  },
+  {
+    "source": "deliverables/Martian-Navigator-offline.zip",
+    "disposition": "repository",
+    "reason": "Raw input, intermediate, evaluation output or offline archive"
+  },
+  {
+    "source": "artifacts/browser-results.json",
+    "disposition": "repository",
+    "reason": "Raw input, intermediate, evaluation output or offline archive"
+  },
+  {
+    "source": "artifacts/custom-route.png",
+    "disposition": "repository",
+    "reason": "Raw input, intermediate, evaluation output or offline archive"
+  },
+  {
+    "source": "artifacts/data-validation.json",
+    "disposition": "repository",
+    "reason": "Raw input, intermediate, evaluation output or offline archive"
+  },
+  {
+    "source": "artifacts/demo.webm",
+    "disposition": "repository",
+    "reason": "Raw input, intermediate, evaluation output or offline archive"
+  },
+  {
+    "source": "artifacts/desktop.png",
+    "disposition": "repository",
+    "reason": "Raw input, intermediate, evaluation output or offline archive"
+  },
+  {
+    "source": "artifacts/evaluation.json",
+    "disposition": "repository",
+    "reason": "Raw input, intermediate, evaluation output or offline archive"
+  },
+  {
+    "source": "artifacts/global-region-results.json",
+    "disposition": "repository",
+    "reason": "Raw input, intermediate, evaluation output or offline archive"
+  },
+  {
+    "source": "artifacts/global-region.png",
+    "disposition": "repository",
+    "reason": "Raw input, intermediate, evaluation output or offline archive"
+  },
+  {
+    "source": "artifacts/map-interactions.json",
+    "disposition": "repository",
+    "reason": "Raw input, intermediate, evaluation output or offline archive"
+  },
+  {
+    "source": "artifacts/mars-overview.png",
+    "disposition": "repository",
+    "reason": "Raw input, intermediate, evaluation output or offline archive"
+  },
+  {
+    "source": "artifacts/mobile.png",
+    "disposition": "repository",
+    "reason": "Raw input, intermediate, evaluation output or offline archive"
+  },
+  {
+    "source": "artifacts/occluded.png",
+    "disposition": "repository",
+    "reason": "Raw input, intermediate, evaluation output or offline archive"
+  },
+  {
+    "source": "artifacts/three-forks-clear.png",
+    "disposition": "repository",
+    "reason": "Raw input, intermediate, evaluation output or offline archive"
+  },
+  {
+    "source": "artifacts/three-forks-poor.png",
+    "disposition": "repository",
+    "reason": "Raw input, intermediate, evaluation output or offline archive"
+  }
+]

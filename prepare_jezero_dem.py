@@ -81,7 +81,7 @@ def convert(source, target, step=40.0, source_url=SOURCE_URL):
     xs = np.linspace(XMIN, XMAX, nx, dtype='float64')
     ys = np.linspace(YMAX, YMIN, ny, dtype='float64')
     X, Y = np.meshgrid(xs, ys)
-    # EXACT SAME local coordinate convention as core.js (east m cos(lat0), north m).
+    # EXACT SAME local coordinate convention as core.mjs (east m cos(lat0), north m).
     lon = LON0 + np.rad2deg(X/(R*math.cos(math.radians(LAT0))))
     lat = LAT0 + np.rad2deg(Y/R)
     with rasterio.open(source) as ds:

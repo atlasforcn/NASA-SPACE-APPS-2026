@@ -1,5 +1,5 @@
 'use strict';
-const assert=require('node:assert/strict'),fs=require('node:fs'),C=require('../core.js'),P=require('../planet.js');
+const assert=require('node:assert/strict'),fs=require('node:fs'),C=require('../core.mjs').default,P=require('../planet.mjs').default;
 const b=fs.readFileSync('data/mola16.bin'),buffer=b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength),meta=require('../data/mola16.json'),planet=P.load(buffer,meta);
 assert.equal(planet.sample(90-.5/16,.5/16),new DataView(buffer).getInt16(0,true));
 assert.equal(planet.sample(0,0),planet.sample(0,360));assert.equal(planet.sample(0,180),planet.sample(0,-180));assert.equal(planet.sample(90,0),planet.sample(90,120));assert.equal(planet.sample(-90,-40),planet.sample(-90,90));assert(Number.isNaN(planet.sample(91,0)));
