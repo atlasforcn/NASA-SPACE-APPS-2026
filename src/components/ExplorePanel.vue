@@ -7,9 +7,7 @@ const m = inject(missionKey),
 <template>
   <div>
     <section class="group">
-      <p class="eyebrow">01 / GLOBAL MISSION</p>
-      <h2>選擇下一個探索地點</h2>
-      <p class="hint">輸入中心座標，建立 256×256 km 區域任務。</p>
+      <p class="hint">輸入中心座標，建立 512×512 km 區域任務。</p>
       <div class="field-pair">
         <label
           >緯度 °N<input

@@ -49,16 +49,17 @@ function estimateCandidateWidth(d,peak){
   const step=Math.max(20,d.cellMeters),h=peak.height,drop=Math.max(3,peak.score/2),radii=[];
   for(let j=0;j<8;j++){
     const a=j*Math.PI/4;let reach=step;
-    for(let r=step;r<=1000;r+=step){const z=demAt(peak.x+r*Math.cos(a),peak.y+r*Math.sin(a));
+    for(let r=step;r<=Math.max(1000,d.cellMeters*8);r+=step){const z=demAt(peak.x+r*Math.cos(a),peak.y+r*Math.sin(a));
       if(!Number.isFinite(z)||z<h-drop)break;reach=r;
     }
     radii.push(reach);
   }
-  return Math.round(clamp(2*radii.reduce((a,b)=>a+b,0)/radii.length,50,1500));
+  return Math.round(clamp(2*radii.reduce((a,b)=>a+b,0)/radii.length,Math.max(50,d.cellMeters),Math.max(1500,d.cellMeters*16)));
 }
 function findDEMFeatures(d,maxCount=7){
+  const regional=d.cellMeters>=1000;
   // This is a candidate detector on DEM local elevation, not verified named peaks.
-  const stride=Math.max(2,Math.round(140/d.cellMeters)),radius=Math.max(3,Math.round(360/d.cellMeters));
+  const stride=regional?1:Math.max(2,Math.round(140/d.cellMeters)),radius=regional?2:Math.max(3,Math.round(360/d.cellMeters));
   const candidates=[];
   function gridHeight(i,j){return d.values[j*d.width+i];}
   for(let j=radius;j<d.height-radius;j+=stride)for(let i=radius;i<d.width-radius;i+=stride){
@@ -75,10 +76,10 @@ function findDEMFeatures(d,maxCount=7){
   }
   candidates.sort((a,b)=>b.score-a.score);
   const chosen=[];
-  for(const c of candidates){if(chosen.some(f=>distance(f,c)<750))continue;
+  for(const c of candidates){if(chosen.some(f=>distance(f,c)<(regional?d.cellMeters*3:750)))continue;
     chosen.push(c);if(chosen.length===maxCount)break;}
   return chosen.map((c,i)=>({id:'P'+(i+1),name:'DEM 候選峰 '+String(i+1).padStart(2,'0'),x:c.x,y:c.y,width:estimateCandidateWidth(d,c),code:0.12+i*.11,
-    status:`高程格網自動抽出的候選局部峰，h=${Math.round(c.height)} m、相對高差指標 ${c.relief.toFixed(1)} m；尚未經影像人工驗證。`,kind:'DEM 峰候選'}));
+    status:`高程格網自動抽出的候選局部峰，h=${Math.round(c.height)} m、相對高差指標 ${c.relief.toFixed(1)} m；尚未經影像人工驗證。${regional?"公里級 MOLA 地形候選，非精確峰頂。":""}`,kind:'DEM 峰候選'}));
 }
 function setDEM(input){
   if(!input||!['jezero-dem-grid-v1','mars-region-grid-v1'].includes(input.schema)||input.crs!==(input.schema==='mars-region-grid-v1'?'MARS_AZIMUTHAL_EQUIDISTANT':'MARS_EQ_LOCAL_TANGENT')||!input.source||!input.source.url)throw Error('不支援的 DEM 格式或缺少來源 metadata');
@@ -93,7 +94,7 @@ function setDEM(input){
   const d={width,height,xMin,xMax,yMin,yMax,values,validCount,cellMeters:(xMax-xMin)/(width-1),metadata:{...input.source}};
   const prev=realDEM,frame={lat:LAT0,lng:LON0,regional:regionalProjection,bounds:{...LIMIT}};realDEM=d;LAT0=regional?input.origin.lat:18.44;LON0=regional?input.origin.lng:77.42;regionalProjection=regional;Object.assign(LIMIT,regional?{minX:xMin,maxX:xMax,minY:yMin,maxY:yMax}:{minX:-4850,maxX:4850,minY:-3500,maxY:3500});
   if(!validDEMPoint(regional?0:-1400,regional?0:-820)){realDEM=prev;LAT0=frame.lat;LON0=frame.lng;regionalProjection=frame.regional;Object.assign(LIMIT,frame.bounds);throw Error('探測車起點沒有有效高程，無法使用該裁切範圍');}
-  const peaks=regional?[]:findDEMFeatures(d);FEATURES.splice(0,FEATURES.length,...peaks);
+  const peaks=findDEMFeatures(d);FEATURES.splice(0,FEATURES.length,...peaks);
   return {validCount,cells:values.length,featureCount:FEATURES.length,metadata:demInfo()};
 }
 function clearDEM(){realDEM=null;LAT0=18.44;LON0=77.42;regionalProjection=false;Object.assign(LIMIT,{minX:-4850,maxX:4850,minY:-3500,maxY:3500});FEATURES.splice(0,FEATURES.length,...SYNTHETIC_FEATURES.map(f=>({...f})));}

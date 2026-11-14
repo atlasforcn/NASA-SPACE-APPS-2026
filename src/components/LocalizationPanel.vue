@@ -20,6 +20,14 @@ const m = inject(missionKey),
           <option value="poor">60° 視角＋55% 遮擋</option>
         </select></label
       >
+      <label class="checkbox">
+        <input id="continuous-localization" v-model="s.continuousLocalization" type="checkbox" />
+        行進中自動以地平線校正
+      </label>
+      <p class="hint">
+        規劃路線並開始行進後，每 {{ s.regional ? "4 km" : "250 m" }} 更新觀測；
+        搜尋期間持續移動，可靠定位才套用校正。已校正 {{ s.localizationCount }} 次。
+      </p>
       <div class="button-row">
         <button
           id="scan"
@@ -60,13 +68,19 @@ const m = inject(missionKey),
       <div class="chart-head">
         <span>DEM 模擬視角</span><span>非真實照片 / 120°</span>
       </div>
+      <div class="button-row">
+        <button :disabled="!s.ready" @click="m.turnView(-30)">← 左轉 30°</button>
+        <button :disabled="!s.ready" @click="m.turnView(30)">右轉 30° →</button>
+        <button :disabled="!s.ready || (!s.poi && !s.destination)" @click="m.focusView">對準標記點</button>
+      </div>
+      <p class="hint">標記顯示名稱與距離；虛線表示地形遮擋或視野外。可點選地圖標記後對準。</p>
       <canvas
         id="panorama"
         :ref="(el) => (m.panorama.value = el)"
         width="700"
-        height="180"
+        height="260"
         role="img"
-        aria-label="DEM 模擬地平線視角"
+        aria-label="DEM 模擬地平線視角，含標記點名稱、距離及遮擋提示"
       ></canvas
       ><canvas
         id="curve"

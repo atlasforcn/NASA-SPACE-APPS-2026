@@ -10,12 +10,21 @@ const m = inject(missionKey),
   <div>
     <section class="group">
       <p class="eyebrow">A* / TERRAIN COST</p>
-      <h2>規劃科學路線</h2>
+      <h2>先選端點，再決定怎麼走</h2>
+      <p class="hint">① 選起點與終點 → ② 評估直線與繞行路線 → ③ 用地平線找回位置並行進。兩條路線都從所選起點開始。</p>
+      <button id="pick-start" :disabled="!s.ready" :aria-pressed="s.pickingStart" @click="m.beginStart">{{ s.pickingStart ? '取消選起點' : '在地圖選起點' }}</button>
+        <label>觀測點名稱<input id="target-name" v-model="s.targetName" maxlength="80" placeholder="輸入自訂名稱（可留空）" /></label>
+        <div class="button-row">
+          <button id="add-target" :disabled="!s.ready" @click="m.beginTarget">{{ s.pickingTarget ? "取消選點" : "在地圖新增觀測點" }}</button>
+          <button id="remove-target" :disabled="!s.destination" @click="m.removeTarget">刪除所選觀測點</button>
+        </div>
+        <p class="hint" role="status">{{ s.pickingTarget ? "點選地圖設定位置；遠處會自動擴大 MOLA 覆蓋範圍。" : "自行命名並點選地圖新增觀測點，再選擇目的地規劃路線。" }}</p>
       <label
-        >模擬觀測點（非正式地名）<select
+        >自訂觀測點<select
           id="destination"
           v-model="s.destination"
         >
+          <option v-if="!s.targets.length" value="">請先在地圖新增觀測點</option>
           <option v-for="t in s.targets" :key="t.id" :value="t.id">
             {{ t.name }} · {{ t.unit }}
           </option>
@@ -35,7 +44,7 @@ const m = inject(missionKey),
           :disabled="!s.ready || !s.targets.length"
           @click="m.plan"
         >
-          規劃路線</button
+          建立並評估兩條路線</button
         ><button
           id="simulate"
           :disabled="!s.route?.reachable"
@@ -44,6 +53,8 @@ const m = inject(missionKey),
           {{ s.running ? "Ⅱ 暫停" : "▶ 開始行進" }}
         </button>
       </div>
+      <p class="hint">金色虛線：理想直線 · 紅色：不可通行段 · 青色：建議路線 · 橘色：定位行進軌跡</p>
+      <p id="straight-status" class="hint" role="status">{{ s.straightStatus }}</p>
       <div class="stats">
         <div>
           <small>路線長度</small
@@ -58,7 +69,7 @@ const m = inject(missionKey),
       </div>
       <p id="route-status" class="hint" role="status">{{ s.routeStatus }}</p>
       <p class="hint">
-        以導航估計位置規劃；DEM 無法辨識小於格距的岩石與車輪風險。
+        建立路線將車放回所選起點；行進中用地平線校正位置並重新規劃剩餘路線。DEM 無法辨識小於格距的岩石與車輪風險。
       </p>
     </section>
     <RouteDrawing /><ExpeditionPanel />

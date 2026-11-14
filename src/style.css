@@ -422,6 +422,9 @@ canvas {
   color: var(--muted);
   padding-bottom: 4px;
 }
+.horizon-charts #panorama {
+  max-height: none;
+}
 .localization-results {
   padding: 15px 22px;
   min-width: 0;

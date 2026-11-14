@@ -9,8 +9,8 @@ const m = inject(missionKey),
     <p class="eyebrow">MARSOPS / THREE FORKS</p>
     <h2>重訪樣本存放區</h2>
     <p class="hint">
-      假想人員考察：起點 → CP-01 → Three Forks → 返回。金色站點為 NASA
-      歷史車體位置；路線與確認點為情境模擬。
+      假想人員考察：起點 → Three Forks → 返回。金色站點為 NASA
+      歷史車體位置；路線為情境模擬。
     </p>
     <div class="button-row">
       <button
@@ -37,6 +37,8 @@ const m = inject(missionKey),
     </p>
     <label
       >路段剖面<select id="expedition-leg" v-model="s.profileIndex">
+        <option v-if="s.route" :value="-1">目前路線</option>
+        <option v-if="!s.route && !s.expedition.length" :value="0" disabled>尚未建立路線</option>
         <option v-for="(leg, i) in s.expedition" :key="i" :value="i">
           {{ leg.name }}{{ leg.reachable ? "" : "（不可達）" }}
         </option>
@@ -50,24 +52,6 @@ const m = inject(missionKey),
       aria-label="數值 DEM 路線高程剖面"
     ></canvas>
     <p class="hint">{{ s.profileInfo }}</p>
-    <div class="button-row">
-      <button
-        id="checkpoint-clear"
-        :disabled="!s.ready"
-        @click="m.enterCheckpoint('good')"
-      >
-        CP-01 完整觀測</button
-      ><button
-        id="checkpoint-poor"
-        :disabled="!s.ready"
-        @click="m.enterCheckpoint('poor')"
-      >
-        CP-01 遮擋觀測
-      </button>
-    </div>
-    <p id="checkpoint-decision" class="hint" role="status">
-      {{ s.checkpointMessage }}
-    </p>
     <article v-if="s.station" class="detail-card">
       <h3>{{ s.station.properties.name }}</h3>
       <p>NASA PDS 歷史紀錄 · 非人員位置／非樣本管端點</p>
