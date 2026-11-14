@@ -1692,19 +1692,29 @@ export function useMission() {
     state.regionLoading=true;
     state.regionStatus="載入 Valles CTX DEM 與正射影像…";
     try {
-      const grid=await json("data/valles/dem.json",{signal:abort.signal});
+      const [grid]=await Promise.all([
+        json("data/valles/dem.json",{signal:abort.signal}),
+        json("data/valles/optical-source.json",{signal:abort.signal}),
+        new Promise((resolve,reject)=>{
+          const image=new Image();
+          image.onload=resolve;
+          image.onerror=()=>reject(Error("Valles 正射影像檔無法載入"));
+          image.src=asset("data/valles/optical.png");
+        }),
+      ]);
       if(disposed || token!==regionToken) return;
       C.setDEM(grid);
       dem.value=grid;
       state.regional=false;
-      state.siteId="valles-ctx"; state.siteName="Valles Marineris"; state.geologyAvailable=false;
+      state.siteId="valles-ctx"; state.siteName="Valles"; state.geologyAvailable=false;
+      state.showNavigationRisk=false;
       geology=null; missionStart={x:0,y:0}; state.targets=[];
       state.lat=grid.origin.lat; state.lng=grid.origin.lng;
       profileOptions={angleStep:3,rayStep:80,maxRange:9000,cameraHeight:1.7,curvature:true};
       optical.setUrl(asset("data/valles/optical.png"));
       optical.setBounds([ll({x:C.LIMIT.minX,y:C.LIMIT.minY}),ll({x:C.LIMIT.maxX,y:C.LIMIT.maxY})]);
       refreshMission();
-      state.regionStatus="Valles Marineris 20×20 km · USGS CTX DTM 40 m 取樣；空白處為缺值。";
+      state.regionStatus="Valles 20×20 km · CTX 正射影像已載入；DEM 40 m 取樣，空白處為缺值。可在圖層中開啟避險標示。";
     } catch(e) {
       if(!disposed && token===regionToken) state.regionStatus="Valles 載入失敗："+e.message+"；可重試。";
     } finally { if(token===regionToken) state.regionLoading=false; }

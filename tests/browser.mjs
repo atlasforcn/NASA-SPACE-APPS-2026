@@ -296,7 +296,13 @@ try {
     // A second detailed site must switch the numeric frame AND every local overlay.
     assert(!requests.some(p=>p.includes('/data/gale/')), 'Gale is loaded on demand');
     await page.getByRole('button',{name:'探索',exact:true}).click();
-    assert.deepEqual(await page.locator('#dem-region-preset option').evaluateAll(options => options.map(o => o.value)), ['jezero', 'gale']);
+    assert.deepEqual(await page.locator('#dem-region-preset option').evaluateAll(options => options.map(o => o.value)), ['jezero', 'gale', 'valles-ctx']);
+    await page.locator('#dem-region-preset').selectOption('valles-ctx');
+    await page.locator('#load-region').click();
+    await page.waitForFunction(()=>window.__mission.state.siteId==='valles-ctx'&&!window.__mission.state.regionLoading);
+    assert.equal(await inspect(()=>window.__mission.state.siteName),'Valles');
+    assert.equal(await inspect(()=>window.__mission.state.showNavigationRisk),false);
+    await page.waitForFunction(()=>Array.from(document.images).some(i=>i.src.endsWith('/data/valles/optical.png')&&i.complete&&i.naturalWidth===501));
     await page.locator('#dem-region-preset').selectOption('gale');
     await page.locator('#load-region').click();
     await page.waitForFunction(()=>window.__mission.state.siteId==='gale'&&!window.__mission.state.regionLoading);
