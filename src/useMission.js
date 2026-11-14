@@ -1329,7 +1329,7 @@ export function useMission() {
         return;
       }
       state.targets.push({...point,id,name:place.zh || place.name,officialName:place.name,
-        source:place.url,lat:place.lat,lng:place.lng,kind:'IAU 正式地名目錄中心',
+        source:place.url,lat:place.lat,lng:place.lng,kind:place.kind || 'IAU 正式地名目錄中心',
         unit:state.regional ? 'MOLA 區域地形' : unitLabel(unitAt(point))});
     }
     stop(); cancel(); clearRoute();
@@ -1343,7 +1343,7 @@ export function useMission() {
     state.pickingTarget = false;
     state.pickingStart = false;
     refreshPois();
-    state.namedTargetStatus = `已將「${place.zh || place.name}」加入${mode === 'stop' ? '停靠順序' : '終點'}；位置採地名目錄中心，規劃時會檢查是否可達。`;
+    state.namedTargetStatus = `已將「${place.zh || place.name}」加入${mode === 'stop' ? '停靠順序' : '終點'}；位置採${place.kind ? '歷史著陸座標' : '地名目錄中心'}，規劃時會檢查是否可達。`;
     state.routeStatus = state.namedTargetStatus;
     state.tab = 'mission'; state.panelOpen = true;
   }
@@ -2087,7 +2087,14 @@ export function useMission() {
               state.namesError = "全球底圖載入失敗，請重新載入。";
             });
       }
-      state.entries = names.entries;
+      state.entries = [...names.entries, {
+        name: 'Octavia E. Butler Landing', lat: 18.4446, lng: 77.4509,
+        eastLongitude: 77.4509, type: '歷史著陸點', code: 'LANDING', diameterKm: 0,
+        featured: true, kind: 'NASA 命名歷史著陸點（非 IAU 正式地名）',
+        description: '毅力號火星車的歷史著陸位置，非即時車輛位置。',
+        origin: 'NASA 任務團隊以作家 Octavia E. Butler 命名。',
+        url: 'https://science.nasa.gov/resource/welcome-to-octavia-e-butler-landing/',
+      }];
       filterNames();
       initStations(stations);
       refreshMission();
