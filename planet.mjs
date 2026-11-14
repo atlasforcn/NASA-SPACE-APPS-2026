@@ -9,13 +9,23 @@ function geoToLocal(origin,p){
  if(n<1e-12)return up>0?{x:0,y:0}:{x:Math.PI*R,y:0};
  const f=R*Math.atan2(n,up)/n;return {x:east*f,y:north*f};
 }
+// Choose a frame away from every selected point's antipode, including global missions.
+function coverageOrigin(points){
+ const vectors=points.map(p=>{const a=p.lat*D,b=p.lng*D;return [Math.cos(a)*Math.cos(b),Math.cos(a)*Math.sin(b),Math.sin(a)];});
+ const sum=vectors.reduce((a,b)=>a.map((v,i)=>v+b[i]),[0,0,0]),candidates=[];
+ if(Math.hypot(...sum)>1e-8)candidates.push(sum.map(v=>v/Math.hypot(...sum)));
+ for(const x of [-1,0,1])for(const y of [-1,0,1])for(const z of [-1,0,1]){const n=Math.hypot(x,y,z);if(n)candidates.push([x/n,y/n,z/n]);}
+ let best=candidates[0],score=-Infinity;
+ for(const v of candidates){let worst=1;for(const p of vectors)worst=Math.min(worst,v[0]*p[0]+v[1]*p[1]+v[2]*p[2]);if(worst>score){score=worst;best=v;}}
+ return {lat:Math.atan2(best[2],Math.hypot(best[0],best[1]))/D,lng:Math.atan2(best[1],best[0])/D};
+}
 function load(buffer,meta){if(meta.schema!=='mars-global-mola-v1'||meta.width!==5760||meta.height!==2880||meta.pixelsPerDegree!==16||buffer.byteLength!==meta.width*meta.height*2)throw Error('Invalid MOLA global grid');const view=new DataView(buffer),northMean=Array.from({length:meta.width},(_,i)=>view.getInt16(i*2,true)).reduce((a,b)=>a+b)/meta.width,southMean=Array.from({length:meta.width},(_,i)=>view.getInt16(((meta.height-1)*meta.width+i)*2,true)).reduce((a,b)=>a+b)/meta.width;
  function sample(lat,lng){if(!Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>90)return NaN;const col=((lng%360+360)%360)*16-.5,row=Math.max(0,Math.min(meta.height-1,(90-lat)*16-.5)),i=Math.floor(col),j=Math.min(meta.height-2,Math.floor(row)),fx=col-i,fy=row-j,get=(x,y)=>view.getInt16((y*meta.width+(x%meta.width+meta.width)%meta.width)*2,true),a=get(i,j),b=get(i+1,j),c=get(i,j+1),d=get(i+1,j+1);let z=a*(1-fx)*(1-fy)+b*fx*(1-fy)+c*(1-fx)*fy+d*fx*fy;const polar=Math.max(0,(Math.abs(lat)-(90-.5/16))/(.5/16));if(polar)z=z*(1-polar)+(lat>0?northMean:southMean)*polar;return z;}
  function region(lat,lng,points=[]){if(!Number.isFinite(lat)||Math.abs(lat)>90||!Number.isFinite(lng)||Math.abs(lng)>180)throw Error('Invalid region centre');const origin={lat,lng},size=129;
  const extent=points.reduce((r,p)=>{const q=geoToLocal(origin,p);return Math.max(r,Math.abs(q.x)+16000,Math.abs(q.y)+16000);},256000);
- const step=Math.max(4000,Math.ceil(extent/64/1000)*1000),half=step*64,heights=[];for(let j=0;j<size;j++)for(let i=0;i<size;i++){const p=localToGeo(origin,-half+i*step,half-j*step);heights.push(Math.round(sample(p.lat,p.lng)*100)/100);}return {schema:'mars-region-grid-v1',crs:'MARS_AZIMUTHAL_EQUIDISTANT',projection:'spherical-azimuthal-equidistant',origin,width:size,height:size,xMin:-half,xMax:half,yMin:-half,yMax:half,heights,source:{id:'MOLA_MEGDR_16PPD',title:'MGS MOLA regional grid (16 ppd source)',url:meta.source,original_sha256:meta.source_sha256,nativeEquatorialCellMeters:meta.nativeEquatorialCellMeters,valid_fraction:1,sample_step_m:step,vertical_reference:meta.verticalReference,limitations:meta.limitations}};}
+ const step=Math.max(4000,Math.ceil((extent<=256000?extent/64:extent/60)/1000)*1000),half=step*64,heights=[];for(let j=0;j<size;j++)for(let i=0;i<size;i++){const p=localToGeo(origin,-half+i*step,half-j*step);heights.push(Math.round(sample(p.lat,p.lng)*100)/100);}return {schema:'mars-region-grid-v1',crs:'MARS_AZIMUTHAL_EQUIDISTANT',projection:'spherical-azimuthal-equidistant',origin,width:size,height:size,xMin:-half,xMax:half,yMin:-half,yMax:half,heights,source:{id:'MOLA_MEGDR_16PPD',title:'MGS MOLA regional grid (16 ppd source)',url:meta.source,original_sha256:meta.source_sha256,nativeEquatorialCellMeters:meta.nativeEquatorialCellMeters,valid_fraction:1,sample_step_m:step,vertical_reference:meta.verticalReference,limitations:meta.limitations}};}
  return {sample,region,metadata:meta};
 }
-return {load,localToGeo,geoToLocal};
+return {load,localToGeo,geoToLocal,coverageOrigin};
 })();
 export default api;

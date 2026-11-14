@@ -23,9 +23,18 @@ for(const points of [
  const grid=planet.region(0,90,points);C.setDEM(grid);
  assert.equal(grid.heights.length,129*129);
  assert(grid.heights.every(Number.isFinite));
- for(const p of points){const q=C.latLngToLocal(p.lat,p.lng);assert(C.validDEMPoint(q.x,q.y));}
+ for(const p of points){const q=C.latLngToLocal(p.lat,p.lng);assert(C.validDEMPoint(q.x,q.y));assert(!C.risk(q.x,q.y).unknown,'Expanded grids retain room for slope and roughness stencils');}
  assert(grid.source.sample_step_m>=4000);
 }
 const saved=C.LAT0;assert.throws(()=>C.setDEM({...planet.region(0,0),origin:{lat:91,lng:0}}));assert.equal(C.LAT0,saved);
+// Opposite hemispheres and both poles must fit without projection singularities.
+for(const points of [
+ [{lat:0,lng:0},{lat:0,lng:180}],
+ [{lat:90,lng:0},{lat:-90,lng:0}],
+ [{lat:0,lng:0},{lat:0,lng:90},{lat:0,lng:180},{lat:0,lng:-90},{lat:90,lng:0},{lat:-90,lng:0}],
+]){
+ const origin=P.coverageOrigin(points),grid=planet.region(origin.lat,origin.lng,points);C.setDEM(grid);
+ for(const p of points){const q=C.latLngToLocal(p.lat,p.lng);assert(Number.isFinite(q.x)&&Number.isFinite(q.y));assert(C.validDEMPoint(q.x,q.y));assert(!C.risk(q.x,q.y).unknown);}
+}
 C.setDEM(require('../data/jezero_dem.json'));assert.equal(C.LAT0,18.44);assert.equal(C.LIMIT.maxX,4850);assert(C.elevation(-1400,-820)<0);
 console.log('Global numeric sampling, pixel centres, seam, poles, spherical frames, routes and Jezero restore passed');

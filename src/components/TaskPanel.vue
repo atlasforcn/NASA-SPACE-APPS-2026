@@ -1,6 +1,7 @@
 <script setup>
 import { inject } from "vue";
 import { missionKey } from "../useMission";
+import RouteProfile from "./RouteProfile.vue";
 import RouteDrawing from "./RouteDrawing.vue";
 import ExpeditionPanel from "./ExpeditionPanel.vue";
 const m = inject(missionKey),
@@ -69,10 +70,10 @@ const m = inject(missionKey),
       </div>
       <p id="route-status" class="hint" role="status">{{ s.routeStatus }}</p>
       <p class="hint">
-        建立路線將車放回所選起點；行進中用地平線校正位置並重新規劃剩餘路線。DEM 無法辨識小於格距的岩石與車輪風險。
+        建立路線將車放回所選起點；{{ s.regional ? "行進中更新地平線實驗候選，不套用位置校正。" : "行進中用地平線校正位置並重新規劃剩餘路線。" }}DEM 無法辨識小於格距的岩石與車輪風險。
       </p>
     </section>
-    <RouteDrawing /><ExpeditionPanel />
+    <RouteProfile /><RouteDrawing /><ExpeditionPanel />
     <section class="group">
       <h2>可重現情境</h2>
       <div class="button-row">

@@ -9,7 +9,7 @@ const m = inject(missionKey),
     <p class="eyebrow">CUSTOM ROUTE</p>
     <h2>繪製自己的探索路線</h2>
     <p class="hint">
-      從導航估計位置開始，逐點設定或拖曳手繪。紅色為越界、缺測或超坡。
+      從導航估計位置開始，逐點設定或拖曳手繪。完成時自動擴大 MOLA 覆蓋；紅色為缺測或超坡。
     </p>
     <div class="button-row">
       <button
@@ -32,11 +32,11 @@ const m = inject(missionKey),
       <button
         id="route-finish"
         class="primary"
-        :disabled="s.points.length < 2"
+        :disabled="s.regionLoading || s.points.length < 2"
         @click="m.finishDrawing"
       >
         完成並檢查</button
-      ><button id="route-undo" :disabled="s.points.length < 2" @click="m.undo">
+      ><button id="route-undo" :disabled="s.regionLoading || s.points.length < 2" @click="m.undo">
         撤銷</button
       ><button id="route-clear" @click="m.clearDrawing">清除</button>
     </div>

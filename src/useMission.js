@@ -157,11 +157,7 @@ export function useMission() {
         (!state.type || p.code === state.type),
     ),
   );
-  const displayed = computed(() =>
-    state.query || state.type
-      ? matches.value
-      : matches.value.filter((p) => p.featured),
-  );
+  const displayed = computed(() => matches.value);
   const ll = (p) => {
     const v = C.localToLatLng(p.x, p.y);
     return [
@@ -173,6 +169,13 @@ export function useMission() {
     ];
   };
   const local = (e) => C.latLngToLocal(e.latlng.lat, e.latlng.lng);
+  const cellMeters = () => C.demInfo()?.cellMeters || 40;
+  const checkStep = () => state.regional ? cellMeters() / 3 : Math.min(15, cellMeters() / 3);
+  const regionalProfile = (grid) => ({
+    angleStep: 6, rayStep: grid.source.sample_step_m,
+    maxRange: Math.max(100000, grid.source.sample_step_m * 25),
+    cameraHeight: 1.7, curvature: true,
+  });
   const remove = (layer) => {
     if (layer && map) map.removeLayer(layer);
   };
@@ -239,6 +242,16 @@ export function useMission() {
     if (!dem.value) return;
     stop();
     cancel();
+    // A task reset also removes user-created destinations and custom list filters.
+    state.targets = state.targets.filter((target) => !target.id.startsWith("custom-"));
+    state.destination = state.targets[0]?.id || "";
+    state.targetName = "";
+    state.query = "";
+    state.type = "";
+    state.selected = null;
+    state.poi = null;
+    state.slope = 24;
+    state.layer = "none";
     resetDrawing();
     state.scenario = kind;
     state.truth = { ...missionStart, heading: 45 };
@@ -291,6 +304,7 @@ export function useMission() {
       }).addTo(routeLayer);
   }
   function plan() {
+    if (state.regionLoading) return;
     stop();
     cancel();
     resetDrawing();
@@ -305,7 +319,7 @@ export function useMission() {
     trail.setLatLngs([ll(missionStart)]);
     const result = C.planPath(missionStart, goal);
     installRoute(result);
-    const n = Math.max(1, Math.ceil(C.distance(missionStart, goal) / Math.max(15, dem.value.cellMeters / 3)));
+    const n = Math.max(1, Math.ceil(C.distance(missionStart, goal) / checkStep()));
     const points = Array.from({ length: n + 1 }, (_, i) => ({
       x: missionStart.x + (goal.x - missionStart.x) * i / n,
       y: missionStart.y + (goal.y - missionStart.y) * i / n,
@@ -426,7 +440,7 @@ export function useMission() {
     });
     drawCurve();
     const centre = { ...state.estimate },
-      range = state.regional ? 16000 : 1600,
+      range = state.regional ? Math.max(16000, cellMeters() * 4) : 1600,
       searchBounds = {
         minX: Math.max(C.LIMIT.minX + 250, centre.x - range),
         maxX: Math.min(C.LIMIT.maxX - 250, centre.x + range),
@@ -531,7 +545,7 @@ export function useMission() {
       observation,
       bounds: searchBounds,
       options: state.regional
-        ? { coarseStep: 4000, candidateSeparation: 8000 }
+        ? { coarseStep: cellMeters(), candidateSeparation: cellMeters() * 2 }
         : {},
     });
   }
@@ -633,13 +647,14 @@ export function useMission() {
       const delta = ((bearing - heading + 540) % 360) - 180;
       const selected = marker.id === state.destination || marker.id === state.poi?.id;
       if (Math.abs(delta) > 60 && !selected) continue;
-      const angle = Math.atan2(z - eye, distance) / C.DEG;
+      const drop = (d) => profileOptions?.curvature ? d * d / (2 * C.R) : 0;
+      const angle = Math.atan2(z - eye - drop(distance), distance) / C.DEG;
       let hidden = false;
       const step = Math.max(40, distance / 100);
       for (let d = step; d < distance - step / 2; d += step) {
         const t = d / distance;
         const terrain = C.elevation(state.truth.x + (marker.x - state.truth.x) * t, state.truth.y + (marker.y - state.truth.y) * t);
-        if (!Number.isFinite(terrain) || terrain > eye + (z - eye) * t + 1) {
+        if (!Number.isFinite(terrain) || terrain - drop(d) > eye + (z - eye - drop(distance)) * t + 1) {
           hidden = true;
           break;
         }
@@ -741,8 +756,8 @@ export function useMission() {
         for (let j = 2; j < dem.value.height - 2; j += 4)
           for (let i = 2; i < dem.value.width - 2; i += 4) {
             const p = {
-                x: dem.value.xMin + i * 4000,
-                y: dem.value.yMax - j * 4000,
+                x: dem.value.xMin + i * cellMeters(),
+                y: dem.value.yMax - j * cellMeters(),
               },
               v =
                 kind === "slope" ? C.slopeDeg(p.x, p.y) : C.elevation(p.x, p.y),
@@ -805,7 +820,7 @@ export function useMission() {
     state.drawStatus = `已繪製 ${state.points.length} 個點；起點為導航估計位置。`;
   }
   function beginDrawing(mode) {
-    if (!dem.value) return;
+    if (!dem.value || state.regionLoading) return;
     stop();
     cancel();
     resetDrawing();
@@ -813,6 +828,7 @@ export function useMission() {
     map.closePopup();
     map.fitBounds(bounds, { animate: false });
     state.drawMode = mode;
+    state.pickingStart = false;
     state.pickingTarget = false;
     state.points = [{ x: state.estimate.x, y: state.estimate.y }];
     if (mode === "freehand") map.dragging.disable();
@@ -836,7 +852,7 @@ export function useMission() {
         d = C.distance(a, b);
       length += d;
       if (!C.segmentSafe(a, b)) invalid.push(i);
-      const n = Math.max(1, Math.ceil(d / 15));
+      const n = Math.max(1, Math.ceil(d / checkStep()));
       for (let k = 0; k <= n; k++) {
         const t = k / n,
           s = C.slopeDeg(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t);
@@ -852,8 +868,10 @@ export function useMission() {
       custom: true,
     };
   }
-  function finishDrawing() {
-    if (state.points.length < 2 || !slopeValid()) return;
+  async function finishDrawing() {
+    if (state.regionLoading || state.points.length < 2 || !slopeValid()) return;
+    const outside = state.points.find(p => !C.validDEMPoint(p.x, p.y) || C.risk(p.x, p.y).unknown);
+    if (outside && !(await coverTarget(C.localToLatLng(outside.x, outside.y)))) return;
     stopDrawing();
     remove(preview);
     const route = routeCheck(state.points);
@@ -888,6 +906,7 @@ export function useMission() {
       .openOn(map);
   }
   function beginTarget() {
+    if (state.regionLoading) return;
     state.pickingStart = false;
     if (!state.ready) return;
     stop();
@@ -898,23 +917,23 @@ export function useMission() {
       : "已取消新增觀測點。";
   }
   async function coverTarget(geo) {
-    if (inDem(geo)) return true;
+    if (inDem(geo)) {
+      const p = C.latLngToLocal(geo.lat, geo.lng);
+      if (!C.risk(p.x, p.y).unknown) return true;
+    }
     if (state.regionLoading) return false;
     const token = ++regionToken;
     const start = C.localToLatLng(missionStart.x, missionStart.y);
     const truth = { ...state.truth, ...C.localToLatLng(state.truth.x, state.truth.y) };
     const estimate = { ...state.estimate, ...C.localToLatLng(state.estimate.x, state.estimate.y) };
     const targets = state.targets.map(t => ({ ...t, ...C.localToLatLng(t.x, t.y) }));
+    const drawing = state.points.map(p => C.localToLatLng(p.x, p.y));
+    const mode = state.drawMode, pickingStart = state.pickingStart, pickingTarget = state.pickingTarget;
+    const destination = state.destination, travelled = state.travelled;
+    const history = trail.getLatLngs();
     const name = state.targetName;
-    const points = [start, truth, estimate, ...targets, geo];
-    // Centre the new spherical frame between the selected locations.
-    const v = points.reduce((v,p) => {
-      const a=p.lat*C.DEG,b=p.lng*C.DEG;
-      return [v[0]+Math.cos(a)*Math.cos(b),v[1]+Math.cos(a)*Math.sin(b),v[2]+Math.sin(a)];
-    }, [0,0,0]);
-    const origin = Math.hypot(...v)>1e-8
-      ? {lat:Math.atan2(v[2],Math.hypot(v[0],v[1]))/C.DEG,lng:Math.atan2(v[1],v[0])/C.DEG}
-      : {lat:0,lng:((start.lng+270)%360+360)%360-180};
+    const points = [start, truth, estimate, ...targets, ...drawing, geo];
+    const origin = P.coverageOrigin(points);
     stop(); cancel();
     state.regionLoading = true;
     state.regionStatus = "正在擴大 MOLA 覆蓋範圍，保留起點與觀測點…";
@@ -926,14 +945,24 @@ export function useMission() {
       dem.value = grid;
       state.regional = true;
       missionStart = C.latLngToLocal(start.lat,start.lng);
-      state.targets = targets.map(t => ({...t,...C.latLngToLocal(t.lat,t.lng)}));
-      profileOptions = {angleStep:6,rayStep:grid.source.sample_step_m,maxRange:Math.max(100000,grid.source.sample_step_m*25),cameraHeight:1.7,curvature:true};
+      state.targets = targets.map(t => ({...t,...C.latLngToLocal(t.lat,t.lng),unit:"MOLA 區域地形"}));
+      profileOptions = regionalProfile(grid);
       refreshMission();
       state.truth = {...truth,...C.latLngToLocal(truth.lat,truth.lng)};
       state.estimate = {...estimate,...C.latLngToLocal(estimate.lat,estimate.lng)};
-      trail.setLatLngs([ll(state.estimate)]);
+      trail.setLatLngs(history);
+      state.travelled = travelled;
+      state.destination = destination;
+      state.points = drawing.map(p => C.latLngToLocal(p.lat, p.lng));
+      state.drawMode = mode;
+      if (mode) {
+        if (mode === "freehand") map.dragging.disable();
+        map.doubleClickZoom.disable();
+        drawPreview();
+      }
       state.targetName = name;
-      state.pickingTarget = true;
+      state.pickingStart = pickingStart;
+      state.pickingTarget = pickingTarget;
       state.regionStatus = `MOLA 覆蓋已擴大至 ${(grid.xMax-grid.xMin)/1000} × ${(grid.yMax-grid.yMin)/1000} km · 格距 ${grid.source.sample_step_m/1000} km；遠距規劃為粗略模擬。`;
       render();
       return true;
@@ -1064,7 +1093,7 @@ export function useMission() {
       : "火星地理導覽 / MGS MOLA";
     state.mapContext = isLocal
       ? state.regional
-        ? (inDem(c) ? "MOLA 約 3.7 km · 未校準定位" : "視野中心超出任務 DEM · 任務與標記已保留")
+        ? (inDem(c) ? `MOLA 格距 ${fmt(cellMeters())} · 未校準定位` : "視野中心超出任務 DEM · 選點與路線將自動擴大覆蓋")
         : "局部 CTX 影像 · DEM 導航有效區"
       : "全球彩色地形陰影 · 可建立區域任務";
   }
@@ -1177,13 +1206,7 @@ export function useMission() {
       dem.value = grid;
       state.regional = true;
       missionStart = { x: 0, y: 0 };
-      profileOptions = {
-        angleStep: 6,
-        rayStep: 4000,
-        maxRange: 100000,
-        cameraHeight: 1.7,
-        curvature: true,
-      };
+      profileOptions = regionalProfile(grid);
       state.estimate = { x: 650, y: -520, heading: 69 };
       state.targets = [];
       refreshMission();
@@ -1222,7 +1245,7 @@ export function useMission() {
       : "有效地標不足或未收斂。";
   }
   function planExpedition() {
-    if (state.regional) restore();
+    if (state.regional) return;
     stop();
     cancel();
     if (!slopeValid()) return;
@@ -1260,7 +1283,7 @@ export function useMission() {
   function drawProfile() {
     const leg = state.profileIndex === -1
         ? state.route && { ...state.route, name: "目前路線" }
-        : state.expedition[state.profileIndex],
+        : !state.regional && state.expedition[state.profileIndex],
       cv = profileCanvas.value;
     if (!cv) return;
     if (!leg) {
@@ -1269,7 +1292,10 @@ export function useMission() {
       return;
     }
     const ctx = cv.getContext("2d"),
-      samples = [];
+      samples = [],
+      length = leg.path.reduce((sum, p, i, path) =>
+        sum + (i ? C.distance(path[i - 1], p) : 0), 0),
+      sampleStep = Math.max(15, state.regional ? C.demInfo().cellMeters / 4 : 0, length / 4096);
     let d = 0,
       maxSlope = 0,
       missing = 0;
@@ -1278,7 +1304,7 @@ export function useMission() {
       const a = leg.path[i - 1],
         b = leg.path[i],
         len = C.distance(a, b),
-        n = Math.max(1, Math.ceil(len / 15));
+        n = Math.max(1, Math.ceil(len / sampleStep));
       for (let k = i === 1 ? 0 : 1; k <= n; k++) {
         const t = k / n,
           x = a.x + (b.x - a.x) * t,
@@ -1296,8 +1322,8 @@ export function useMission() {
       state.profileInfo = "不可達路段，沒有可用剖面。";
       return;
     }
-    const lo = Math.min(...finite),
-      hi = Math.max(...finite);
+    const lo = finite.reduce((min, z) => Math.min(min, z), Infinity),
+      hi = finite.reduce((max, z) => Math.max(max, z), -Infinity);
     ctx.strokeStyle = "#83e5d2";
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -1314,10 +1340,10 @@ export function useMission() {
       open = true;
     }
     ctx.stroke();
-    state.profileInfo = `${leg.name} · ${fmt(d)} · 最大格網坡度 ${maxSlope.toFixed(1)}° · 缺值 ${missing}；每 ≤15 m 取樣數值 DEM，非影像高程。`;
+    state.profileInfo = `${leg.name} · ${state.regional ? "MOLA" : "CTX"} DEM · ${fmt(d)} · 最大格網坡度 ${maxSlope.toFixed(1)}° · 缺值 ${missing}；每 ≤${Math.ceil(sampleStep)} m 取樣數值 DEM，非影像高程。`;
   }
   function showStation(f) {
-    if (state.regional) restore();
+    if (state.regional || !f) return;
     state.selected = null;
     state.station = f;
     map.setView([f.geometry.coordinates[1], f.geometry.coordinates[0]], 14);
@@ -1391,10 +1417,9 @@ export function useMission() {
     map.on("click", async (e) => {
       if (state.pickingStart) {
         if (state.regionLoading) return;
-        if (!inDem(e.latlng)) {
-          state.lat = e.latlng.lat;
-          state.lng = ((e.latlng.lng + 180) % 360 + 360) % 360 - 180;
-          if (!(await startRegion())) return;
+        if (!inDem(e.latlng) || C.risk(local(e).x, local(e).y).unknown) {
+          const geo = {lat:e.latlng.lat,lng:((e.latlng.lng+180)%360+360)%360-180};
+          if (!(await coverTarget(geo))) return;
         }
         const p = local(e);
         if (!C.validDEMPoint(p.x, p.y) || C.risk(p.x, p.y).blocked) {
@@ -1572,7 +1597,7 @@ export function useMission() {
     cancel();
     if (enabled && state.running) scan(true);
   });
-  watch(() => state.profileIndex, drawProfile);
+  watch(() => [state.profileIndex, state.regional], drawProfile);
   watch(() => state.route, drawProfile);
   watch(profileCanvas, drawProfile);
   watch(panorama, render);
@@ -1618,10 +1643,11 @@ export function useMission() {
     },
     beginDrawing,
     beginStart: () => {
+      if (state.regionLoading) return;
       stop(); cancel(); resetDrawing();
       state.pickingTarget = false;
       state.pickingStart = !state.pickingStart;
-      state.routeStatus = state.pickingStart ? "請在地圖選起點；選在目前區域外會以該處建立 MOLA 區域任務。" : "已取消選起點。";
+      state.routeStatus = state.pickingStart ? "請在地圖選起點；跨區域時自動擴大 MOLA 覆蓋並保留觀測點。" : "已取消選起點。";
     },
     beginTarget,
     removeTarget,
@@ -1638,7 +1664,7 @@ export function useMission() {
     showStation,
     resize: () => map?.invalidateSize(),
     // Explicit test-only access; never installed on window in production.
-    inspect: () => ({ dem: dem.value, observation, waypoint, profileOptions }),
+    inspect: () => ({ dem: dem.value, observation, waypoint, profileOptions, analysis }),
     appendPoint: append,
   };
 }

@@ -5,7 +5,7 @@ const m = inject(missionKey),
   s = m.state;
 </script>
 <template>
-  <section class="group">
+  <section v-if="!s.regional" class="group">
     <p class="eyebrow">MARSOPS / THREE FORKS</p>
     <h2>重訪樣本存放區</h2>
     <p class="hint">
@@ -35,23 +35,6 @@ const m = inject(missionKey),
     <p id="expedition-status" class="hint" role="status">
       {{ s.expeditionStatus }}
     </p>
-    <label
-      >路段剖面<select id="expedition-leg" v-model="s.profileIndex">
-        <option v-if="s.route" :value="-1">目前路線</option>
-        <option v-if="!s.route && !s.expedition.length" :value="0" disabled>尚未建立路線</option>
-        <option v-for="(leg, i) in s.expedition" :key="i" :value="i">
-          {{ leg.name }}{{ leg.reachable ? "" : "（不可達）" }}
-        </option>
-      </select></label
-    ><canvas
-      id="route-profile"
-      :ref="(el) => (m.profileCanvas.value = el)"
-      width="360"
-      height="150"
-      role="img"
-      aria-label="數值 DEM 路線高程剖面"
-    ></canvas>
-    <p class="hint">{{ s.profileInfo }}</p>
     <article v-if="s.station" class="detail-card">
       <h3>{{ s.station.properties.name }}</h3>
       <p>NASA PDS 歷史紀錄 · 非人員位置／非樣本管端點</p>

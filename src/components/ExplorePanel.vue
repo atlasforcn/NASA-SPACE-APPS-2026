@@ -7,7 +7,7 @@ const m = inject(missionKey),
 <template>
   <div>
     <section class="group">
-      <p class="hint">輸入中心座標，建立 512×512 km 區域任務。</p>
+      <p class="hint">輸入中心座標建立任務；起點、觀測點與繪製路線可跨區域，覆蓋範圍自動調整。</p>
       <div class="field-pair">
         <label
           >緯度 °N<input
@@ -71,12 +71,12 @@ const m = inject(missionKey),
       <p id="named-count" class="hint">
         {{
           s.namesError ||
-          `${s.entries.length} 個正式地名 · 符合 ${m.matches.value.length} 個 · 顯示 ${Math.min(60, m.displayed.value.length)} 個`
+          `${s.entries.length} 個正式地名 · 符合 ${m.matches.value.length} 個 · 顯示 ${m.displayed.value.length} 個`
         }}
       </p>
       <div id="named-list" class="list">
         <button
-          v-for="p in m.displayed.value.slice(0, 60)"
+          v-for="p in m.displayed.value"
           :key="p.name"
           @click="m.selectName(p)"
         >

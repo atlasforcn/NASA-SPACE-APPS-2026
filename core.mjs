@@ -140,7 +140,7 @@ function planPath(start,goal,step=realDEM?Math.max(65,realDEM.cellMeters):105){
   const rev=[];let k=en;while(k!==-1){rev.push(coords(k));if(k===st)break;k=prev[k];}rev.reverse();rev.unshift({...start});rev.push({...goal});
   // Keep every traversed grid cell: decimation could draw unsafe shortcuts across obstacles.
   const out=rev;
-  let len=0,maxSlope=0;for(let i=1;i<out.length;i++){if(!segmentSafe(out[i-1],out[i]))return failure;const d=distance(out[i-1],out[i]);len+=d;const n=Math.max(1,Math.ceil(d/15));for(let k=0;k<=n;k++){const t=k/n;maxSlope=Math.max(maxSlope,slopeDeg(out[i-1].x+(out[i].x-out[i-1].x)*t,out[i-1].y+(out[i].y-out[i-1].y)*t));}}
+  let len=0,maxSlope=0;for(let i=1;i<out.length;i++){if(!segmentSafe(out[i-1],out[i]))return failure;const d=distance(out[i-1],out[i]);len+=d;const n=Math.max(1,Math.ceil(d/(realDEM&&realDEM.cellMeters>100?realDEM.cellMeters/3:15)));for(let k=0;k<=n;k++){const t=k/n;maxSlope=Math.max(maxSlope,slopeDeg(out[i-1].x+(out[i].x-out[i-1].x)*t,out[i-1].y+(out[i].y-out[i-1].y)*t));}}
   return {path:out,length:len,maxSlope,expanded,reachable:true};
 }
 function apparentSizeDeg(width,d){return 2*Math.atan2((width||0)/2,Math.max(1,d))/DEG;}

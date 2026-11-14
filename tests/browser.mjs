@@ -3,6 +3,7 @@ import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
 import assert from "node:assert/strict";
+import P from "../planet.mjs";
 const base = process.env.PAGES_BASE_PATH || "/",
   root = path.resolve(process.env.STATIC_DIST || "dist");
 const types = {
@@ -127,6 +128,7 @@ try {
     await page.getByRole("button", { name: "任務", exact: true }).click();
     await page.locator("#plan").click();
     assert(await inspect(() => window.__mission.state.route.reachable));
+    assert(await inspect(() => !window.__mission.state.straightStatus.includes(" 0 m")));
     await page.locator("#simulate").click();
     assert(await inspect(() => window.__mission.state.running && window.__mission.state.searching));
     await page.waitForFunction(() => window.__mission.state.travelled > 30);
@@ -205,17 +207,16 @@ try {
         canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height)
           .data.some((value, i) => i % 4 === 3 && value > 0);
     });
-    await inspect(() => {
+    await inspect(async () => {
       const m = window.__mission;
       m.beginDrawing("points");
       m.appendPoint({ x: 999999, y: 999999 });
-      m.finishDrawing();
+      await m.finishDrawing();
     });
-    assert.equal(
-      await inspect(() => window.__mission.state.route.reachable),
-      false,
-    );
-    assert(await page.locator("#simulate").isDisabled());
+    assert(await inspect(() => window.__mission.state.regional));
+    assert(await inspect(() => window.__mission.state.route.path.length >= 2));
+    assert(await page.locator("#route-profile").isVisible());
+    await inspect(() => window.__mission.restore());
     await page.locator("#route-clear").click();
     await page.locator("#draw-freehand").click();
     const box = await page.locator("#map").boundingBox();
@@ -254,6 +255,10 @@ try {
     await page.locator("#named-type").selectOption("MO");
     assert(await page.locator("#named-count").textContent());
     // Fail first global binary request, then prove retry loads successfully.
+    // Cross-region drawing above already loaded MOLA; use a fresh app instance.
+    await page.reload();
+    await page.waitForFunction(() => window.__mission?.state.ready);
+    await page.getByRole("button", { name: "探索", exact: true }).click();
     await page.route("**/data/mola16.bin", (route) =>
       route.fulfill({ status: 503, body: "temporary failure" }),
     );
@@ -283,10 +288,7 @@ try {
       );
     }
     await page.getByRole("button", { name: "圖層", exact: true }).click();
-    await page.locator("#analysis-layer").selectOption("geology");
-    assert(
-      (await page.locator("#layer-legend").textContent()).includes("尚無"),
-    );
+    assert(await page.locator("#analysis-layer option[value=geology]").isDisabled());
     await page.locator("#analysis-layer").selectOption("terrain");
     await page.locator("#analysis-layer").selectOption("slope");
     await page.getByRole("button", { name: "探索", exact: true }).click();
@@ -315,6 +317,23 @@ try {
     assert.equal(await page.locator("#plan").isEnabled(), true);
     await page.locator("#plan").click();
     assert(await inspect(() => window.__mission.state.route !== null));
+    assert(await inspect(() => !window.__mission.state.straightStatus.includes(" 0 m")));
+    assert.equal(await page.locator("#expedition-plan").count(), 0);
+    await inspect(() => { window.__mission.planExpedition(); window.__mission.showStation(); });
+    assert(await inspect(() => window.__mission.state.regional && window.__mission.state.targets.length === 1));
+    await page.waitForFunction(() => window.__mission.state.profileInfo.includes("MOLA DEM"));
+    // Long regional traverses must not overflow Math.min/max argument limits.
+    await inspect(() => {
+      window.__mission.state.route = {
+        path: Array.from({ length: 12 }, (_, i) => ({ x: i % 2 ? 120000 : -120000, y: 0 })),
+        reachable: true,
+      };
+    });
+    await page.waitForFunction(() => window.__mission.state.profileInfo.includes("2640.00 km"));
+    assert(await page.locator("#route-profile").evaluate((canvas) =>
+      canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height)
+        .data.some((value, i) => i % 4 === 3 && value > 0),
+    ));
     await page.locator("#remove-target").click();
     assert.equal(await inspect(() => window.__mission.state.targets.length), 0);
     assert.equal(await inspect(() => window.__mission.state.route), null);
@@ -342,6 +361,29 @@ try {
     assert.equal(await inspect(() => window.__mission.state.targets[0].id),retainedId);
     assert.equal(await inspect(() => window.__mission.state.targets[1].name),"遠距觀測點");
     assert(await inspect(() => window.__mission.inspect().dem.xMax-window.__mission.inspect().dem.xMin>512000));
+    await page.getByRole("button", { name: "圖層", exact: true }).click();
+    await page.locator("#analysis-layer").selectOption("terrain");
+    assert(await page.locator("#analysis-layer option[value=geology]").isDisabled());
+    const layerGrid = await inspect(() => {
+      const {dem, analysis} = window.__mission.inspect();
+      return {origin:dem.origin,xMin:dem.xMin,step:dem.source.sample_step_m,
+        samples:analysis.getLayers().map(layer => layer.getLatLng())};
+    });
+    const firstSample = P.geoToLocal(layerGrid.origin, layerGrid.samples[0]);
+    const lastSample = P.geoToLocal(layerGrid.origin, layerGrid.samples.at(-1));
+    assert(Math.abs(firstSample.x - (layerGrid.xMin + 2 * layerGrid.step)) < 1);
+    assert(Math.abs(lastSample.x - (layerGrid.xMin + 126 * layerGrid.step)) < 1);
+    await page.getByRole("button", { name: "任務", exact: true }).click();
+    await page.locator("#plan").click();
+    assert(await inspect(() => window.__mission.state.route.path.length > 1));
+    assert(await page.locator("#route-profile").isVisible());
+    await inspect(() => window.__mission.overview());
+    await page.locator("#pick-start").click();
+    await page.locator("#map").click({position:{x:regionMap.width/2-100,y:regionMap.height/2+40}});
+    await page.waitForFunction(() => !window.__mission.state.regionLoading && !window.__mission.state.pickingStart)
+      .catch(async error => { console.error(await inspect(() => ({status:window.__mission.state.routeStatus,region:window.__mission.state.regionStatus}))); throw error; });
+    assert.equal(await inspect(() => window.__mission.state.targets.length), 2);
+    assert.equal(await inspect(() => window.__mission.state.targets[0].id), retainedId);
     await page.getByRole("button", { name: "探索", exact: true }).click();
     await page.locator("#restore-jezero").click();
     assert.equal(await inspect(() => window.__mission.state.regional), false);
@@ -351,7 +393,10 @@ try {
     for (const entry of manifest.filter((e) => e.disposition === "publish")) {
       const r = await page.request.get(url + entry.path);
       assert(r.ok(), entry.path);
-      assert.equal((await r.body()).length, entry.bytes, entry.path);
+      const bytes = await r.body();
+      const canonical = /\.(?:json|geojson|lbl|csv|xml|md|txt|svg)$/i.test(entry.path)
+        ? Buffer.from(bytes.toString("utf8").replace(/\r\n/g, "\n"), "utf8") : bytes;
+      assert.equal(canonical.length, entry.bytes, entry.path);
     }
     await page.goto(url);
     await page.waitForFunction(() => window.__mission?.state.ready);

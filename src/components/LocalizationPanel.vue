@@ -22,11 +22,11 @@ const m = inject(missionKey),
       >
       <label class="checkbox">
         <input id="continuous-localization" v-model="s.continuousLocalization" type="checkbox" />
-        行進中自動以地平線校正
+        {{ s.regional ? "行進中更新地平線實驗候選" : "行進中自動以地平線校正" }}
       </label>
       <p class="hint">
         規劃路線並開始行進後，每 {{ s.regional ? "4 km" : "250 m" }} 更新觀測；
-        搜尋期間持續移動，可靠定位才套用校正。已校正 {{ s.localizationCount }} 次。
+        {{ s.regional ? "搜尋期間持續移動；MOLA 尚未校準可信度，候選不套用位置校正。" : `搜尋期間持續移動，可靠定位才套用校正。已校正 ${s.localizationCount} 次。` }}
       </p>
       <div class="button-row">
         <button
