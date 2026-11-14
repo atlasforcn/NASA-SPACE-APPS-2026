@@ -12,12 +12,13 @@ export function energyStep(distance, rise, { uphillPenalty = 10, downhillSaving 
   const ratio = grade >= 0 ? 1 + uphillPenalty * grade : Math.max(minimumEnergyRatio, 1 + downhillSaving * grade);
   return Math.hypot(distance, rise) * ratio;
 }
-export function segmentEnergy(a, b, elevation, sampleStep, options = {}) {
+export function segmentEnergy(a, b, elevation, sampleStep, options = {}, factorAt = () => 1) {
   const distance = Math.hypot(b.x-a.x, b.y-a.y), n = Math.max(1, Math.ceil(distance / sampleStep));
   let energy = 0, previous = elevation(a.x,a.y);
   for (let i = 1; i <= n; i++) {
     const z = elevation(a.x+(b.x-a.x)*i/n, a.y+(b.y-a.y)*i/n);
-    energy += energyStep(distance/n, z-previous, options);
+    const t=(i-.5)/n;
+    energy += energyStep(distance/n, z-previous, options)*factorAt(a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t);
     previous = z;
   }
   return energy;

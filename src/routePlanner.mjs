@@ -5,7 +5,8 @@ import { energyStep, validateEnergyOptions } from '../energy-model.mjs';
 export function measureRoute(path, options = {}) {
   const { speedKmh = 3, highSlope = 15 } = options;
   validateEnergyOptions(options);
-  let energy = 0;
+  let energy = 0, materialEnergy = 0, unknownMaterialDistance = 0;
+  const causeDistances = new Map();
   let length = 0, surface = 0, gain = 0, loss = 0, maxSlope = 0, steep = 0, riskDistance = 0, hours = 0;
   const step = Math.max(10, (C.demInfo()?.cellMeters || 40) / 3);
   for (let i = 1; i < path.length; i++) {
@@ -16,7 +17,12 @@ export function measureRoute(path, options = {}) {
       const dz = C.elevation(q.x,q.y)-C.elevation(p.x,p.y), ds = d/n;
       const r = C.risk((p.x+q.x)/2,(p.y+q.y)/2);
       if (!Number.isFinite(dz) || r.unknown) return null;
-      energy += energyStep(ds,dz,options);
+      const nav = r.navigation;
+      const baseEnergy=energyStep(ds,dz,options);
+      energy += baseEnergy*nav.factor;
+      materialEnergy += baseEnergy*(nav.factor-1);
+      if(nav.unknown) unknownMaterialDistance += ds;
+      for(const cause of nav.reasons) causeDistances.set(cause,(causeDistances.get(cause)||0)+ds);
       length += ds; surface += Math.hypot(ds,dz);
       gain += Math.max(0,dz); loss += Math.max(0,-dz); maxSlope = Math.max(maxSlope,r.slope);
       if (r.slope > highSlope) steep += ds;
@@ -26,7 +32,7 @@ export function measureRoute(path, options = {}) {
       hours += ds/1000/speed;
     }
   }
-  return { energy, length, surface, gain, loss, maxSlope, steep, riskDistance, riskScore: length ? riskDistance/length : 0, hours };
+  return { energy, materialEnergy, unknownMaterialDistance, navigationReasons: [...causeDistances].map(([reason,distance])=>({reason,distance})), length, surface, gain, loss, maxSlope, steep, riskDistance, riskScore: length ? riskDistance/length : 0, hours };
 }
 
 export function buildItinerary(start, stops, options = {}) {
