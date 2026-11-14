@@ -5,7 +5,7 @@ import { energyStep, validateEnergyOptions } from '../energy-model.mjs';
 export function measureRoute(path, options = {}) {
   const { speedKmh = 3, highSlope = 15 } = options;
   validateEnergyOptions(options);
-  let energy = 0, materialEnergy = 0, unknownMaterialDistance = 0;
+  let energy = 0, materialEnergy = 0, unknownMaterialDistance = 0, molaDistance = 0;
   const causeDistances = new Map();
   let length = 0, surface = 0, gain = 0, loss = 0, maxSlope = 0, steep = 0, riskDistance = 0, hours = 0;
   const step = Math.max(10, (C.demInfo()?.cellMeters || 40) / 3);
@@ -17,6 +17,7 @@ export function measureRoute(path, options = {}) {
       const dz = C.elevation(q.x,q.y)-C.elevation(p.x,p.y), ds = d/n;
       const r = C.risk((p.x+q.x)/2,(p.y+q.y)/2);
       if (!Number.isFinite(dz) || r.unknown) return null;
+      if(C.heightSource((p.x+q.x)/2,(p.y+q.y)/2)==='MOLA')molaDistance+=ds;
       const nav = r.navigation;
       const baseEnergy=energyStep(ds,dz,options);
       energy += baseEnergy*nav.factor;
@@ -32,7 +33,7 @@ export function measureRoute(path, options = {}) {
       hours += ds/1000/speed;
     }
   }
-  return { energy, materialEnergy, unknownMaterialDistance, navigationReasons: [...causeDistances].map(([reason,distance])=>({reason,distance})), length, surface, gain, loss, maxSlope, steep, riskDistance, riskScore: length ? riskDistance/length : 0, hours };
+  return { energy, materialEnergy, unknownMaterialDistance, molaDistance, navigationReasons: [...causeDistances].map(([reason,distance])=>({reason,distance})), length, surface, gain, loss, maxSlope, steep, riskDistance, riskScore: length ? riskDistance/length : 0, hours };
 }
 
 export function buildItinerary(start, stops, options = {}) {
@@ -59,13 +60,13 @@ export function buildItinerary(start, stops, options = {}) {
     for (const leg of legs) for (const { reason, distance } of leg.navigationReasons)
       totals.set(reason, (totals.get(reason) || 0) + distance);
     const stats = {
-      energy: 0, materialEnergy: 0, unknownMaterialDistance: 0,
+      energy: 0, materialEnergy: 0, unknownMaterialDistance: 0, molaDistance: 0,
       length: 0, surface: 0, gain: 0, loss: 0, maxSlope: 0,
       steep: 0, riskDistance: 0, hours: 0,
       navigationReasons: [...totals].map(([reason, distance]) => ({ reason, distance })),
     };
     for (const leg of legs) {
-      for (const key of ['energy', 'materialEnergy', 'unknownMaterialDistance', 'length', 'surface', 'gain', 'loss', 'steep', 'riskDistance', 'hours']) stats[key] += leg[key];
+      for (const key of ['energy', 'materialEnergy', 'unknownMaterialDistance', 'molaDistance', 'length', 'surface', 'gain', 'loss', 'steep', 'riskDistance', 'hours']) stats[key] += leg[key];
       stats.maxSlope = Math.max(stats.maxSlope, leg.maxSlope);
     }
     stats.riskScore = stats.length ? stats.riskDistance / stats.length : 0;

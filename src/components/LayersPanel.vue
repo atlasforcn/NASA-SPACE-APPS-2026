@@ -35,7 +35,6 @@ const m = inject(missionKey),
       <a :href="m.asset('docs/SOURCES.md')">完整資料紀錄 ↗</a><br />
       <a v-if="s.regional" :href="m.dem.value.source.url" target="_blank" rel="noopener noreferrer">NASA PDS MOLA ↗</a>
       <template v-else-if="s.siteId === 'gale'"><a :href="m.dem.value.source.url" target="_blank" rel="noopener noreferrer">USGS Gale DEM ↗</a><br /><a href="https://astrogeology.usgs.gov/search/map/mars_msl_gale_merged_orthophoto_mosaic_25cm" target="_blank" rel="noopener noreferrer">USGS Gale 正射影像來源 ↗</a></template>
-      <template v-else-if="s.siteId === 'jezero-hirise'"><a :href="m.dem.value.source.url" target="_blank" rel="noopener noreferrer">USGS Jezero HiRISE DTM ↗</a></template>
       <template v-else-if="s.siteId === 'valles-ctx'"><a :href="m.dem.value.source.stac_item" target="_blank" rel="noopener noreferrer">USGS CTX DTM 來源 ↗</a><br /><a :href="m.asset('data/valles/optical-source.json')" target="_blank" rel="noopener noreferrer">正射影像處理紀錄 ↗</a></template>
       <template v-else><a
         href="https://astrogeology.usgs.gov/search/map/mars_2020_science_investigation_ctx_dem_mosaic"

@@ -28,7 +28,7 @@ const m = inject(missionKey),
           <button id="add-target" :disabled="!s.ready" @click="m.beginTarget">{{ s.pickingTarget ? "取消選點" : "在地圖新增目的地" }}</button>
           <button id="remove-target" :disabled="!s.destination" @click="m.removeTarget">刪除所選目的地</button>
         </div>
-        <p class="hint" role="status">{{ s.pickingTarget ? "點選地圖設定位置；遠處會自動擴大 MOLA 覆蓋範圍。" : "自行命名並點選地圖新增目的地，再選擇目的地規劃路線。" }}</p>
+        <p class="hint" role="status">{{ s.pickingTarget ? "點選地圖設定位置；局部 DEM 優先，越界或缺測處合併使用公里級 MOLA。" : "自行命名並點選地圖新增目的地，再選擇目的地規劃路線。" }}</p>
       <label
         >任務目的地<select
           id="destination"
@@ -78,7 +78,7 @@ const m = inject(missionKey),
           {{ s.running ? "Ⅱ 暫停" : "▶ 開始行進" }}
         </button>
       </div>
-      <p class="hint">亮黃色虛線：理想直線 · 紅色：不可通行段 · 青色：建議路線 · 橘色：定位行進軌跡</p>
+      <p class="hint">亮黃色虛線：理想直線 · 紅色：不可通行段 · 青色：DEM 建議路線 · 橘色虛線：MOLA 粗略路段 · 橘色實線：定位行進軌跡</p>
       <p id="straight-status" class="hint" role="status">{{ s.straightStatus }}</p>
       <RouteAlternatives />
       <div v-if="s.directRoute && s.route && !s.routeOptions" class="route-comparison">
@@ -110,7 +110,7 @@ const m = inject(missionKey),
       <details class="planning-assumptions">
         <summary>規劃假設與資料限制</summary>
         <p class="hint">黃色直線只用於距離對照；三種方案都使用 A* 搜尋。最短方案最小化格網三維距離，較低風險方案加入坡度與粗糙度成本；最低耗電方案逐段考慮上坡增耗與下坡省電。結果受搜尋格網限制，不保證連續地形上的全域最優。</p>
-        <p class="hint">{{ s.regional ? '全球 MOLA 為公里尺度高程，遠距結果僅供粗略模擬。' : '區域 DEM 的格距與取樣尺度限制了坡度判讀。' }}缺測與越界區段不視為可通行；未納入車輪尺度障礙、能源及真實任務時程。</p>
+        <p class="hint">{{ s.regional ? '全球 MOLA 為公里尺度高程，遠距結果僅供粗略模擬。' : '區域 DEM 有效處優先；越界或缺測時使用公里尺度 MOLA。MOLA 路段的粗糙度無法估計，只能作粗略規劃。' }}缺測與越界區段不視為可通行；未納入車輪尺度障礙、能源及真實任務時程。</p>
         <a href="https://www.momar.si/planner/" target="_blank" rel="noopener noreferrer">路線規劃介面參考：MOMAR ↗</a>
       </details>
       <p class="hint">

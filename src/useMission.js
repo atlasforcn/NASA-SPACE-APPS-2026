@@ -15,6 +15,7 @@ import P from "../planet.mjs";
 import { buildItinerary } from './routePlanner.mjs';
 import { asset, json } from "./asset";
 import { scienceLayerIds, createScienceLoader, sampleScienceGrid } from './science-layers.mjs';
+import { colorizeScienceGrid, rasterScales } from './science-style.mjs';
 
 export const missionKey = Symbol("mission");
 export const fmt = (m) =>
@@ -93,6 +94,7 @@ export function useMission() {
     bearing: "",
     layer: "none",
     layers: [],
+    layerStyles: Object.fromEntries(['terrain', 'slope', 'hillshade', 'roughness', 'geology', ...scienceLayerIds].map(id => [id, { opacity: 65, palette: 'heat', min: rasterScales[id]?.[0], max: rasterScales[id]?.[1] }])),
     scienceMeta: null,
     scienceStatus: '',
     scienceLoading: false,
@@ -362,10 +364,10 @@ export function useMission() {
     routeLayer = L.layerGroup().addTo(map);
     for (let i = 1; i < result.path.length; i++)
       L.polyline([ll(result.path[i - 1]), ll(result.path[i])], {
-        color: result.invalidSegments?.includes(i) ? "#ff736e" : "#8be4d0",
+        color: result.invalidSegments?.includes(i) ? "#ff736e" : C.heightSource(result.path[i].x,result.path[i].y)==='MOLA' ? "#e6b772" : "#8be4d0",
         weight: 4,
         pane: "navigationRoute",
-        dashArray: null,
+        dashArray: C.heightSource(result.path[i].x,result.path[i].y)==='MOLA' ? "7 5" : null,
       }).addTo(routeLayer);
   }
   function redrawNoGoZones() {
@@ -466,7 +468,7 @@ export function useMission() {
     state.continuousLocalization = true;
     render();
     state.routeStatus = result.reachable
-      ? `已建立${{safer:'較低風險',shortest:'最短',energy:'最低耗電'}[state.selectedRoute]}路線 · ${result.legs.length} 段 · 可切換比較後行進`
+      ? `已建立${{safer:'較低風險',shortest:'最短',energy:'最低耗電'}[state.selectedRoute]}路線 · ${result.legs.length} 段${result.molaDistance ? ` · MOLA 粗略區段 ${fmt(result.molaDistance)}` : ''} · 可切換比較後行進`
       : `無法抵達「${result.failedStop || goal.name}」，請調整停靠點或避險門檻。`;
   }
   function selectRoute(key) {
@@ -996,6 +998,7 @@ export function useMission() {
     return cv.toDataURL();
   }
   async function setScienceLayer(kind, token) {
+    const scienceOverlay = L.layerGroup().addTo(analysis);
     state.scienceLoading = true;
     state.scienceStatus = '正在載入離線科學資料…';
     try {
@@ -1004,22 +1007,25 @@ export function useMission() {
       const meta = loaded.meta;
       scienceGrid = loaded.values;
       state.scienceMeta = meta;
-      const scienceOverlay = L.layerGroup().addTo(analysis);
+      const style = state.layerStyles[kind];
       if (meta.kind === 'raster') {
+        const validRange = Number.isFinite(Number(style.min)) && Number.isFinite(Number(style.max)) && Number(style.min) < Number(style.max);
+        const [min, max] = validRange ? [Number(style.min), Number(style.max)] : meta.scale;
+        const url = colorizeScienceGrid(loaded.values, meta.width, meta.height, min, max, style.palette);
         for (const offset of [-360, 0, 360]) {
-          const overlay = L.imageOverlay(asset(`data/science/${kind}.png`), [[-90,-180+offset],[90,180+offset]], {
-            opacity: 0.65, className: 'science-raster', interactive: false,
+          const overlay = L.imageOverlay(url, [[-90,-180+offset],[90,180+offset]], {
+            opacity: style.opacity / 100, className: 'science-raster', interactive: false,
           });
           overlay.on('error', () => {
             if (token === scienceToken) state.scienceStatus = '科學疊圖影像載入失敗，請重試。';
           });
           overlay.addTo(scienceOverlay);
         }
-        state.legend = `${meta.title} · ${meta.scale[0]} 至 ${meta.scale[1]} ${meta.unit} · 缺值透明；色階外數值截色`;
+        state.legend = `${meta.title} · ${min} 至 ${max} ${meta.unit} · 缺值透明；色階外數值截色`;
         state.scienceStatus = `已疊加下載格網 · ${360/meta.width}°／格；放大不增加原始解析度。`;
       } else {
         for (const offset of [-360,0,360]) {
-          L.circleMarker([meta.lat, meta.lng+offset], { radius: 9, color: '#ffe09a', weight: 2, fillColor: kind === 'radiation' ? '#d24132' : '#2ab4b4', fillOpacity: 0.9 })
+          L.circleMarker([meta.lat, meta.lng+offset], { radius: 9, color: '#ffe09a', weight: 2, opacity: style.opacity / 100, fillColor: kind === 'radiation' ? '#d24132' : '#2ab4b4', fillOpacity: style.opacity / 100 })
             .bindTooltip(esc(`${meta.name} · ${meta.value.toFixed(2)} ${meta.unit}`))
             .bindPopup(`<strong>${esc(meta.name)}</strong><p>${esc(meta.value.toFixed(2))} ${esc(meta.unit)}</p><p>${esc(meta.note)}</p>`)
             .addTo(scienceOverlay);
@@ -1051,6 +1057,7 @@ export function useMission() {
     if (!state.layers.length) renderLayer('none', token);
   }
   function renderLayer(kind, token) {
+    const opacity = (state.layerStyles[kind]?.opacity ?? 65) / 100;
     if (scienceLayerIds.includes(kind)) {
       state.legend = '正在載入科學疊圖…';
       setScienceLayer(kind, token);
@@ -1078,7 +1085,7 @@ export function useMission() {
           }
           return L.polygon(
             f.rings.map((r) => r.map(([x, y]) => ll({ x, y }))),
-            { color, weight: 1, fillOpacity: 0.55 },
+            { color, weight: 1, opacity, fillOpacity: opacity * 0.85 },
           ).bindTooltip(esc(label));
         }),
       ).addTo(analysis);
@@ -1102,7 +1109,7 @@ export function useMission() {
               radius: 4,
               color: `hsl(${220 - f * 220} 65% 60%)`,
               weight: 0,
-              fillOpacity: 0.7,
+              fillOpacity: opacity,
             })
               .bindTooltip(
                 `${v.toFixed(1)} ${kind === "slope" ? "°" : "m"} · MOLA 衍生`,
@@ -1112,7 +1119,7 @@ export function useMission() {
         state.legend = "MOLA 區域取樣點；無法解析近距離障礙物。";
       } else {
         L.imageOverlay(terrainImage(kind), bounds, {
-          opacity: 0.6,
+          opacity,
           className: 'local-dem-image',
         }).addTo(analysis);
         state.legend =
@@ -1124,7 +1131,7 @@ export function useMission() {
       state.legend = state.regional
         ? (state.optical ? "USGS Viking 全球彩色光學拼圖 · 展示約 10.4 km/pixel；非即時影像" : "MOLA 全球地形陰影 · 16 ppd，赤道約 3.7 km/格")
         : !state.optical ? "光學影像關閉 · 背景為 MOLA 全球地形陰影"
-        : state.siteId === "gale" ? "USGS HiRISE 正射影像 · 展示約 6.67 m/pixel；約 51.5% 彩色，其餘灰階補足，非地質分區" : "CTX 光學影像 · 原生 5 m，展示約 8.1 m/pixel";
+        : state.siteId === "gale" ? "USGS HiRISE 正射影像 · 展示約 6.67 m/pixel；約 51.5% 彩色，其餘灰階補足，非地質分區" : "CTX 光學影像 · 原生約 5 m；擴區完整影像展示約 20 m/pixel";
     estimateMarker.bringToFront();
   }
   function stopDrawing() {
@@ -1251,13 +1258,38 @@ export function useMission() {
     resetDrawing();
     state.pickingTarget = !state.pickingTarget;
     state.routeStatus = state.pickingTarget
-      ? "請在地圖上點選任意觀測位置；超出範圍會自動擴大 MOLA 覆蓋。"
+      ? "請在地圖選取位置；局部 DEM 有效處優先，近區域越界處合併使用 MOLA。"
       : "已取消新增目的地。";
   }
   async function coverTarget(geo) {
     if (inDem(geo)) {
       const p = C.latLngToLocal(geo.lat, geo.lng);
       if (!C.risk(p.x, p.y).unknown) return true;
+    }
+    if (!state.regional) {
+      const p=C.latLngToLocal(geo.lat,geo.lng);
+      if(!Number.isFinite(p.x)||!Number.isFinite(p.y)||Math.hypot(p.x,p.y)>200000){
+        state.regionStatus="此位置距離局部 DEM 超過 200 km；請建立獨立的 MOLA 區域任務。";
+        state.routeStatus=state.regionStatus;
+        return false;
+      }
+      if(state.regionLoading)return false;
+      state.regionLoading=true;
+      state.regionStatus="載入 MOLA 數值高程，與目前局部 DEM 合併導航…";
+      try{
+        const planet=await loadPlanet();
+        const localCenter=C.localToLatLng(0,0);
+        const anchor=C.demAt(0,0);
+        const offset=Number.isFinite(anchor)?anchor-planet.sample(localCenter.lat,localCenter.lng):0;
+        const extent={minX:Math.min(C.LIMIT.minX,p.x-8000),maxX:Math.max(C.LIMIT.maxX,p.x+8000),minY:Math.min(C.LIMIT.minY,p.y-8000),maxY:Math.max(C.LIMIT.maxY,p.y+8000)};
+        C.setMolaFallback((x,y)=>{const q=C.localToLatLng(x,y);return planet.sample(q.lat,q.lng)+offset;},extent,4000);
+        bounds=[ll({x:extent.minX,y:extent.minY}),ll({x:extent.maxX,y:extent.maxY})];
+        state.regionStatus="局部 DEM 與 MOLA 已合併：局部 DEM 優先，缺測或越界處採用公里級 MOLA；MOLA 區段無法評估小型障礙。";
+        state.routeStatus=state.regionStatus;
+        scope();
+        return !C.risk(p.x,p.y).unknown;
+      }catch(e){state.regionStatus="MOLA 載入失敗："+e.message;state.routeStatus=state.regionStatus;return false;}
+      finally{state.regionLoading=false;}
     }
     if (state.regionLoading) return false;
     const token = ++regionToken;
@@ -1501,7 +1533,7 @@ export function useMission() {
     state.mapContext = isLocal
       ? state.regional
         ? (inDem(c) ? `MOLA 格距 ${fmt(cellMeters())} · 未校準定位` : "視野中心超出任務 DEM · 選點與路線將自動擴大覆蓋")
-        : `${state.siteName} 正射影像 · DEM 導航有效區`
+        : `${state.siteName} 正射影像 · 導航高程以 DEM 優先，必要時採 MOLA`
       : `${state.optical && !state.layers.includes('terrain') ? "Viking 全球光學影像" : "MOLA 全球高程"} · 可建立區域任務`;
   }
   async function overviewHeights() {
@@ -1603,7 +1635,7 @@ export function useMission() {
       : `真實 ${state.siteName} DEM · ${dem.value.width}×${dem.value.height} · 觀測為模擬`;
     state.source = state.regional
       ? `NASA PDS MOLA 16 ppd，來源含插值；球面方位等距投影。SHA-256 ${dem.value.source.original_sha256}`
-      : state.siteId === "gale" ? "USGS Gale 合併 DEM：原生格距 1 m，本站取樣 20 m；混合來源不代表全域 1 m 精度。HiRISE 彩色正射影像展示 6.67 m；尚無 Gale 地質分類。未獨立評估配準精度。" : state.siteId === "jezero-hirise" ? `USGS Jezero HiRISE DTM：單塊原生 1 m，本站 4×4 km 取樣 5 m；有效格點 ${(100*dem.value.source.valid_fraction).toFixed(1)}%，缺值不外推。光學底圖仍為 CTX；來源窗 SHA-256 ${dem.value.source.sampled_window_sha256}。` : state.siteId === "valles-ctx" ? `USGS Valles CTX DTM：單組立體影像原生約 20 m，本站 20×20 km 取樣 40 m；有效格點 ${(100*dem.value.source.valid_fraction).toFixed(1)}%，缺值不外推。來源窗 SHA-256 ${dem.value.source.sampled_window_sha256}。` : state.siteId === "jezero-extended" ? `USGS Jezero CTX DEM：原生 20 m，擴區 30×30 km 取樣 40 m；光學影像僅覆蓋中央 9.7×7 km。取樣窗 SHA-256 ${dem.value.source.sampled_window_sha256}；未獨立評估配準精度。` : `USGS CTX 原生 20 m，展示約 40 m；光學原生 5 m。地質 Sun & Stack 2020，1:75,000。SHA-256 ${dem.value.source.original_sha256}；未獨立估計配準誤差。`;
+      : state.siteId === "gale" ? "USGS Gale 合併 DEM：原生格距 1 m，本站取樣 20 m；混合來源不代表全域 1 m 精度。HiRISE 彩色正射影像展示 6.67 m；尚無 Gale 地質分類。未獨立評估配準精度。" : state.siteId === "valles-ctx" ? `USGS Valles CTX DTM：單組立體影像原生約 20 m，本站 20×20 km 取樣 40 m；有效格點 ${(100*dem.value.source.valid_fraction).toFixed(1)}%，缺值不外推。來源窗 SHA-256 ${dem.value.source.sampled_window_sha256}。` : `USGS CTX DEM 原生 20 m，30×30 km 取樣 40 m；正射影像顯示完整原檔範圍、約 20 m／像素。地質 Sun & Stack 2020，1:75,000。取樣窗 SHA-256 ${dem.value.source.sampled_window_sha256}；未獨立估計配準誤差。`;
     scope();
   }
   async function startRegion() {
@@ -1652,55 +1684,6 @@ export function useMission() {
     } finally {
       if (token === regionToken) state.regionLoading = false;
     }
-  }
-  async function startJezeroExtended() {
-    if (!state.ready || !slopeValid()) return;
-    const token=++regionToken;
-    stop(); cancel();
-    state.regionLoading=true;
-    state.regionStatus="載入 Jezero 擴區 CTX DEM…";
-    try {
-      const grid=await json("data/jezero-extended/dem.json",{signal:abort.signal});
-      if(disposed || token!==regionToken) return;
-      C.setDEM(grid);
-      dem.value=grid;
-      state.regional=false;
-      state.siteId="jezero-extended"; state.siteName="Jezero 擴區"; state.geologyAvailable=false;
-      geology=null; missionStart={x:0,y:0}; state.targets=[];
-      state.lat=grid.origin.lat; state.lng=grid.origin.lng;
-      profileOptions={angleStep:3,rayStep:80,maxRange:14000,cameraHeight:1.7,curvature:true};
-      optical.setUrl(asset("data/ctx.png"));
-      optical.setBounds([ll({x:-4850,y:-3500}),ll({x:4850,y:3500})]);
-      refreshMission();
-      state.regionStatus="Jezero 擴區 30×30 km · CTX DEM 40 m 取樣；光學影像僅覆蓋中央原有裁切。";
-    } catch(e) {
-      if(!disposed && token===regionToken) state.regionStatus="Jezero 擴區載入失敗："+e.message+"；可重試。";
-    } finally { if(token===regionToken) state.regionLoading=false; }
-  }
-  async function startJezeroHiRISE() {
-    if (!state.ready || !slopeValid()) return;
-    const token=++regionToken;
-    stop(); cancel();
-    state.regionLoading=true;
-    state.regionStatus="載入 Jezero HiRISE DTM…";
-    try {
-      const grid=await json("data/jezero-hirise/dem.json",{signal:abort.signal});
-      if(disposed || token!==regionToken) return;
-      C.setDEM(grid);
-      dem.value=grid;
-      state.regional=false;
-      state.siteId="jezero-hirise"; state.siteName="Jezero HiRISE"; state.geologyAvailable=false;
-      geology=null; missionStart={x:0,y:0}; state.targets=[];
-      state.lat=grid.origin.lat; state.lng=grid.origin.lng;
-      profileOptions={angleStep:3,rayStep:10,maxRange:1900,cameraHeight:1.7,curvature:true};
-      const originalCenter=C.latLngToLocal(18.44,77.42);
-      optical.setUrl(asset("data/ctx.png"));
-      optical.setBounds([ll({x:originalCenter.x-4850,y:-3500}),ll({x:originalCenter.x+4850,y:3500})]);
-      refreshMission();
-      state.regionStatus="Jezero HiRISE 4×4 km · 原生 1 m DTM 取樣 5 m；光學底圖仍為較粗的 CTX。";
-    } catch(e) {
-      if(!disposed && token===regionToken) state.regionStatus="Jezero HiRISE 載入失敗："+e.message+"；可重試。";
-    } finally { if(token===regionToken) state.regionLoading=false; }
   }
   async function startValles() {
     if (!state.ready || !slopeValid()) return;
@@ -1764,8 +1747,9 @@ export function useMission() {
     state.targets = [];
     profileOptions = undefined;
     C.setDEM(dem.value);
-    optical.setUrl(asset("data/ctx.png"));
-    optical.setBounds([ll({x:C.LIMIT.minX,y:C.LIMIT.minY}),ll({x:C.LIMIT.maxX,y:C.LIMIT.maxY})]);
+    optical.setUrl(asset("data/jezero-extended/optical.png"));
+    const photo=snapshot.photo;
+    optical.setBounds([ll({x:photo.bounds[0],y:photo.bounds[1]}),ll({x:photo.bounds[2],y:photo.bounds[3]})]);
     refreshMission();
     state.regionStatus = "";
   }
@@ -2125,19 +2109,19 @@ export function useMission() {
     state.loading = true;
     state.error = "";
     try {
-      const [grid, geo, mission, ctxSource, names, stations] =
+      const [grid, geo, mission, photo, names, stations] =
         await Promise.all(
           [
-            "jezero_dem.json",
+            "jezero-extended/dem.json",
             "geology.json",
             "mission.json",
-            "ctx-source.json",
+            "jezero-extended/optical-source.json",
             "mars-names.json",
             "three-forks.geojson",
           ].map((p) => json("data/" + p, { signal: abort.signal })),
         );
       if (disposed) return;
-      snapshot = { dem: grid, geology: geo, mission, ctxSource };
+      snapshot = { dem: grid, geology: geo, mission, photo };
       dem.value = grid;
       geology = geo;
       geologyIndex = createGeologyIndex(geo);
@@ -2146,10 +2130,10 @@ export function useMission() {
       C.setDEM(grid);
       if (!optical) {
         optical = L.imageOverlay(
-          asset("data/ctx.png"),
+          asset("data/jezero-extended/optical.png"),
           [
-            ll({ x: C.LIMIT.minX, y: C.LIMIT.minY }),
-            ll({ x: C.LIMIT.maxX, y: C.LIMIT.maxY }),
+            ll({ x: photo.bounds[0], y: photo.bounds[1] }),
+            ll({ x: photo.bounds[2], y: photo.bounds[3] }),
           ],
           { opacity: 1, className: 'local-dem-image' },
         ).addTo(map);
@@ -2164,7 +2148,7 @@ export function useMission() {
               [-90, -180 + offset],
               [90, 180 + offset],
             ],
-            { zIndex: -1, interactive: false },
+            { pane: 'tilePane', zIndex: -1, interactive: false },
           )
             .addTo(globalBase)
             .on("error", () => {
@@ -2200,6 +2184,11 @@ export function useMission() {
     if (map) scope();
   });
   watch(() => state.layers, () => { setLayer(); if (map) scope(); });
+  let styleTimer;
+  watch(() => state.layerStyles, () => {
+    clearTimeout(styleTimer);
+    styleTimer = setTimeout(() => { if (map && !disposed) setLayer(); }, 180);
+  }, { deep: true });
   watch(
     () => state.optical,
     (v) => {
@@ -2276,6 +2265,7 @@ export function useMission() {
   });
   watch(curve, () => drawCurve(state.result?.candidates[0]));
   onScopeDispose(() => {
+    clearTimeout(styleTimer);
     disposed = true;
     abort.abort();
     regionToken++;
@@ -2362,7 +2352,7 @@ export function useMission() {
       stop(); cancel(); resetDrawing();
       state.pickingTarget = false;
       state.pickingStart = !state.pickingStart;
-      state.routeStatus = state.pickingStart ? "請在地圖選起點；跨區域時自動擴大 MOLA 覆蓋並保留目的地。" : "已取消選起點。";
+      state.routeStatus = state.pickingStart ? "請在地圖選起點；局部 DEM 有效處優先，近區域越界處合併使用 MOLA。" : "已取消選起點。";
     },
     beginTarget,
     removeTarget,
@@ -2374,8 +2364,6 @@ export function useMission() {
     overview,
     startRegion,
     startGale,
-    startJezeroExtended,
-    startJezeroHiRISE,
     startValles,
     restore,
     bearingDemo,

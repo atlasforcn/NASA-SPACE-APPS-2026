@@ -1,35 +1,11 @@
 [
   {
-    "source": "data/ctx-source.json",
-    "disposition": "publish",
-    "reason": "Website runtime, reference, source record or presentation",
-    "path": "data/ctx-source.json",
-    "bytes": 1032,
-    "sha256": "f9122664096ac106867d16b729c43892e268d761b93122a6a5275f3f5f3e6111"
-  },
-  {
-    "source": "data/ctx.png",
-    "disposition": "publish",
-    "reason": "Website runtime, reference, source record or presentation",
-    "path": "data/ctx.png",
-    "bytes": 832803,
-    "sha256": "f5fd48c2a67aa156206953a388be4a9086e9a3c36af069d96721ca751d2358f9"
-  },
-  {
     "source": "data/geology.json",
     "disposition": "publish",
     "reason": "Website runtime, reference, source record or presentation",
     "path": "data/geology.json",
     "bytes": 1163294,
     "sha256": "283275acdc5fb16e2effe805c1e0681ef4722842643e45641b944f1be407e030"
-  },
-  {
-    "source": "data/jezero_dem.json",
-    "disposition": "publish",
-    "reason": "Website runtime, reference, source record or presentation",
-    "path": "data/jezero_dem.json",
-    "bytes": 382058,
-    "sha256": "2e53a9e3c109d33e19e15fb2456f36078ca6aac3366cab8fc6ed4a0cf26181dc"
   },
   {
     "source": "data/mars-global-dem.jpg",
@@ -124,8 +100,8 @@
     "disposition": "publish",
     "reason": "Website runtime, reference, source record or presentation",
     "path": "docs/SOURCES.md",
-    "bytes": 16819,
-    "sha256": "dd1b26c909a6be30e04ffb6737741e56dc972fac265f425eaf93c8cb33a594c7"
+    "bytes": 16662,
+    "sha256": "32f43457dfaa8161422186148fd6608e011b938895c6b99f238bcd48268bf98a"
   },
   {
     "source": "docs/Leaflet-LICENSE.txt",
@@ -140,8 +116,8 @@
     "disposition": "publish",
     "reason": "Real photo validation sources, protocol and current evidence limitations",
     "path": "docs/PHOTO-VALIDATION.md",
-    "bytes": 4540,
-    "sha256": "92efe8359c0d8de6a905bc8d1f2a56b6c4af9455d847820ee410eb5c770dd860"
+    "bytes": 4544,
+    "sha256": "40799984338d88633315b8481a8fa3644ed2c20ea3f1525d8302b71558bc32ac"
   },
   {
     "source": "data/gale/dem.json",
@@ -320,11 +296,19 @@
     "sha256": "6bca6aaf8ea39e9b55b6f287b0dd823cf66974313ce9737bf699c9a7d2ef95d7"
   },
   {
-    "source": "data/jezero-hirise/dem.json",
+    "source": "data/jezero-extended/optical.png",
     "disposition": "publish",
-    "reason": "Website runtime numeric HiRISE DTM and source record",
-    "path": "data/jezero-hirise/dem.json",
-    "bytes": 5489001,
-    "sha256": "d3fd5208d442436ddfb177ff3969c9645801d7cbd1797619889e4cbd693816eb"
+    "reason": "Website runtime Jezero extended CTX orthoimage or source record",
+    "path": "data/jezero-extended/optical.png",
+    "bytes": 22698922,
+    "sha256": "b7786e9ec1b7a37a29a0c92231c11316fa0b4bebbb3d5c3025ec39d33e8b335f"
+  },
+  {
+    "source": "data/jezero-extended/optical-source.json",
+    "disposition": "publish",
+    "reason": "Website runtime Jezero extended CTX orthoimage or source record",
+    "path": "data/jezero-extended/optical-source.json",
+    "bytes": 1388,
+    "sha256": "dc5a7212cd7e0030c837a14271810114fef5987f9b5be61ef051cbd662556d95"
   }
 ]

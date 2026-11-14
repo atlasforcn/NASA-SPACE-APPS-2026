@@ -36,5 +36,5 @@ for(const points of [
  const origin=P.coverageOrigin(points),grid=planet.region(origin.lat,origin.lng,points);C.setDEM(grid);
  for(const p of points){const q=C.latLngToLocal(p.lat,p.lng);assert(Number.isFinite(q.x)&&Number.isFinite(q.y));assert(C.validDEMPoint(q.x,q.y));assert(!C.risk(q.x,q.y).unknown);}
 }
-C.setDEM(require('../data/jezero_dem.json'));assert.equal(C.LAT0,18.44);assert.equal(C.LIMIT.maxX,4850);assert(C.elevation(-1400,-820)<0);
+C.setDEM(require('../data/jezero-extended/dem.json'));assert.equal(C.LAT0,18.44);assert.equal(C.LIMIT.maxX,15000);assert(C.elevation(-1400,-820)<0);
 console.log('Global numeric sampling, pixel centres, seam, poles, spherical frames, routes and Jezero restore passed');

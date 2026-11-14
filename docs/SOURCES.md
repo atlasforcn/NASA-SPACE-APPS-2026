@@ -28,9 +28,7 @@
 | 功能／區域 | 資料來源 | 本機資料與用途 | 類型／限制 |
 |---|---|---|---|
 | 全球導覽、任務座標 | [NASA PDS MOLA MEGDR](https://pds-geosciences.wustl.edu/missions/mgs/megdr.html) | `data/mola16.bin`、`data/mars-global-dem.jpg`；數值高程、全球底圖與自訂座標任務 | MGS 雷射高度計；16 ppd 全球格網，衍生著色圖僅供顯示 |
-| Jezero 任務區 | [USGS CTX DEM](https://astrogeology.usgs.gov/search/map/mars_2020_science_investigation_ctx_dem_mosaic)、[USGS CTX 正射影像](https://asc-pds-services.s3.us-west-2.amazonaws.com/mosaic/mars2020_trn/CTX/ScienceInvestigationMaps_JPL/M20_JezeroCrater_CTXortho_mosaic_5m.tif)、[USGS 地質圖](https://www.usgs.gov/maps/geologic-map-jezero-crater-and-nili-planum-region-mars) | `data/jezero_dem.json`、`data/ctx.png`、`data/geology.json`；地形、影像、地質單元 | MRO CTX 觀測；地質為區域科學解釋，非障礙物實測 |
-| Jezero 擴區 | [同一 USGS CTX DEM](https://astrogeology.usgs.gov/search/map/mars_2020_science_investigation_ctx_dem_mosaic) | `data/jezero-extended/dem.json`；30×30 km 數值高程 | 原生 20 m，本站 40 m 取樣；光學影像僅覆蓋中央 9.7×7 km，未提供擴區地質圖 |
-| Jezero HiRISE 局部 | [USGS Mars Sample Return HiRISE DTM](https://astrogeology.usgs.gov/search/map/mars-sample-return-terrain-relative-navigation-hirise-dtm-mosaic) | `data/jezero-hirise/dem.json`；4×4 km 數值高程 | 單塊原生 1 m DTM 取樣 5 m；有效格點約 91.1%，底圖仍為 CTX 正射影像 |
+| Jezero 任務區 | [USGS CTX DEM](https://astrogeology.usgs.gov/search/map/mars_2020_science_investigation_ctx_dem_mosaic)、[CTX 正射影像](https://asc-pds-services.s3.us-west-2.amazonaws.com/mosaic/mars2020_trn/CTX/ScienceInvestigationMaps_JPL/M20_JezeroCrater_CTXortho_mosaic_5m.tif)、[USGS 地質圖](https://www.usgs.gov/maps/geologic-map-jezero-crater-and-nili-planum-region-mars) | `data/jezero-extended/dem.json`、`optical.png`、`data/geology.json`；30×30 km 數值高程、完整 CTX 正射影像及中央地質單元 | DEM 原生 20 m、本站 40 m 取樣；光學原生約 5 m、展示約 20 m／像素；影像超出 DEM 範圍，地質圖只覆蓋中央區域 |
 | Gale 任務區 | [USGS MSL Gale DEM](https://astrogeology.usgs.gov/search/map/mars_msl_gale_merged_dem_1m)、[USGS Gale 正射影像](https://astrogeology.usgs.gov/search/map/mars_msl_gale_merged_orthophoto_mosaic_25cm) | `data/gale/`；按需載入局部地形與光學影像 | MRO HiRISE／合併產品；本機展示格距較原生像素粗，色彩覆蓋不完整 |
 | Valles Marineris 局部 | [USGS CTX DTM STAC](https://stac.astrogeology.usgs.gov/docs/tutorials/qgis_3d/) | `data/valles/`；20×20 km 數值高程與灰階正射影像 | 單組 CTX 立體 DTM，原生約 20 m、本站 40 m 取樣；有效高程約 94.2%，缺值不外推 |
 | 全球科學圖層 | [ASU JMARS 數值圖層服務](https://ms-mars.mars.asu.edu/) | `data/science/*.bin`、`*.png` 與 `manifest.json`；熱慣量、橄欖石豐度、重力異常、鐵含量 | 多任務儀器產品與模型；解析度、有效覆蓋及引用各異，供區域背景探索 |
@@ -38,13 +36,13 @@
 | Three Forks 樣本存放 | [NASA PDS Sample Depot](https://pds-geosciences.wustl.edu/m2020/urn-nasa-pds-mars2020_sample_depot_three_forks/) | `data/pds/` CSV/XML 與 `data/three-forks.geojson`；樣本名稱、存放點及時間 | 任務紀錄資料；非地形或材料遙測 |
 | 官方地名與著陸位置 | [USGS／IAU Mars nomenclature GIS](https://planetarynames.wr.usgs.gov/GIS_Downloads)、NASA 與研究論文 | `data/mars-names.json`、`data/mission.json`；地名和歷史著陸標記 | 地名核准資料與歷史位置；標記不代表漫遊車目前位置 |
 
+局部導航高程採兩來源：有效的局部 DEM 優先；目的地離局部中心不超過 200 km 時，缺測或超出局部 DEM 的區段可載入 MOLA 16 ppd 數值格網補足。MOLA 高程以局部中心點的差值作常數垂直對齊，這不等於完整配準。路線將 MOLA 區段以橘色虛線標示並統計長度。MOLA 約公里尺度，無法估算車輪尺度粗糙度；混合路線只供粗略模擬，不可用於實際導航。超過 200 km 應明確建立 MOLA 區域任務，避免局部平面座標誤差。
+
 坡度、粗糙度、陰影、地平線、彩色 DEM 底圖、樣本 GeoJSON 及介面摘要均為本專案計算或格式轉換後的呈現，不應視為額外獨立觀測。模擬車輛位置、漂移與路線成本也不是資料來源。以下各節記錄重要產品細節及限制。
 
 ## Gale 高解析區域資料
 
-Jezero 擴區由 `scripts/prepare-jezero-extended.py` 以 HTTP range 讀取官方 CTX 數值 DEM，中心 18.44°N、77.42°E，取樣 751×751、40 m／格。來源 URL、ETag、尺寸、火星投影、讀取窗與取樣窗雜湊保存在輸出 JSON；未下載整份原始 TIFF，因此未宣稱原檔 SHA-256。有效格點為 100%。此擴區與原 Jezero 地形來自同一 CTX 產品，不是獨立觀測。原正射影像只在中央裁切展示；擴區的影像空白不代表 DEM 缺值。
-
-Jezero HiRISE 局部由 `scripts/prepare-jezero-hirise.py` 讀取官方 Jezero C HiRISE DTM 分塊，中心 18.44°N、77.425°E，取樣 801×801、5 m／格。來源原生格距 1 m，並不表示 1 m 垂直精度。有效格點約 91.1%，缺值保持空白；光學底圖沿用較粗的 CTX 影像。此局部與 CTX 裁切可用於比較格距對地形衍生量的影響，但須分開考慮覆蓋範圍與資料誤差。
+預設 Jezero CTX DEM 由 `scripts/prepare-jezero-extended.py` 以 HTTP range 讀取官方 CTX 數值 DEM，中心 18.44°N、77.42°E，取樣 751×751、40 m／格。來源 URL、ETag、尺寸、火星投影、讀取窗與取樣窗雜湊保存在輸出 JSON；未下載整份原始 TIFF，因此未宣稱原檔 SHA-256。有效格點為 100%。`scripts/prepare-jezero-extended-optical.py` 從官方 CTX 正射影像完整範圍降採樣約 4 倍、約 20 m／像素，不裁切原始覆蓋範圍，來源與讀取窗記錄於 `data/jezero-extended/optical-source.json`。光學影像只用於展示，不作數值高程。舊 9.7×7 km 同源 DEM 已移除，避免重複載入。
 
 Valles 局部由 `scripts/prepare-valles.py` 使用 USGS STAC 的單組受控 CTX DTM 與對應正射影像；中心 −10.0°N、−69.3°E，格網 501×501、40 m／格。數值高程約 −364 至 4067 m，有效格點約 94.2%。兩份來源皆重新投影到本站的火星局部框架；正射影像做 1–99 百分位灰階拉伸，僅供顯示。來源項目、URL、原始投影、讀取窗與數值窗雜湊保存在輸出資料。單組 DTM 的缺值、雜訊和垂直誤差仍限制坡度與路線判讀；尚無獨立配準驗證。
 
@@ -61,8 +59,8 @@ Valles 局部由 `scripts/prepare-valles.py` 使用 USGS STAC 的單組受控 CT
 
 | 資料 | 產品／來源 | 解析度與用途 |
 |---|---|---|
-| 地形 | [USGS Mars 2020 Science Investigation CTX DEM](https://astrogeology.usgs.gov/search/map/mars_2020_science_investigation_ctx_dem_mosaic) | 原生 20 m；本機 243×176 格網，東 40.082645 m／北 40 m；100% 有效 |
-| 光學 | [同套 USGS CTX 正射影像](https://asc-pds-services.s3.us-west-2.amazonaws.com/mosaic/mars2020_trn/CTX/ScienceInvestigationMaps_JPL/M20_JezeroCrater_CTXortho_mosaic_5m.tif) | 原生 5 m；本機 1200×866 PNG，約 8.09 m；1–99 百分位對比拉伸，只供顯示 |
+| 地形 | [USGS Mars 2020 Science Investigation CTX DEM](https://astrogeology.usgs.gov/search/map/mars_2020_science_investigation_ctx_dem_mosaic) | 原生 20 m；本機 751×751 格網，40 m／格、30×30 km；100% 有效 |
+| 光學 | [同套 USGS CTX 正射影像](https://asc-pds-services.s3.us-west-2.amazonaws.com/mosaic/mars2020_trn/CTX/ScienceInvestigationMaps_JPL/M20_JezeroCrater_CTXortho_mosaic_5m.tif) | 原生約 5 m；本機完整影像 4442×5059 PNG，約 20 m／像素；1–99 百分位對比拉伸，只供顯示 |
 | 地質 | [Sun & Stack 2020, USGS SIM 3464](https://www.usgs.gov/maps/geologic-map-jezero-crater-and-nili-planum-region-mars)；[官方 GIS FeatureServer](https://services.arcgis.com/v01gqwM5QqNysAAi/arcgis/rest/services/Jezero_FeatureServiceFromPro/FeatureServer/8) | 1:75,000 地質解釋圖，27 個與示範框相交的多邊形；保留單元、原始描述及配色 |
 
 DEM 與光學使用 MRO CTX 產品；DEM 的垂直控制依來源產品以 MOLA 為基礎。這是 MRO 觀測加上 MGS/MOLA 高程控制，並非三種獨立任務的感測觀測。坡度、粗糙度及地平線均為 DEM 衍生量，不另計為獨立資料類別。
@@ -71,7 +69,7 @@ DEM 與光學使用 MRO CTX 產品；DEM 的垂直控制依來源產品以 MOLA 
 
 `data/geology.json` 保留原生 WKT、查詢 URL、原始 JSON SHA-256、所有欄位與 renderer。多邊形保留完整相交要素，顯示框以外不列為有效任務範圍。洞與多重環採 even-odd 點包含測試。
 
-`data/ctx-source.json` 保存影像來源、SHA-256、CRS、實際展示格距及有效率。DEM 來源與原始雜湊亦保存於 `data/jezero_dem.json`。
+`data/jezero-extended/optical-source.json` 保存完整影像來源、CRS、展示格距及有效率；`data/jezero-extended/dem.json` 保存 DEM 來源與取樣窗雜湊。
 
 資料限制：沒有獨立控制點的配準精度評估；共同座標套疊不能證明公尺級對齊。地質圖為區域科學解釋，不是障礙物或逐格材質實測。局部格網邊界會截短遠方視線，1200 m 以上可用射線仍未必包含真正遠方天際線。觀測與匹配使用同一模型，會高估實景表現。
 

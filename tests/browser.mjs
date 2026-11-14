@@ -322,10 +322,10 @@ try {
     await page.locator('#dem-region-preset').selectOption('jezero');
     await page.locator('#load-region').click();
     await page.waitForFunction(()=>window.__mission.state.siteId==='jezero');
-    assert.equal(await inspect(()=>window.__mission.inspect().dem.schema),'jezero-dem-grid-v1');
+    assert.equal(await inspect(()=>window.__mission.inspect().dem.schema),'mars-local-grid-v1');
     assert.equal(await inspect(()=>window.__mission.state.geologyAvailable),true);
     assert(await inspect(()=>window.__mission.state.pois.some(p=>p.id==='butler')));
-    await page.waitForFunction(()=>Array.from(document.images).some(i=>i.src.endsWith('/data/ctx.png')&&i.complete&&i.naturalWidth>0));
+    await page.waitForFunction(()=>Array.from(document.images).some(i=>i.src.endsWith('/data/jezero-extended/optical.png')&&i.complete&&i.naturalWidth>0));
     assert.equal(await inspect(() => window.__mission.state.targets.length), 0);
     await page.getByRole("button", { name: "任務", exact: true }).click();
     assert.equal(await page.locator("#plan").isEnabled(), false);

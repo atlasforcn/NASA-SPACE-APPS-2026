@@ -3,7 +3,7 @@ import { spawnSync } from "node:child_process";
 import assert from "node:assert/strict";
 
 // Mutate only generated output or a temporary untracked input; always restore it.
-const file = "dist/data/ctx.png",
+const file = "dist/data/jezero-extended/optical.png",
   original = fs.readFileSync(file);
 const rejects = (message) => {
   const result = spawnSync(process.execPath, ["scripts/assets.mjs", "verify"], {
@@ -25,10 +25,10 @@ try {
   fs.writeFileSync(file, original);
 }
 try {
-  fs.renameSync(file, "dist/data/CTX.png");
+  fs.renameSync(file, "dist/data/jezero-extended/OPTICAL.png");
   rejects("Missing/case mismatch");
 } finally {
-  fs.renameSync("dist/data/CTX.png", file);
+  fs.renameSync("dist/data/jezero-extended/OPTICAL.png", file);
 }
 const unclassified = "data/__asset_integrity_test__.tmp";
 try {

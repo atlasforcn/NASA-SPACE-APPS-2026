@@ -29,6 +29,18 @@ test('A* can still traverse DEM risks',()=>{
  const r=c.planPath({x:-1400,y:-820},{x:2200,y:780},90);
  assert(r.reachable,'No path generated through test raster');
 });
+test('Local DEM and MOLA fallback share a route without replacing the local grid',()=>{
+ const local=c.demAt(0,0);
+ c.setMolaFallback(()=>-2500,{minX:-10000,maxX:10000,minY:-8000,maxY:8000});
+ assert.equal(c.heightSource(0,0),'DEM');
+ assert.equal(c.elevation(0,0),local);
+ assert.equal(c.heightSource(6000,0),'MOLA');
+ assert.equal(c.elevation(6000,0),-2500);
+ assert(c.planPath({x:2200,y:0},{x:6000,y:0}).reachable);
+ assert(Number.isNaN(c.elevation(11000,0)));
+ c.clearMolaFallback();
+ assert(Number.isNaN(c.elevation(6000,0)));
+});
 test('Loader rejects impossible input and rolls back to current DEM',()=>{
  const bad={...fixture,heights:fixture.heights.slice(3)};
  assert.throws(()=>c.setDEM(bad));assert(c.demInfo());

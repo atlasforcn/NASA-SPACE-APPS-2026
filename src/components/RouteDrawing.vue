@@ -9,7 +9,7 @@ const m = inject(missionKey),
     <p class="eyebrow">CUSTOM ROUTE</p>
     <h2>繪製自己的探索路線</h2>
     <p class="hint">
-      從導航估計位置開始，逐點設定或拖曳手繪。完成時自動擴大 MOLA 覆蓋；紅色為缺測或超坡。
+      從導航估計位置開始，逐點設定或拖曳手繪。局部 DEM 有效處優先，越界或缺測處使用 MOLA；MOLA 區段僅供粗略規劃。紅色為缺測或超坡。
     </p>
     <div class="button-row">
       <button
