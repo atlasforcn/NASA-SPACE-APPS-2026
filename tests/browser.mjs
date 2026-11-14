@@ -194,7 +194,7 @@ try {
     await page.locator('#named-search').fill('Jezero');
     await page.locator('#named-list button').first().click();
     await page.locator('#named-set-destination').click();
-    await page.waitForFunction(() => document.querySelector('#destination')?.selectedOptions[0]?.textContent.includes('Jezero'));
+    await page.waitForFunction(() => document.querySelector('#destination')?.value === 'custom-named-Jezero');
     assert.equal(await page.locator('.planner-stops li').count(), 2);
     await page.screenshot({path:'test-results/named-stops.png'});
 
