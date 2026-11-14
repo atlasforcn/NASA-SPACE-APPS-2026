@@ -121,6 +121,43 @@ try {
     assert.equal(await page.locator("#position").textContent(), "尚未設定起點");
     assert.equal(await page.locator('#map path[stroke="#9af0e0"]').count(), 0);
     assert.equal(await page.getByText("E -750 m", {exact: false}).count(), 0);
+    // Drawing and uploads must also work before any mission start is chosen.
+    assert(await page.locator("#horizon-match").isEnabled());
+    const initialEditor = page.locator("#horizon-editor");
+    await initialEditor.scrollIntoViewIfNeeded();
+    const initialBox = await initialEditor.boundingBox();
+    await page.mouse.move(initialBox.x + 5, initialBox.y + initialBox.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(initialBox.x + initialBox.width - 5, initialBox.y + initialBox.height / 2, { steps: 30 });
+    await page.mouse.up();
+    await page.locator("#horizon-match").click();
+    await page.waitForFunction(() => window.__mission.state.externalHorizon);
+    assert((await page.locator("#horizon-input-status").textContent()).includes("未設定起點"));
+    await page.locator("#cancel").click();
+    const widePhoto = await page.evaluate(() => {
+      const cv = document.createElement("canvas"); cv.width = 3430; cv.height = 450;
+      const ctx = cv.getContext("2d"); ctx.fillStyle = "#dddddd"; ctx.fillRect(0, 0, cv.width, cv.height);
+      ctx.fillStyle = "#887766"; ctx.fillRect(0, 120, cv.width, 330);
+      return cv.toDataURL().split(",")[1];
+    });
+    await page.locator("#horizon-photo").setInputFiles(process.env.USER_HORIZON_IMAGE ||
+      { name: "wide-ridge.png", mimeType: "image/png", buffer: Buffer.from(widePhoto, "base64") });
+    await page.waitForFunction(() => document.getElementById("horizon-input-status").textContent.includes("邊界提案"));
+    assert(await initialEditor.evaluate(cv => cv.height < 105));
+    fs.mkdirSync("test-results", { recursive: true });
+    await page.locator(".horizon-input").screenshot({ path: "test-results/wide-horizon-input.png" });
+    await page.locator("#horizon-projection").selectOption("equirectangular");
+    await page.locator("#horizon-fov").fill("180");
+    await page.locator("#horizon-match").click();
+    await page.waitForFunction(() => window.__mission.state.externalHorizon && !window.__mission.state.searching, null, { timeout: 120000 });
+    assert.equal(await inspect(() => window.__mission.state.status), "外部輪廓候選");
+    assert.equal(await inspect(() => window.__mission.state.hasStart), false);
+    assert.equal(await page.locator('#map path[stroke="#9af0e0"]').count(), 0);
+    assert(await page.locator("#curve").evaluate(cv => cv.getContext("2d").getImageData(0, 0, cv.width, cv.height).data.some((v, i) => i % 4 === 3 && v)));
+    await page.locator("#horizon-projection").selectOption("perspective");
+    await page.locator("#horizon-fov").fill("60");
+    await page.locator("#horizon-blank").click();
+    await inspect(() => window.__mission.reset());
     // A second detailed site must switch the numeric frame AND every local overlay.
     assert(!requests.some(p=>p.includes('/data/gale/')), 'Gale is loaded on demand');
     await page.getByRole('button',{name:'探索',exact:true}).click();
@@ -167,6 +204,35 @@ try {
     await chooseStart();
     assert.equal(await inspect(() => window.__mission.state.hasStart), true);
     assert.equal(await page.locator('#map path[stroke="#9af0e0"]').count(), 1);
+    // User observations must search without reading or correcting simulator truth.
+    const editor = page.locator("#horizon-editor");
+    await editor.scrollIntoViewIfNeeded();
+    const editorBox = await editor.boundingBox();
+    await page.mouse.move(editorBox.x + 5, editorBox.y + editorBox.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(editorBox.x + editorBox.width - 5, editorBox.y + editorBox.height / 2, { steps: 30 });
+    await page.mouse.up();
+    assert(await page.locator("#horizon-input-status").textContent().then(v => v.includes("橘線")));
+    const photo = await page.evaluate(() => {
+      const cv = document.createElement("canvas"); cv.width = 700; cv.height = 260;
+      const ctx = cv.getContext("2d"); ctx.fillStyle = "#d9bbaa"; ctx.fillRect(0, 0, 700, 260);
+      ctx.fillStyle = "#443322"; ctx.beginPath(); ctx.moveTo(0, 260);
+      for (let x = 0; x <= 700; x++) ctx.lineTo(x, 130 + Math.sin(x / 45) * 12);
+      ctx.lineTo(700, 260); ctx.fill(); return cv.toDataURL().split(",")[1];
+    });
+    await page.locator("#horizon-photo").setInputFiles({ name: "ridge.png", mimeType: "image/png", buffer: Buffer.from(photo, "base64") });
+    await page.waitForFunction(() => document.getElementById("horizon-input-status").textContent.includes("邊界提案"));
+    await page.locator(".horizon-input").screenshot({ path: "test-results/horizon-input.png" });
+    const beforeExternal = await inspect(() => ({ ...window.__mission.state.estimate }));
+    await page.locator("#horizon-match").click();
+    await page.waitForFunction(() => window.__mission.state.externalHorizon && !window.__mission.state.searching, null, { timeout: 120000 });
+    assert.equal(await inspect(() => window.__mission.state.status), "外部輪廓候選");
+    assert.deepEqual(await inspect(() => ({ ...window.__mission.state.estimate })), beforeExternal);
+    assert.equal(await inspect(() => window.__mission.inspect().observation.kind), "user-horizon");
+    await page.locator("#horizon-blank").click();
+    await page.locator("#horizon-match").click();
+    assert((await page.locator("#horizon-input-status").textContent()).includes("輪廓太短"));
+    await page.locator("#reset").click();
     // Keep the navigation scenarios on a fixed destination for reproducibility.
     await inspect(() => {
       window.__mission.state.targets = [{ id: "test-goal", name: "導航測試點", x: -2200, y: -800, unit: "測試地形" }];

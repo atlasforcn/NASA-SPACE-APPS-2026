@@ -1,5 +1,6 @@
 <script setup>
 import { inject } from "vue";
+import HorizonInput from "./HorizonInput.vue";
 import { missionKey } from "../useMission";
 const m = inject(missionKey),
   s = m.state;
@@ -66,17 +67,18 @@ const m = inject(missionKey),
       </div>
     </div>
     <div class="horizon-charts">
+      <HorizonInput />
       <div class="chart-head">
-        <span>DEM 模擬掃描視角</span><span>非真實照片 / 120°</span>
+        <span>{{ s.externalHorizon ? "手繪／照片輪廓與 DEM 候選" : "DEM 模擬掃描視角" }}</span><span>輪廓視窗 / 120°</span>
       </div>
       <div class="button-row">
         <button :disabled="!s.ready || !s.hasStart" @click="m.turnView(-30)">← 左轉 30°</button>
         <button :disabled="!s.ready || !s.hasStart" @click="m.turnView(30)">右轉 30° →</button>
         <button :disabled="!s.ready || !s.hasStart || (!s.poi && !s.destination)" @click="m.focusView">對準標記點</button>
       </div>
-      <p class="hint">標記為已知地圖位置的輔助投影，不參與地平線定位；虛線與空心點表示不可見或視野外，並非相機辨識結果。可點選地圖標記後對準。</p>
+      <p v-if="!s.externalHorizon" class="hint">標記為已知地圖位置的輔助投影，不參與地平線定位；虛線與空心點表示不可見或視野外，並非相機辨識結果。可點選地圖標記後對準。</p>
       <div class="chart-legend" aria-label="地平線圖例">
-        <span><i class="legend-line orange"></i>橘線：模擬觀測</span>
+        <span><i class="legend-line orange"></i>橘線：{{ s.externalHorizon ? "手繪／照片輪廓" : "模擬觀測" }}</span>
         <span><i class="legend-line mint"></i>青線：候選地平線</span>
         <span>深色／缺口：無觀測資料</span>
       </div>
@@ -102,7 +104,7 @@ const m = inject(missionKey),
       <p class="hint" id="horizon-hover" role="status">{{ s.horizonHover || "掃描後，移動滑鼠至快照可在地圖查看對應輪廓點；標示的是該方向仰角最高的地形點。" }}</p>
     </div>
     <div class="localization-results">
-      <p class="hint">上下圖使用同一次掃描、同一個 120° 視窗，左右轉動會同步；深色區與曲線缺口表示無觀測。行進時保留掃描當下的視角，直到下一次掃描更新。畫面以仰角縮放，並非相機透視照片；定位仍比對完整掃描中的有效資料。60° 視角不足全周 50% 的校正門檻，顯示候選不代表定位成功。</p>
+      <p v-if="!s.externalHorizon" class="hint">上下圖使用同一次掃描、同一個 120° 視窗，左右轉動會同步；深色區與曲線缺口表示無觀測。行進時保留掃描當下的視角，直到下一次掃描更新。畫面以仰角縮放，並非相機透視照片；定位仍比對完整掃描中的有效資料。60° 視角不足全周 50% 的校正門檻，顯示候選不代表定位成功。</p>
       <p id="match-msg" class="hint" role="status">{{ s.message }}</p>
       <ol id="candidates" aria-label="Top 3 定位候選">
         <li v-for="(v, i) in s.result?.candidates || []" :key="i">
@@ -127,7 +129,7 @@ const m = inject(missionKey),
         <p class="hint">{{ s.bearing }}</p>
       </details>
       <p class="notice">
-        教育概念驗證 · 圖層為真實資料；觀測、車輛與漂移為模擬。
+        教育概念驗證 · DEM 為真實資料；手繪／照片為使用者輸入，其餘觀測、車輛與漂移為模擬。
       </p>
     </div>
   </section>

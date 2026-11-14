@@ -65,6 +65,7 @@ export function useMission() {
     scenario: "good",
     viewYaw: 0,
     horizonHover: "",
+    externalHorizon: false,
     searching: false,
     continuousLocalization: true,
     localizationCount: 0,
@@ -282,6 +283,7 @@ export function useMission() {
     clearRoute();
     state.result = null;
     observation = null;
+    state.externalHorizon = false;
     observationPose = null;
     displayedCandidate = null;
     state.viewYaw = 0;
@@ -443,8 +445,9 @@ export function useMission() {
     state.status = "里程偏差已注入";
     render();
   }
-  function scan(continuous = false) {
-    if (!state.hasStart) return;
+  function scan(continuous = false, suppliedObservation = null) {
+    if (!state.hasStart && !suppliedObservation) return;
+    if (!state.ready || state.regionLoading) return;
     // Click handlers pass an event; only explicit true enables moving capture.
     continuous = continuous === true;
     if (continuous) {
@@ -459,9 +462,11 @@ export function useMission() {
     const capturePose = { ...state.estimate };
     candidateLayer.clearLayers();
     state.result = null;
-    observationPose = { ...state.truth };
+    observationPose = { ...(suppliedObservation ? state.estimate : state.truth) };
     displayedCandidate = null;
-    observation = S.simulate(observationPose, {
+    state.viewYaw = 0;
+    state.externalHorizon = !!suppliedObservation;
+    observation = suppliedObservation || S.simulate(observationPose, {
       ...profileOptions,
       seed: 42,
       noise: 0.025,
@@ -472,7 +477,10 @@ export function useMission() {
     render();
     const centre = { ...state.estimate },
       range = state.regional ? Math.max(16000, cellMeters() * 4) : 1600,
-      searchBounds = {
+      searchBounds = suppliedObservation && !state.hasStart ? {
+        minX: C.LIMIT.minX + 250, maxX: C.LIMIT.maxX - 250,
+        minY: C.LIMIT.minY + 250, maxY: C.LIMIT.maxY - 250,
+      } : {
         minX: Math.max(C.LIMIT.minX + 250, centre.x - range),
         maxX: Math.min(C.LIMIT.maxX - 250, centre.x + range),
         minY: Math.max(C.LIMIT.minY + 250, centre.y - range),
@@ -486,7 +494,7 @@ export function useMission() {
     state.searching = true;
     state.status = continuous ? "行進中／地平線搜尋中" : "搜尋中";
     state.message =
-      "輸入只有地平線曲線與估計位置周邊搜尋區；模擬真值不傳入定位器。";
+      suppliedObservation ? "使用手繪／照片角度輪廓搜尋 DEM 候選；不自動套用校正。" : "輸入只有地平線曲線與估計位置周邊搜尋區；模擬真值不傳入定位器。";
     const fail = (message) => {
       if (id !== job) return;
       cancel();
@@ -533,7 +541,11 @@ export function useMission() {
       });
       const best = result.candidates[0];
       drawCurve(best);
-      if (result.status === "good" && best) {
+      if (suppliedObservation) {
+        state.status = "外部輪廓候選";
+        state.message = `${result.reason}；手繪／照片比對僅提供候選，請核對橘色輸入與青色 DEM 輪廓及相機設定。未套用位置校正。`;
+        state.evaluation = "外部觀測沒有模擬真值可評估。";
+      } else if (result.status === "good" && best) {
         // Search describes the capture instant; carry intervening odometry forward.
         state.estimate = {
           x: best.x + (continuous ? state.estimate.x - capturePose.x : 0),
@@ -575,9 +587,11 @@ export function useMission() {
       dem: dem.value,
       observation,
       bounds: searchBounds,
-      options: state.regional
-        ? { coarseStep: cellMeters(), candidateSeparation: cellMeters() * 2 }
-        : {},
+      options: suppliedObservation && !state.hasStart
+        ? { coarseStep: Math.max(state.regional ? cellMeters() : 200,
+            (searchBounds.maxX - searchBounds.minX) / 24, (searchBounds.maxY - searchBounds.minY) / 24),
+            candidateSeparation: state.regional ? cellMeters() * 2 : 180 }
+        : state.regional ? { coarseStep: cellMeters(), candidateSeparation: cellMeters() * 2 } : {},
     });
   }
   function drawCurve(candidate) {
@@ -653,7 +667,7 @@ export function useMission() {
     clearHorizonHover();
     panoramaFrame = null;
     if (!dem.value || !map) return;
-    if (!state.hasStart) {
+    if (!state.hasStart && !state.externalHorizon) {
       remove(estimateMarker);
       remove(truthMarker);
       for (const cv of [panorama.value, curve.value]) {
@@ -704,7 +718,7 @@ export function useMission() {
       ctx.stroke();
     });
     const eye = C.elevation(pose.x, pose.y) + obs.cameraHeight;
-    const markers = [...state.pois, ...state.targets];
+    const markers = state.externalHorizon ? [] : [...state.pois, ...state.targets];
     const seen = new Set();
     const labels = [];
     for (const marker of markers) {
@@ -766,7 +780,7 @@ export function useMission() {
     }
     ctx.fillStyle = "#fff0d6";
     ctx.font = "13px system-ui";
-    ctx.fillText(`${observation ? '掃描快照' : '掃描前預覽'} · yaw ${heading.toFixed(0)}° · 深色區無觀測`, 12, 22);
+    ctx.fillText(state.externalHorizon ? `使用者輪廓 · 相對視角 ${state.viewYaw.toFixed(0)}° · 深色區無觀測` : `${observation ? '掃描快照' : '掃描前預覽'} · yaw ${heading.toFixed(0)}° · 深色區無觀測`, 12, 22);
   }
   function clearHorizonHover() {
     horizonHoverLayer?.clearLayers();
@@ -778,6 +792,7 @@ export function useMission() {
     render();
   }
   function hoverHorizon(event) {
+    if (state.externalHorizon) { state.horizonHover = "外部輪廓尚未確定拍攝位置，請查看地圖候選與青色 DEM 疊圖。"; return; }
     if (!panoramaFrame?.captured || !map || !horizonHoverLayer) return;
     const cv = panorama.value, rect = cv.getBoundingClientRect();
     const fraction = C.clamp((event.clientX - rect.left) / rect.width, 0, 1);
@@ -1825,6 +1840,7 @@ export function useMission() {
       state.message = state.hasStart ? "保留導航估計；請重新掃描。" : "請先在「任務」選擇起點。";
       if (!state.hasStart) state.status = "尚未設定起點";
       observation = null;
+    state.externalHorizon = false;
       observationPose = null;
       displayedCandidate = null;
       candidateLayer?.clearLayers();
@@ -1881,6 +1897,8 @@ export function useMission() {
     toggleMotion,
     drift,
     scan,
+    matchHorizon: (obs) => scan(false, obs),
+    horizonOptions: () => ({ ...profileOptions }),
     drawCurve,
     turnView: (degrees) => { state.viewYaw = ((state.viewYaw + degrees + 540) % 360) - 180; },
     focusView: () => {
