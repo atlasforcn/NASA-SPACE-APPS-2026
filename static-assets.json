@@ -68,8 +68,8 @@
     "disposition": "publish",
     "reason": "Website runtime, reference, source record or presentation",
     "path": "data/mola16.json",
-    "bytes": 1022,
-    "sha256": "4c2b9106838446e8df54eb8e6069e0ab594348ddafd9099f78ee102cd836edae"
+    "bytes": 1004,
+    "sha256": "bb1b923536a1d2a37f83194d92f8c9a5e3df834183f3fb46b6b3b418b8998376"
   },
   {
     "source": "data/mola16.lbl",

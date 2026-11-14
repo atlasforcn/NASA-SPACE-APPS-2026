@@ -10,8 +10,16 @@ export const walk = (dir) =>
           e.isDirectory() ? walk(`${dir}/${e.name}`) : [`${dir}/${e.name}`],
         )
     : [];
+const assetBytes = (p) => {
+  const bytes = fs.readFileSync(p);
+  // JSON metadata is text and Git may check it out with CRLF on Windows.
+  // Hash its canonical LF form so the inventory stays portable across OSes.
+  return p.endsWith(".json")
+    ? Buffer.from(bytes.toString("utf8").replace(/\r\n/g, "\n"), "utf8")
+    : bytes;
+};
 const hash = (p) =>
-  crypto.createHash("sha256").update(fs.readFileSync(p)).digest("hex");
+  crypto.createHash("sha256").update(assetBytes(p)).digest("hex");
 const fail = (s) => {
   throw Error(s);
 };
@@ -45,7 +53,7 @@ export function checkInventory() {
       fail("Invalid classification: " + r.source);
     if (r.disposition === "publish") {
       if (!fs.existsSync(r.source)) fail("Missing source: " + r.source);
-      if (fs.statSync(r.source).size !== r.bytes || hash(r.source) !== r.sha256)
+      if (assetBytes(r.source).byteLength !== r.bytes || hash(r.source) !== r.sha256)
         fail(
           "Asset changed; review and run npm run assets:update: " + r.source,
         );
@@ -136,7 +144,7 @@ export function verify() {
 const command = process.argv[2];
 if (command === "inventory") {
   for (const r of records.filter((r) => r.disposition === "publish")) {
-    r.bytes = fs.statSync(r.source).size;
+    r.bytes = assetBytes(r.source).byteLength;
     r.sha256 = hash(r.source);
   }
   fs.writeFileSync(inventoryPath, JSON.stringify(records, null, 2) + "\n");
