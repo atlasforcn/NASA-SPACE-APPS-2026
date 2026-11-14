@@ -100,3 +100,19 @@ Jezero 模式相機高度 1.7 m、假定俯仰／滾轉已校正。射線 80 m �
 這是「任意火星地點的區域規劃」，不是一次跨整顆行星的 A* 搜尋，也沒有全火星 20 m DEM、全球 CTX 光學、全球地質單元或全球已驗證定位精度。全球地平線射線 4 km、方位 6°、最遠 100 km，含一階球面曲率近似；相機與地形均為模擬。
 
 重建：`python scripts/prepare_global_dem.py`、`python scripts/render_global_dem.py`。檢查：`node tests/test_planet.js`、`python tests/test_global_assets.py`、`python tests/planet_browser.py`。全球介面與換日線、兩極、圖層、路線、實驗定位、切回 Jezero 均有自動驗證，結果見 `artifacts/global-region-results.json`。
+
+
+## MarsOps Three Forks 考察流程（基於目前版本新增）
+
+首頁新增「重訪樣本存放區」，保留原本全球區域任務、地圖互動及定位功能。
+
+1. 點「建立往返路線」：以目前 DEM 和坡度門檻計算「規劃起點 → CP-01 → Three Forks → 返回」三段假想人員路線。點選路段或下拉選單，查看距離、最大格網坡度及數值高程剖面；關閉光學影像不影響數值。
+2. 點「Malay NASA 紀錄」或金色站點：查看 NASA PDS 原始 ID、Sol、車體座標、LMST、資料版本及原表連結。這些歷史位置不是樣本管端點，也不是真實人員路線。
+3. 點 CP-01 或「CP-01 完整觀測」，再點右側掃描。固定搜尋框是目前局部座標 E −2400 至 −400 m、N −1500 至 500 m；確認點 E −1400 / N −500 m，約 18.431565°N、77.395103°E。框內即時計算地平線，沒有使用其他版本的模板。地圖顯示 Top-3 位置和朝向，左側顯示 fix / ambiguous / no_fix、可見方位及下一步。
+4. 用「CP-01 遮擋觀測」重播拒絕更新情境。一般重設退出固定確認點搜尋；評估勾選框可揭示真值與誤差。
+
+資料：`data/pds/` 保存 PDS 位置與事件 CSV、XML（1.0）；`python scripts/import_three_forks.py` 以 Sample Designation 串接全部 10 筆並產生 `data/three-forks.geojson`。座標為火星行星中心緯度、東經，GeoJSON 順序 [經度, 緯度]，不可當作地球 WGS84。原始來源： https://pds-geosciences.wustl.edu/m2020/urn-nasa-pds-mars2020_sample_depot_three_forks/ 。資料讀取使用本機檔案，外部原始連結需網路。
+
+地形仍使用現有 243×176 CTX 衍生格網（E 40.082645 / N 40 m，來源原生 20 m），沿線每 ≤15 m 取樣不代表解析度提高。所有路線／確認點／觀測均為情境模擬，岩塊、足下路況與真實全景定位未驗證。Malay 在 CP-01 搜尋框外；終點不沿用確認點的搜尋框。地面歷史影像提供 PDS 索引連結，尚未內嵌產品照片。
+
+新增端到端檢查：`.\.venv\Scripts\python.exe tests/test_three_forks.py`（需 Playwright 與 Edge）。涵蓋三段可達、離線卡片欄位、關閉光學後剖面一致、完整觀測定位、遮擋拒絕更新、重設與窄螢幕。

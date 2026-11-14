@@ -7,3 +7,5 @@
 #named-list{max-height:280px;overflow-y:auto;margin-top:12px}#named-search{margin-bottom:12px}#named-count{margin-bottom:8px}
 
 .coordinate-fields{display:flex;gap:10px;margin:14px 0}.coordinate-fields label{width:50%;font-size:11px;color:#a7b6bf}.coordinate-fields input{width:100%;background:#25343b;color:#eee;border:1px solid #52616b;border-radius:5px;padding:8px;margin-top:6px}#mission-quality{margin:8px 0;color:#d8ba90}
+
+#route-profile{width:100%;height:150px;border-radius:8px;margin-top:12px} #three-forks-panel h2{margin:8px 0} #expedition-leg{width:100%}
