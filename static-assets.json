@@ -76,16 +76,16 @@
     "disposition": "publish",
     "reason": "Website runtime, reference, source record or presentation",
     "path": "data/mola16.lbl",
-    "bytes": 4813,
-    "sha256": "0f2bd919dddb86d83489a008d3007bd915507c892a0f22ce49ad5dd5d2fc7d8a"
+    "bytes": 4720,
+    "sha256": "80c6989aa69c4e21ec60afea06d69c8386e56aef281149fa5b220bd385d1a52e"
   },
   {
     "source": "data/pds/sample_drop_timestamps.csv",
     "disposition": "publish",
     "reason": "Website runtime, reference, source record or presentation",
     "path": "data/pds/sample_drop_timestamps.csv",
-    "bytes": 539,
-    "sha256": "afdf6515ed007e211cd7503a455a66c620fcdb457e3f10da886a40defc61262c"
+    "bytes": 528,
+    "sha256": "f5bf062129ebd9ec54a4e50b1fd630f09c465d97e8103d7b67c90b749ea24954"
   },
   {
     "source": "data/pds/sample_drop_timestamps.xml",
@@ -100,8 +100,8 @@
     "disposition": "publish",
     "reason": "Website runtime, reference, source record or presentation",
     "path": "data/pds/sample_tube_locations.csv",
-    "bytes": 859,
-    "sha256": "089015bb25bc61415cfa69aea7160ddb7f1b5149446dd50dd84332c7660c5d59"
+    "bytes": 848,
+    "sha256": "173dc16c802cd0aba070c388cba9f12433cc3ac8bf59ccc17415535958ae4c72"
   },
   {
     "source": "data/pds/sample_tube_locations.xml",
@@ -116,23 +116,23 @@
     "disposition": "publish",
     "reason": "Website runtime, reference, source record or presentation",
     "path": "data/three-forks.geojson",
-    "bytes": 12126,
-    "sha256": "c2d8114d67c00625cd1eb0e61b74f1c153d1da27225b669c2b2e69e00558e481"
+    "bytes": 11801,
+    "sha256": "5f3ec9539d2e90c4ddc31f91f61e28833fd6ce0693bf9c6513bf5d43bfb8d088"
   },
   {
     "source": "docs/SOURCES.md",
     "disposition": "publish",
     "reason": "Website runtime, reference, source record or presentation",
     "path": "docs/SOURCES.md",
-    "bytes": 4851,
-    "sha256": "dd31e79a0a91a284f98cb6a1059af8fb180aa158f0eb5328c0ced38bf0929827"
+    "bytes": 4818,
+    "sha256": "97335cfd57911dc527d3ebd25ed3f567987963cc84b1e6472a78f617dfbc64f6"
   },
   {
     "source": "docs/Leaflet-LICENSE.txt",
     "path": "docs/Leaflet-LICENSE.txt",
     "disposition": "publish",
     "reason": "Leaflet license required for website distribution",
-    "bytes": 1395,
-    "sha256": "53e8dc25862014e4324741ca18fbe3611e11d42ef69f59f86ea8c5389647d4cb"
+    "bytes": 1369,
+    "sha256": "bbc959aaef7488b38942e7f05cfd1244351f8bce54261951ea17dd7cf60f894b"
   }
 ]

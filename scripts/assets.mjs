@@ -12,9 +12,9 @@ export const walk = (dir) =>
     : [];
 const assetBytes = (p) => {
   const bytes = fs.readFileSync(p);
-  // JSON metadata is text and Git may check it out with CRLF on Windows.
-  // Hash its canonical LF form so the inventory stays portable across OSes.
-  return p.endsWith(".json")
+  // Git may check text assets out with CRLF on Windows. Hash and size their
+  // canonical LF form so the inventory stays portable across operating systems.
+  return /\.(?:json|geojson|lbl|csv|xml|md|txt|svg)$/i.test(p)
     ? Buffer.from(bytes.toString("utf8").replace(/\r\n/g, "\n"), "utf8")
     : bytes;
 };
@@ -87,7 +87,7 @@ export function verify() {
     if (r.disposition === "publish") {
       if (!output.has(r.path)) fail("Missing/case mismatch in dist: " + r.path);
       if (
-        fs.statSync("dist/" + r.path).size !== r.bytes ||
+        assetBytes("dist/" + r.path).byteLength !== r.bytes ||
         hash("dist/" + r.path) !== r.sha256
       )
         fail("Hash mismatch: " + r.path);
