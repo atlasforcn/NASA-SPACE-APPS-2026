@@ -4,6 +4,7 @@ import { missionKey } from "../useMission";
 import RouteProfile from "./RouteProfile.vue";
 import RouteDrawing from "./RouteDrawing.vue";
 import ExpeditionPanel from "./ExpeditionPanel.vue";
+import NavigationMaterials from './NavigationMaterials.vue';
 import PlannerControls from './PlannerControls.vue';
 import RouteAlternatives from './RouteAlternatives.vue';
 const m = inject(missionKey),
@@ -47,10 +48,11 @@ const m = inject(missionKey),
           <button type="button" @click="s.layer = 'roughness'" :disabled="s.regional || s.globalView">查看粗糙度</button>
           <button type="button" @click="s.tab = 'layers'; s.panelOpen = true">對照其他圖層 ↗</button>
         </div>
-        <p class="hint">紅色：坡度超過 {{ s.slope }}°，或粗糙度超過 {{ s.roughnessLimit }}。黃色：地形資料不足，無法判定能否通行。三種路線都會避開這些位置。取消勾選只隱藏標記，規劃仍會避開。</p>
+        <p class="hint">紅色：坡度超過 {{ s.slope }}°，或粗糙度超過 {{ s.roughnessLimit }}，也包含人工禁行區。黃色：地形資料不足，無法判定能否通行。三種路線都會避開這些位置。取消勾選只隱藏標記，規劃仍會避開。</p>
         <label>粗糙度上限 {{ s.roughnessLimit }}<input id="roughness-limit" v-model.number="s.roughnessLimit" type="range" min="0" max="1" step="0.05" /></label>
-        <p class="hint">調低上限可排除較粗糙地形；1 表示不額外排除粗糙度。光學、地質與科學圖層可供位置對照，尚未作為通行判定。遮罩為顯示取樣，路線會沿途細分檢查。</p>
+        <p class="hint">調低上限可排除較粗糙地形；1 表示不額外排除粗糙度。人工禁行區也會阻擋通行；地質與選配熱慣量用於材質成本。遮罩為顯示取樣，路線會沿途細分檢查。</p>
       </section>
+      <NavigationMaterials />
       <PlannerControls />
       <label
         >示範坡度上限（非車輛工程規格）<input
@@ -64,7 +66,7 @@ const m = inject(missionKey),
         <button
           id="plan"
           class="primary"
-          :disabled="!s.ready || !s.hasStart || !s.destination || s.regionLoading"
+          :disabled="!s.ready || !s.hasStart || !s.destination || s.regionLoading || s.navigationLoading || !!s.navigationError"
           @click="m.plan"
         >
           建立並評估三條路線</button

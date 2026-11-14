@@ -7,6 +7,7 @@ import {
   nextTick,
 } from "vue";
 import L from "leaflet";
+import { createNavigationContext, createGeologyIndex } from './navigation-context.mjs';
 import { createNavigationOverlay } from "./navigation-overlay";
 import C from "../core.mjs";
 import S from "../skyline.mjs";
@@ -70,6 +71,9 @@ export function useMission() {
     slope: 24,
     roughnessLimit: 1,
     showNavigationRisk: true,
+    navigation: {geologyEnabled:true, thermalEnabled:false, sandFactor:1.8, rockFactor:1.25, unknownFactor:1.1, thermalThreshold:200, thermalFactor:1.2},
+    navigationLoading: false, navigationError: '', navigationStatus: '',
+    noGoZones: [], pickingNoGo: false, noGoRadius: 250, noGoName: '',
     route: null,
     routeStatus: "選擇科學點並規劃路線",
     running: false,
@@ -143,6 +147,7 @@ export function useMission() {
     optical,
     globalBase,
     navigationOverlay,
+    noGoLayer,
     regionalOverview = false,
     estimateMarker,
     truthMarker,
@@ -172,6 +177,7 @@ export function useMission() {
     stroke = false;
   const abort = new AbortController();
   const scienceLoader = createScienceLoader(asset);
+  let navigationThermal = null, geologyIndex = [], navigationLoadToken = 0;
   let scienceToken = 0, scienceGrid = null;
   const position = computed(() => {
     if (!dem.value || !state.hasStart) return "尚未設定起點";
@@ -277,6 +283,7 @@ export function useMission() {
     routeLayer = null;
   }
   function reset(kind = state.scenario, { preserveTargets = false } = {}) {
+    state.pickingNoGo=false;
     if (!dem.value) return;
     stop();
     cancel();
@@ -359,7 +366,60 @@ export function useMission() {
         dashArray: null,
       }).addTo(routeLayer);
   }
+  function redrawNoGoZones() {
+    if (!map) return;
+    noGoLayer?.clearLayers();
+    if (!state.showNavigationRisk) return;
+    for (const zone of state.noGoZones) {
+      const ring=Array.from({length:64},(_,i)=>{
+        const angle=i*Math.PI/32;
+        const p=P.localToGeo(zone,Math.cos(angle)*zone.radius,Math.sin(angle)*zone.radius);
+        return [p.lat,zone.lng+C.wrapRad((p.lng-zone.lng)*C.DEG)/C.DEG];
+      });
+      for(const offset of [-360,0,360]) L.polygon(ring.map(([lat,lng])=>[lat,lng+offset]),{pane:'navigationRisk',color:'#ff736e',weight:2,fillOpacity:.12,dashArray:'5 4',interactive:false}).addTo(noGoLayer);
+    }
+  }
+  function rebuildNavigation() {
+    if (!dem.value) return;
+    try {
+      C.setNavigationContext(createNavigationContext({options:state.navigation,zones:state.noGoZones,geologyIndex,thermal:navigationThermal,toGeo:(x,y)=>C.localToLatLng(x,y)}));
+      state.navigationError='';
+      state.navigationStatus = state.navigation.thermalEnabled
+        ? (navigationThermal ? '熱慣量已接入導航（原始格網約 7.4 km／格）；與地質取較高倍率，不重複相乘。' : '熱慣量導航資料尚未就緒。')
+        : '地質使用 Jezero 已接入圖幅；圖幅外採未知材質倍率。熱慣量修正未啟用。';
+      syncNavigationRisk(true);
+      redrawNoGoZones();
+    } catch(error) { state.navigationError=error.message; }
+  }
+  async function loadNavigationThermal() {
+    const token=++navigationLoadToken;
+    if (!state.navigation.thermalEnabled || navigationThermal) {
+      state.navigationLoading=false;
+      rebuildNavigation(); return;
+    }
+    state.navigationLoading=true; state.navigationError='';
+    try {
+      const loaded=await scienceLoader.load('thermal');
+      if(disposed || token!==navigationLoadToken)return;
+      navigationThermal=loaded;
+      rebuildNavigation();
+    } catch(error) {
+      if(!disposed && token===navigationLoadToken) state.navigationError=`熱慣量導航資料載入失敗：${error.message}；請重試或關閉熱慣量修正。`;
+    } finally { if(!disposed && token===navigationLoadToken)state.navigationLoading=false; }
+  }
+  function beginNoGo() {
+    if (state.pickingNoGo) { state.pickingNoGo=false; return; }
+    if(!Number.isFinite(Number(state.noGoRadius)) || Number(state.noGoRadius)<10 || Number(state.noGoRadius)>100000) {
+      state.routeStatus='禁行區半徑須介於 10–100,000 m'; return;
+    }
+    stop(); cancel(); stopDrawing();
+    state.pickingStart=false; state.pickingTarget=false;
+    state.pickingNoGo=true;
+    state.routeStatus='請參照影像點選禁行區中心；半徑採火星公尺，不會自動辨識影像內容。';
+  }
+  function removeNoGo(id) { state.noGoZones=state.noGoZones.filter(z=>z.id!==id); }
   function plan() {
+    if (state.navigationLoading || state.navigationError) { state.routeStatus=state.navigationError || '正在載入導航資料，請稍候。'; return; }
     if (!state.hasStart) return;
     if (state.regionLoading) return;
     stop();
@@ -1088,6 +1148,7 @@ export function useMission() {
     state.drawStatus = `已繪製 ${state.points.length} 個點；起點為導航估計位置。`;
   }
   function beginDrawing(mode) {
+    state.pickingNoGo=false;
     if (!state.hasStart) return;
     if (!dem.value || state.regionLoading) return;
     stop();
@@ -1175,6 +1236,7 @@ export function useMission() {
       .openOn(map);
   }
   function beginTarget() {
+    state.pickingNoGo=false;
     if (state.regionLoading) return;
     state.pickingStart = false;
     if (!state.ready) return;
@@ -1444,6 +1506,7 @@ export function useMission() {
     }
   }
   function overview() {
+    state.pickingNoGo=false;
     regionalOverview = true;
     stop();
     cancel();
@@ -1478,7 +1541,9 @@ export function useMission() {
     return pendingPlanet;
   }
   function refreshMission() {
+    state.pickingNoGo=false;
     regionalOverview = false;
+    rebuildNavigation();
     navigationOverlay?.redraw();
     state.hasStart = false;
     state.pickingStart = false;
@@ -1842,6 +1907,7 @@ export function useMission() {
     map.getPane('navigationRoute').style.zIndex = 450;
     map.getPane('navigationRoute').style.pointerEvents = 'none';
     navigationOverlay = createNavigationOverlay(map);
+    noGoLayer = L.layerGroup().addTo(map);
     L.control.zoom({ position: "bottomright" }).addTo(map);
     map.attributionControl
       .setPrefix(false)
@@ -1872,12 +1938,21 @@ export function useMission() {
       state.coords = `${e.latlng.lat.toFixed(5)}°N ${e.latlng.lng.toFixed(5)}°E · ${height} · ${unitLabel(unitAt(p))}`;
       const scienceValue = sampleScienceGrid(state.scienceMeta, scienceGrid, e.latlng.lat, e.latlng.lng);
       if (scienceValue !== null) state.coords += ` · ${scienceValue.toFixed(3)} ${state.scienceMeta.unit}`;
+      const nav=C.navigationAt(p.x,p.y);
+      if(nav.reasons.length) state.coords += ` · ${nav.reasons.join("；")}`;
       else if (state.scienceMeta?.kind === 'raster') state.coords += ' · 科學格網：無資料';
       state.elevation = Number.isFinite(z)
         ? `游標高程 ${z.toFixed(1)} m · ${Number.isFinite(localZ) && !state.regional ? state.siteName + " DEM" : "MOLA 16 ppd"}`
         : "游標高程：無資料";
     });
     map.on("click", async (e) => {
+      if(state.pickingNoGo) {
+        const radius=Number(state.noGoRadius);
+        if(!Number.isFinite(radius)||radius<10||radius>100000||Math.abs(e.latlng.lat)>90){state.routeStatus='禁行區半徑須介於 10–100,000 m';return;}
+        state.noGoZones.push({id:crypto.randomUUID(),name:state.noGoName.trim()||`人工禁行區 ${state.noGoZones.length+1}`,lat:e.latlng.lat,lng:((e.latlng.lng+180)%360+360)%360-180,radius});
+        state.pickingNoGo=false; state.noGoName='';
+        return;
+      }
       if (state.pickingStart) {
         if (state.regionLoading) return;
         if (!inDem(e.latlng) || C.risk(local(e).x, local(e).y).unknown) {
@@ -1981,6 +2056,7 @@ export function useMission() {
       snapshot = { dem: grid, geology: geo, mission, ctxSource };
       dem.value = grid;
       geology = geo;
+      geologyIndex = createGeologyIndex(geo);
       missionStart = mission.start;
       state.targets = [];
       C.setDEM(grid);
@@ -2038,7 +2114,7 @@ export function useMission() {
       scope();
     },
   );
-  watch(() => state.showNavigationRisk, () => syncNavigationRisk());
+  watch(() => state.showNavigationRisk, () => {syncNavigationRisk();redrawNoGoZones();});
   watch(
     () => state.truthVisible,
     () => map && scope(),
@@ -2072,6 +2148,13 @@ export function useMission() {
       render();
     },
   );
+  watch(() => [JSON.stringify(state.navigation),JSON.stringify(state.noGoZones)], () => {
+    stop();cancel();clearRoute();
+    rebuildNavigation();
+    if(state.navigation.thermalEnabled && !navigationThermal) loadNavigationThermal();
+    else {navigationLoadToken++;state.navigationLoading=false;}
+    state.routeStatus='導航資料或人工禁行區已變更，請重新規劃。';
+  });
   watch(() => state.continuousLocalization, (enabled) => {
     cancel();
     if (enabled && state.running) scan(true);
@@ -2103,6 +2186,7 @@ export function useMission() {
     stop();
     cancel();
     cleanupPointer?.();
+    C.setNavigationContext(null);
     map?.remove();
   });
   return {
@@ -2146,6 +2230,7 @@ export function useMission() {
     stop,
     cancel,
     plan,
+    beginNoGo, removeNoGo, retryNavigation: loadNavigationThermal,
     toggleMotion,
     drift,
     scan,
@@ -2170,12 +2255,13 @@ export function useMission() {
       const route = state.routeOptions?.[state.selectedRoute];
       if (!route?.reachable) return;
       const { path, ...metrics } = route;
-      const payload = { type: 'FeatureCollection', properties: { body: 'Mars', coordinates: 'Planetocentric east-positive longitude/latitude; not Earth WGS84', assumptions: {...state.planner}, slopeLimit: Number(state.slope), roughnessLimit: Number(state.roughnessLimit), dem: C.demInfo(), warning: 'Prototype terrain planning; not operational navigation' }, features: [{ type: 'Feature', properties: { mode: state.selectedRoute, ...metrics }, geometry: { type: 'LineString', coordinates: path.map(p => { const ll = C.localToLatLng(p.x,p.y); return [ll.lng,ll.lat,C.elevation(p.x,p.y)]; }) } }] };
+      const payload = { type: 'FeatureCollection', properties: { body: 'Mars', coordinates: 'Planetocentric east-positive longitude/latitude; not Earth WGS84', assumptions: {...state.planner}, slopeLimit: Number(state.slope), roughnessLimit: Number(state.roughnessLimit), navigation: {...state.navigation}, noGoZones: state.noGoZones.map(z=>({...z})), navigationModel: "User-defined material hypotheses; max geology/thermal factor; no calibrated vehicle model", navigationSources: {geology: state.navigation.geologyEnabled ? {source:snapshot?.geology?.source,sha256:snapshot?.geology?.raw_sha256} : null,thermal: state.navigation.thermalEnabled && navigationThermal ? {source:navigationThermal.meta.source.url,sha256:navigationThermal.meta.source.sha256,unit:navigationThermal.meta.unit,pixelsPerDegree:navigationThermal.meta.display_ppd} : null}, dem: C.demInfo(), warning: 'Prototype terrain planning; not operational navigation' }, features: [{ type: 'Feature', properties: { mode: state.selectedRoute, ...metrics }, geometry: { type: 'LineString', coordinates: path.map(p => { const ll = C.localToLatLng(p.x,p.y); return [ll.lng,ll.lat,C.elevation(p.x,p.y)]; }) } }] };
       const url = URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)], {type:'application/geo+json'}));
       const link = document.createElement('a'); link.href=url; link.download='mars-mission.geojson'; link.click();
       setTimeout(() => URL.revokeObjectURL(url),1000);
     },
     beginStart: () => {
+      state.pickingNoGo=false;
       if (state.regionLoading) return;
       stop(); cancel(); resetDrawing();
       state.pickingTarget = false;

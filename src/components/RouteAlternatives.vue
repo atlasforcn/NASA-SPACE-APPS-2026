@@ -5,6 +5,8 @@ const m = inject(missionKey), s = m.state;
 const hours = value => `${value.toFixed(2)} h`;
 const rows = [
   ['energy','估計耗電',v => `${(v/1000).toFixed(2)} 單位`],
+  ['materialEnergy','材質增加耗電',v => `${(v/1000).toFixed(2)} 單位`],
+  ['unknownMaterialDistance','材質未知路段',m.fmt],
   ['surface','三維路程',m.fmt],
   ['hours','步行時間',hours],
   ['gain','累積上升',m.fmt],
@@ -31,8 +33,11 @@ const rows = [
         </tbody>
       </table>
     </div>
-    <p class="hint">風險為坡度與粗糙度的模型指標，並非事故機率。不同目標可能得到相同路徑。1 耗電單位相當於平地行駛 1 km；只估計行進耗電，不含停留與設備用電。</p>
+    <p class="hint">風險為坡度、粗糙度與材質假設的模型指標，並非事故機率。不同目標可能得到相同路徑。1 耗電單位相當於平地行駛 1 km；只估計行進耗電，不含停留與設備用電。</p>
     <template v-if="s.routeOptions[s.selectedRoute].reachable">
+      <h3>導航成本原因</h3>
+      <ul><li v-for="cause in s.routeOptions[s.selectedRoute].navigationReasons" :key="cause.reason">{{ cause.reason }} · {{ m.fmt(cause.distance) }}</li></ul>
+      <p v-if="!s.routeOptions[s.selectedRoute].navigationReasons?.length" class="hint">此路線未增加材質成本；仍套用坡度耗電與禁行檢查。</p>
       <h3>所選方案行程</h3>
       <ol class="itinerary"><li v-for="(leg,i) in s.routeOptions[s.selectedRoute].legs" :key="i"><strong>{{ leg.name }}</strong><span>{{ m.fmt(leg.surface) }} · 耗電 {{ (leg.energy/1000).toFixed(2) }} 單位 · 步行 {{ hours(leg.hours) }} · 停留 {{ leg.stopMinutes }} min</span></li></ol>
       <div class="button-row"><button id="fit-plan" @click="m.fitRoute">顯示完整路線</button><button id="export-plan" @click="m.exportPlan">匯出任務 GeoJSON</button></div>

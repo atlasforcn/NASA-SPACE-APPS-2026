@@ -777,3 +777,7 @@ canvas.navigation-risk-tile {
 .navigation-risk-key span { display: inline-flex; align-items: center; gap: 5px; }
 .navigation-risk-key i { width: 10px; height: 10px; border-radius: 2px; background: #ff736e; }
 .navigation-risk-key .missing { background: #eab45a; }
+
+.no-go-list { padding-left: 18px; }
+.no-go-list li { margin: 8px 0; }
+.no-go-list button { margin-left: 8px; padding: 4px 8px; }

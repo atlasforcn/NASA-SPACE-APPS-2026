@@ -145,6 +145,47 @@ try {
     await page.locator('#plan').click();
     await page.locator('.route-comparison').scrollIntoViewIfNeeded();
     await page.screenshot({path:'test-results/navigation-energy.png'});
+    // Navigation data is independent of the currently displayed science layer.
+    await page.route('**/data/science/thermal.bin', route => route.fulfill({status:503,body:'temporary navigation data failure'}));
+    await page.locator('#nav-thermal').check();
+    await page.waitForFunction(() => document.querySelector('#navigation-data-status')?.textContent.includes('載入失敗'));
+    assert(await page.locator('#plan').isDisabled());
+    assert(await page.locator('#simulate').isDisabled());
+    await page.unroute('**/data/science/thermal.bin');
+    const failedThermal=missing.findIndex(url=>url.endsWith('/data/science/thermal.bin'));
+    assert(failedThermal>=0);missing.splice(failedThermal,1);
+    await page.getByRole('button',{name:'重試導航資料',exact:true}).click();
+    await page.waitForFunction(() => document.querySelector('#navigation-data-status')?.textContent.includes('熱慣量已接入'));
+    await page.locator('#plan').click();
+    assert(await page.locator('#simulate').isEnabled());
+    const materialDistance=await page.locator('#path-distance').textContent();
+    await page.getByRole('button',{name:'圖層',exact:true}).click();
+    await page.locator('#analysis-layer').selectOption('spectral');
+    await page.waitForFunction(() => document.querySelector('.science-context')?.textContent.includes('已疊加下載格網'));
+    await page.getByRole('button',{name:'任務',exact:true}).click();
+    assert(await page.locator('#nav-thermal').isChecked());
+    assert(await page.locator('#simulate').isEnabled());
+    assert.equal(await page.locator('#path-distance').textContent(),materialDistance);
+    await page.locator('#map-analysis-layer').selectOption('none');
+    await page.locator('#no-go-name').fill('人工影像禁行測試');
+    await page.locator('#no-go-radius').fill('50');
+    await page.locator('#pick-no-go').click();
+    const exclusionMap=await page.locator('#map').boundingBox();
+    await page.locator('#map').click({position:{x:exclusionMap.width/2,y:exclusionMap.height/2}});
+    await page.waitForFunction(() => document.querySelector('.no-go-list')?.textContent.includes('人工影像禁行測試'));
+    assert(await page.locator('#simulate').isDisabled());
+    await page.locator('#plan').click();
+    assert((await page.locator('#route-status').textContent()).includes('無法抵達'));
+    await page.locator('#task-navigation-risk').uncheck();
+    await page.locator('#plan').click();
+    assert(await page.locator('#simulate').isDisabled());
+    await page.locator('.navigation-materials').scrollIntoViewIfNeeded();
+    await page.screenshot({path:'test-results/navigation-materials.png'});
+    await page.getByRole('button',{name:'移除禁行區 人工影像禁行測試',exact:true}).click();
+    await page.locator('#task-navigation-risk').check();
+    await page.locator('#plan').click();
+    assert(await page.locator('#simulate').isEnabled());
+
 
     await page.getByRole('button', { name: '圖層', exact: true }).click();
     const science = page.locator('.science-context');

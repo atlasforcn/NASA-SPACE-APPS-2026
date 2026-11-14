@@ -38,7 +38,7 @@ onUnmounted(() => observer?.disconnect());
     ref="container"
     id="map"
     class="map"
-    :class="{ drawing: m.state.drawMode }"
+    :class="{ drawing: m.state.drawMode || m.state.pickingNoGo }"
     role="region"
     aria-label="火星地圖"
   ></div>
