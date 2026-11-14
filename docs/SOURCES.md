@@ -12,16 +12,16 @@ DEM 與光學使用 MRO CTX 產品；DEM 的垂直控制依來源產品以 MOLA 
 
 `data/geology.json` 保留原生 WKT、查詢 URL、原始 JSON SHA-256、所有欄位與 renderer。多邊形保留完整相交要素，顯示框以外不列為有效任務範圍。洞與多重環採 even-odd 點包含測試。
 
-`data/ctx-source.json` 保存影像來源、SHA-256、CRS、實際展示格距及有效率。`artifacts/data-validation.json` 保存 DEM 統計與對官方鏡像重新串流計算的 SHA-256 比對結果。
+`data/ctx-source.json` 保存影像來源、SHA-256、CRS、實際展示格距及有效率。DEM 來源與原始雜湊亦保存於 `data/jezero_dem.json`。
 
 資料限制：沒有獨立控制點的配準精度評估；共同座標套疊不能證明公尺級對齊。地質圖為區域科學解釋，不是障礙物或逐格材質實測。局部格網邊界會截短遠方視線，1200 m 以上可用射線仍未必包含真正遠方天際線。觀測與匹配使用同一模型，會高估實景表現。
 
-引用：Calef et al. (2021), USGS Astrogeology；Sun, V.Z. and Stack, K.M. (2020), Geologic map of Jezero crater and the Nili Planum region, Mars, USGS Scientific Investigations Map 3464, https://doi.org/10.3133/sim3464。光學影像應致謝 NASA/JPL-Caltech/MSSS 及 USGS。Leaflet 1.9.4 的 BSD-2-Clause 授權附於 `vendor/Leaflet-LICENSE.txt`。資料沿用來源機構的授權及引用要求。
+引用：Calef et al. (2021), USGS Astrogeology；Sun, V.Z. and Stack, K.M. (2020), Geologic map of Jezero crater and the Nili Planum region, Mars, USGS Scientific Investigations Map 3464, https://doi.org/10.3133/sim3464。光學影像應致謝 NASA/JPL-Caltech/MSSS 及 USGS。Leaflet 1.9.4 的 BSD-2-Clause 授權附於 `docs/Leaflet-LICENSE.txt`。資料沿用來源機構的授權及引用要求。
 
 ## 已命名地形與全球導覽
 
 - 正式地名：取自 [USGS／IAU 官方 GIS 下載](https://planetarynames.wr.usgs.gov/GIS_Downloads) 的 MARS_nomenclature_center_pts.kmz，共 2055 個 Adopted by IAU 項目；`data/mars-names.json` 保存中心、分類、尺度、核准日、名稱由來及逐項官方連結。精選中文為介面翻譯，正式名稱以原文為準。
-- 精選地理介紹參考 [NASA Mars Facts](https://science.nasa.gov/mars/facts/)。MOLA 全球底圖取自 NASA Mars Trek WMTS z=2（2048×1024），僅為彩色地形陰影顯示，不能當作延伸的數值 DEM；每張來源圖磚雜湊見 `data/mars-global-source.json`。
+- 精選地理介紹參考 [NASA Mars Facts](https://science.nasa.gov/mars/facts/)。MOLA 全球底圖由數值高程渲染，僅供彩色地形陰影顯示；數值來源見 `data/mola16.json`。
 - Octavia E. Butler Landing 的[命名來源](https://science.nasa.gov/resource/welcome-to-octavia-e-butler-landing/)為 NASA；位置 18.4446°N／77.4509°E 取自 [Bell et al. 2022 原始研究](https://ntrs.nasa.gov/api/citations/20230016428/downloads/Bell%20et%20al%202022sciadv.pdf)。它是歷史著陸位置，不是目前車輛位置，也未列為 IAU 正式地名。
 
 ## 全球數值 DEM

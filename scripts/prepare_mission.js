@@ -1,8 +1,0 @@
-'use strict';
-const fs=require('node:fs'),C=require('../core.mjs').default,d=require('../data/geology.json');C.setDEM(require('../data/jezero_dem.json'));
-function inside(p,r){let v=false;for(let i=0,j=r.length-1;i<r.length;j=i++){const a=r[i],b=r[j];if((a[1]>p.y)!==(b[1]>p.y)&&p.x<(b[0]-a[0])*(p.y-a[1])/(b[1]-a[1])+a[0])v=!v;}return v;}
-const unit=p=>d.features.find(f=>f.rings.reduce((v,r)=>v!==inside(p,r),false));
-const start={x:-1400,y:-820},seen=new Set(),targets=[];console.log('start:',unit(start)?.properties.name);
-const candidates=[];for(let y=-2000;y<=2000;y+=200)for(let x=-3000;x<=3000;x+=200){const p={x,y},f=unit(p);if(f&&!C.risk(x,y).blocked&&C.distance(p,start)>800)candidates.push({...p,f});}candidates.sort((a,b)=>C.distance(a,start)-C.distance(b,start));
-for(const p of candidates){const key=p.f.properties.unit;if(seen.has(key))continue;const route=C.planPath(start,p),fromEstimate=C.planPath({x:start.x+650,y:start.y-520},p);if(!route.reachable||!fromEstimate.reachable)continue;seen.add(key);targets.push({id:'s'+(targets.length+1),name:'科學觀測站 '+String.fromCharCode(65+targets.length),x:p.x,y:p.y,unit:p.f.properties.name,symbol:p.f.properties.symbol,unitCode:key,sourceObjectId:p.f.properties.OBJECTID,science:p.f.properties.Unit_Interpretation,routeLength:route.length,maxSlope:route.maxSlope});if(targets.length===2)break;}
-if(targets.length!==2)throw Error('Need two reachable distinct geologic units');fs.writeFileSync('data/mission.json',JSON.stringify({start,startUnit:unit(start)?.properties.name,policy:'Simulated mission locations selected on official geologic units; not historical rover traverse or formal place names.',targets},null,2));console.log(targets.map(t=>({name:t.name,x:t.x,y:t.y,unit:t.unit,length:t.routeLength})));

@@ -17,7 +17,7 @@ const fail = (s) => {
 };
 const records = JSON.parse(fs.readFileSync(inventoryPath, "utf8"));
 const inventoryFiles = () => [
-  ...["data", "vendor", "docs", "deliverables", "artifacts"]
+  ...["data", "docs"]
     .flatMap(walk)
     .filter((p) => !p.includes("/__pycache__/")),
   ...fs.readdirSync(".", { withFileTypes: true })

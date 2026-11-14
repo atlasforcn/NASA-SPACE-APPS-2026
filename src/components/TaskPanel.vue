@@ -80,7 +80,6 @@ const m = inject(missionKey),
         </button>
       </div>
       <p class="hint">遮擋案例只有 60° 視角且缺失 55%，系統應保留原估計。</p>
-      <a :href="m.asset('docs/DEMO.md')">三分鐘講稿</a>
     </section>
   </div>
 </template>

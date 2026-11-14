@@ -11,10 +11,7 @@
     "assets:update": "node scripts/assets.mjs inventory",
     "test": "node scripts/test.js",
     "test:browser": "node tests/browser.mjs",
-    "test:pages": "node scripts/test-pages.mjs",
-    "package:offline": "node scripts/package-offline.mjs",
-    "evaluate": "node scripts/evaluate.js",
-    "mission": "node scripts/prepare_mission.js"
+    "test:pages": "node scripts/test-pages.mjs"
   },
   "engines": {
     "node": ">=22.12"
@@ -26,7 +23,6 @@
   "devDependencies": {
     "vite": "^7.2.0",
     "@vitejs/plugin-vue": "^6.0.0",
-    "@playwright/test": "^1.56.0",
-    "fflate": "^0.8.2"
+    "@playwright/test": "^1.56.0"
   }
 }

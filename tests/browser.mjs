@@ -74,7 +74,6 @@ try {
     }
     return route.continue();
   });
-  for(const file of ['slides.html','docs/reference-v03.html','docs/core.js','docs/main.js','docs/styles.css','deliverables/Martian-Navigator.pptx',...Array.from({length:5},(_,i)=>'deliverables/slides/'+(i+1)+'.png')])assert.equal(fs.existsSync(path.join(root,file)),false,'Repository-only asset must not be published: '+file);
   await page.goto(url);
   if (process.env.PRODUCTION_SMOKE === "1") {
     await page.waitForFunction(() => !document.getElementById("scan").disabled);

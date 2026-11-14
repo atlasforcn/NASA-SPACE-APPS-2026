@@ -22,9 +22,6 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run test:pages
       - run: npm run build
-      - run: npm run package:offline
-        env:
-          OFFLINE_OUTPUT: .build/Martian-Navigator-offline.zip
   deploy:
     if: github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch
     needs: verify
