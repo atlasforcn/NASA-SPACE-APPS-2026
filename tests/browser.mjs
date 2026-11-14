@@ -149,6 +149,23 @@ try {
     assert.equal(good.status, "good");
     assert.equal(good.candidates, 3);
     assert(good.error <= 100);
+    const chartImages = () => page.evaluate(() =>
+      ['panorama', 'curve'].map(id => document.getElementById(id).toDataURL()));
+    const capturedCharts = await chartImages();
+    await inspect(() => window.__mission.turnView(30));
+    const rotatedCharts = await chartImages();
+    assert.notEqual(rotatedCharts[0], capturedCharts[0]);
+    assert.notEqual(rotatedCharts[1], capturedCharts[1]);
+    await inspect(() => window.__mission.turnView(-30));
+    assert.deepEqual(await chartImages(), capturedCharts);
+    // A new current rover position must not change either captured chart.
+    await inspect(() => {
+      window.__mission.state.truth.x += 100;
+      window.__mission.turnView(30);
+    });
+    await inspect(() => window.__mission.turnView(-30));
+    assert.deepEqual(await chartImages(), capturedCharts);
+    await inspect(() => { window.__mission.state.truth.x -= 100; });
     await page.locator("#plan").click();
     await page.locator("#simulate").click();
     await page.waitForFunction(() => window.__mission.state.localizationCount >= 2, {

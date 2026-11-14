@@ -66,16 +66,19 @@ const m = inject(missionKey),
     </div>
     <div class="horizon-charts">
       <div class="chart-head">
-        <span>DEM 模擬視角</span><span>非真實照片 / 120°</span>
+        <span>DEM 模擬掃描視角</span><span>非真實照片 / 120°</span>
       </div>
       <div class="button-row">
         <button :disabled="!s.ready" @click="m.turnView(-30)">← 左轉 30°</button>
         <button :disabled="!s.ready" @click="m.turnView(30)">右轉 30° →</button>
         <button :disabled="!s.ready || (!s.poi && !s.destination)" @click="m.focusView">對準標記點</button>
       </div>
-      <p class="hint">標記顯示名稱與距離；虛線表示地形遮擋或視野外。可點選地圖標記後對準。</p>
+      <p class="hint">標記為已知地圖位置的輔助投影，不參與地平線定位；虛線與空心點表示不可見或視野外，並非相機辨識結果。可點選地圖標記後對準。</p>
       <canvas
         id="panorama"
+        @pointermove="m.hoverHorizon"
+        @pointerleave="m.leaveHorizon"
+        @pointercancel="m.leaveHorizon"
         :ref="(el) => (m.panorama.value = el)"
         width="700"
         height="260"
@@ -90,8 +93,10 @@ const m = inject(missionKey),
         role="img"
         aria-label="觀測與候選地平線曲線"
       ></canvas>
+      <p class="hint" id="horizon-hover" role="status">{{ s.horizonHover || "掃描後，移動滑鼠至快照可在地圖查看對應輪廓點；標示的是該方向仰角最高的地形點。" }}</p>
     </div>
     <div class="localization-results">
+      <p class="hint">上下圖使用同一次掃描、同一個 120° 視窗，左右轉動會同步；深色區與曲線缺口表示無觀測。行進時保留掃描當下的視角，直到下一次掃描更新。畫面以仰角縮放，並非相機透視照片；定位仍比對完整掃描中的有效資料。60° 視角不足全周 50% 的校正門檻，顯示候選不代表定位成功。</p>
       <p id="match-msg" class="hint" role="status">{{ s.message }}</p>
       <ol id="candidates" aria-label="Top 3 定位候選">
         <li v-for="(v, i) in s.result?.candidates || []" :key="i">

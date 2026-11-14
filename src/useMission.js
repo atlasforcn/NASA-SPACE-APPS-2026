@@ -60,6 +60,7 @@ export function useMission() {
     running: false,
     scenario: "good",
     viewYaw: 0,
+    horizonHover: "",
     searching: false,
     continuousLocalization: true,
     localizationCount: 0,
@@ -124,6 +125,7 @@ export function useMission() {
     poiLayer,
     namesLayer,
     candidateLayer,
+    horizonHoverLayer,
     stationLayer,
     expeditionLayer;
   let idealLayer;
@@ -136,6 +138,10 @@ export function useMission() {
     lastTime,
     lastDraw = 0,
     observation,
+    observationPose,
+    displayedCandidate,
+    panoramaFrame,
+    hoveredHorizonIndex,
     lastScanDistance = -Infinity,
     stroke = false;
   const abort = new AbortController();
@@ -266,6 +272,9 @@ export function useMission() {
     clearRoute();
     state.result = null;
     observation = null;
+    observationPose = null;
+    displayedCandidate = null;
+    state.viewYaw = 0;
     candidateLayer?.clearLayers();
     trail?.setLatLngs([]);
     state.status = "尚未定位";
@@ -431,7 +440,9 @@ export function useMission() {
     const capturePose = { ...state.estimate };
     candidateLayer.clearLayers();
     state.result = null;
-    observation = S.simulate(state.truth, {
+    observationPose = { ...state.truth };
+    displayedCandidate = null;
+    observation = S.simulate(observationPose, {
       ...profileOptions,
       seed: 42,
       noise: 0.025,
@@ -439,6 +450,7 @@ export function useMission() {
       occlusion: state.scenario === "good" ? 0 : 0.55,
     });
     drawCurve();
+    render();
     const centre = { ...state.estimate },
       range = state.regional ? Math.max(16000, cellMeters() * 4) : 1600,
       searchBounds = {
@@ -550,6 +562,7 @@ export function useMission() {
     });
   }
   function drawCurve(candidate) {
+    displayedCandidate = candidate;
     const cv = curve.value;
     if (!cv) return;
     const ctx = cv.getContext("2d"),
@@ -558,10 +571,10 @@ export function useMission() {
     ctx.clearRect(0, 0, w, h);
     if (!observation) return;
     const obs = observation,
+      view = S.viewport(obs, state.viewYaw),
       p = candidate ? S.profile(candidate, obs.options) : null,
       vals = obs.elevations
-        .filter(Number.isFinite)
-        .concat(p ? p.elevations.filter(Number.isFinite) : []);
+        .filter((v, i) => obs.valid[i] && Number.isFinite(v));
     if (!vals.length) return;
     const lo = Math.min(...vals) - 0.3,
       hi = Math.max(...vals) + 0.3;
@@ -570,7 +583,7 @@ export function useMission() {
     ctx.fillStyle = "#c9d5d5";
     ctx.font = "12px system-ui";
     ctx.fillText(
-      `觀測（橘）／候選（青） · 0–360° · ${lo.toFixed(1)}–${hi.toFixed(1)}°`,
+      `觀測（橘）／候選（青） · 同上方 120° · 仰角 ${lo.toFixed(1)}–${hi.toFixed(1)}°`,
       12,
       18,
     );
@@ -579,18 +592,26 @@ export function useMission() {
       ctx.lineWidth = 2;
       ctx.beginPath();
       let open = false;
-      values.forEach((v, i) => {
+      view.forEach(({ index: i }, column) => {
+        const v = values[i];
         if (!valid[i] || !Number.isFinite(v)) {
           open = false;
           return;
         }
-        const x = (i / (values.length - 1)) * w,
+        const x = (column / (view.length - 1)) * w,
           y = 30 + ((hi - v) / (hi - lo)) * (h - 45);
         if (open) ctx.lineTo(x, y);
         else ctx.moveTo(x, y);
         open = true;
       });
       ctx.stroke();
+      // Isolated valid rays remain visible without bridging missing observations.
+      view.forEach(({ index: i }, column) => {
+        if (!valid[i] || !Number.isFinite(values[i])) return;
+        ctx.fillStyle = color;
+        ctx.fillRect(column / (view.length - 1) * w - 1.5,
+          30 + ((hi - values[i]) / (hi - lo)) * (h - 45) - 1.5, 3, 3);
+      });
     }
     line(obs.elevations, obs.valid, "#ffb477");
     if (p) {
@@ -604,12 +625,14 @@ export function useMission() {
         values.push(
           p.elevations[j] * (1 - (q - j)) + p.elevations[k] * (q - j),
         );
-        valid.push(p.valid[j] && p.valid[k]);
+        valid.push(obs.valid[i] && Number.isFinite(obs.elevations[i]) && p.valid[j] && p.valid[k]);
       }
       line(values, valid, "#82e6d2");
     }
   }
   function render() {
+    clearHorizonHover();
+    panoramaFrame = null;
     if (!dem.value || !map) return;
     estimateMarker.setLatLng(ll(state.estimate));
     truthMarker.setLatLng(ll(state.truth));
@@ -618,32 +641,51 @@ export function useMission() {
     const W = cv.width,
       H = cv.height,
       ctx = cv.getContext("2d"),
-      p = S.profile(state.truth, profileOptions),
-      heading = C.modDeg(state.truth.heading + state.viewYaw);
+      pose = observationPose || state.truth,
+      obs = observation || S.simulate(pose, {
+        ...profileOptions, seed: 42, noise: 0.025,
+        fov: state.scenario === "good" ? 360 : 60,
+        occlusion: state.scenario === "good" ? 0 : 0.55,
+      }),
+      view = S.viewport(obs, state.viewYaw),
+      heading = C.modDeg(pose.heading + state.viewYaw),
+      validValues = obs.elevations.filter((v, i) => obs.valid[i] && Number.isFinite(v)),
+      lo = validValues.length ? Math.min(...validValues) - 0.3 : -1,
+      hi = validValues.length ? Math.max(...validValues) + 0.3 : 1,
+      screenY = (angle) => 40 + (hi - angle) / (hi - lo) * (H - 60);
+    panoramaFrame = { pose, obs, view, screenY, captured: !!observation };
     ctx.fillStyle = "#a68470";
     ctx.fillRect(0, 0, W, H);
-    ctx.beginPath();
-    ctx.moveTo(0, H);
-    for (let i = 0; i <= W; i += 3) {
-      const angle = C.modDeg(heading + (i / W - 0.5) * 120),
-        k = Math.round(angle / (360 / p.angles.length)) % p.angles.length,
-        v = p.elevations[k];
-      ctx.lineTo(i, Number.isFinite(v) ? H * 0.75 - v * 5 : H);
-    }
-    ctx.lineTo(W, H);
-    ctx.fillStyle = "#553d36";
-    ctx.fill();
-    const eye = C.elevation(state.truth.x, state.truth.y) + 1.7;
+    const dx = W / (view.length - 1);
+    view.forEach((sample, i) => {
+      const x = i * dx;
+      if (!sample.valid) {
+        ctx.fillStyle = '#26343c';
+        ctx.fillRect(x - dx / 2, 30, dx, H - 30);
+        return;
+      }
+      const y = screenY(sample.elevation), next = view[i + 1];
+      ctx.fillStyle = '#553d36';
+      ctx.fillRect(x - dx / 2, y, dx, H - y);
+      ctx.strokeStyle = '#ffb477';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      if (next?.valid) ctx.lineTo(x + dx, screenY(next.elevation));
+      else ctx.lineTo(x + 1, y);
+      ctx.stroke();
+    });
+    const eye = C.elevation(pose.x, pose.y) + obs.cameraHeight;
     const markers = [...state.pois, ...state.targets];
     const seen = new Set();
     const labels = [];
     for (const marker of markers) {
       if (seen.has(marker.id)) continue;
       seen.add(marker.id);
-      const distance = C.distance(state.truth, marker);
+      const distance = C.distance(pose, marker);
       const z = C.elevation(marker.x, marker.y);
       if (!Number.isFinite(z) || distance < 1) continue;
-      const bearing = C.modDeg(Math.atan2(marker.x - state.truth.x, marker.y - state.truth.y) / C.DEG);
+      const bearing = C.modDeg(Math.atan2(marker.x - pose.x, marker.y - pose.y) / C.DEG);
       const delta = ((bearing - heading + 540) % 360) - 180;
       const selected = marker.id === state.destination || marker.id === state.poi?.id;
       if (Math.abs(delta) > 60 && !selected) continue;
@@ -653,7 +695,7 @@ export function useMission() {
       const step = Math.max(40, distance / 100);
       for (let d = step; d < distance - step / 2; d += step) {
         const t = d / distance;
-        const terrain = C.elevation(state.truth.x + (marker.x - state.truth.x) * t, state.truth.y + (marker.y - state.truth.y) * t);
+        const terrain = C.elevation(pose.x + (marker.x - pose.x) * t, pose.y + (marker.y - pose.y) * t);
         if (!Number.isFinite(terrain) || terrain - drop(d) > eye + (z - eye - drop(distance)) * t + 1) {
           hidden = true;
           break;
@@ -667,8 +709,8 @@ export function useMission() {
       const { marker, distance, delta, selected, hidden, angle } = item;
       const outside = Math.abs(delta) > 60;
       const x = C.clamp((delta / 120 + 0.5) * W, 12, W - 12);
-      const y = C.clamp(H * 0.75 - angle * 5, 65, H - 32);
-      const text = `${outside ? (delta < 0 ? '◀ ' : '▶ ') : ''}${marker.name} · ${fmt(distance)}${outside ? ' · 視野外' : hidden ? ' · 地形遮擋' : ''}`;
+      const y = C.clamp(screenY(angle), 65, H - 32);
+      const text = `${outside ? (delta < 0 ? '◀ ' : '▶ ') : ''}${marker.name} · ${fmt(distance)}${outside ? ' · 地圖投影／視野外' : hidden ? ' · 地圖投影／不可見' : ''}`;
       ctx.font = `${selected ? 'bold ' : ''}12px system-ui`;
       const width = Math.min(W - 16, ctx.measureText(text).width + 16);
       const left = C.clamp(x - width / 2, 8, W - width - 8);
@@ -691,11 +733,56 @@ export function useMission() {
       ctx.fillText(text, left + 8, top + 15, width - 16);
       ctx.beginPath();
       ctx.arc(x, y, selected ? 5 : 3.5, 0, Math.PI * 2);
-      ctx.fill();
+      if (hidden || outside) ctx.stroke();
+      else ctx.fill();
     }
     ctx.fillStyle = "#fff0d6";
     ctx.font = "13px system-ui";
-    ctx.fillText(`模擬視角 · yaw ${heading.toFixed(0)}° · 非真實照片`, 12, 22);
+    ctx.fillText(`${observation ? '掃描快照' : '掃描前預覽'} · yaw ${heading.toFixed(0)}° · 深色區無觀測`, 12, 22);
+  }
+  function clearHorizonHover() {
+    horizonHoverLayer?.clearLayers();
+    hoveredHorizonIndex = null;
+    state.horizonHover = "";
+  }
+  function leaveHorizon() {
+    clearHorizonHover();
+    render();
+  }
+  function hoverHorizon(event) {
+    if (!panoramaFrame?.captured || !map || !horizonHoverLayer) return;
+    const cv = panorama.value, rect = cv.getBoundingClientRect();
+    const fraction = C.clamp((event.clientX - rect.left) / rect.width, 0, 1);
+    const column = Math.round(fraction * (panoramaFrame.view.length - 1));
+    if (column === hoveredHorizonIndex) return;
+    render();
+    const { pose, obs, view, screenY } = panoramaFrame, sample = view[column];
+    hoveredHorizonIndex = column;
+    if (!sample.valid) {
+      state.horizonHover = "此方向無有效觀測，無法標示輪廓點。";
+      return;
+    }
+    const bearing = C.modDeg(pose.heading + obs.angles[sample.index]);
+    const point = S.horizonPoint(pose, bearing, obs.options);
+    if (!point) return;
+    const label = `輪廓點 · 方位 ${bearing.toFixed(0)}° · 距掃描位置 ${fmt(point.distance)} · 高程 ${point.z.toFixed(0)} m`;
+    L.polyline([ll(pose), ll(point)], {
+      color: '#ffb477', weight: 2, dashArray: '5 5', interactive: false,
+    }).addTo(horizonHoverLayer);
+    L.circleMarker(ll(point), {
+      radius: 7, color: '#ffffff', weight: 2, fillColor: '#ffb477',
+      fillOpacity: 1, interactive: false, className: 'horizon-hover-point',
+    }).addTo(horizonHoverLayer).bindTooltip(label, {
+      permanent: true, direction: 'top', offset: [0, -9],
+    });
+    const ctx = cv.getContext('2d'), x = column / (view.length - 1) * cv.width;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(x, 30); ctx.lineTo(x, cv.height); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath(); ctx.arc(x, screenY(sample.elevation), 5, 0, Math.PI * 2); ctx.stroke();
+    state.horizonHover = label;
   }
   function terrainImage(kind) {
     const cv = document.createElement("canvas");
@@ -1388,6 +1475,7 @@ export function useMission() {
         "NASA/JPL-Caltech/MSSS · USGS Sun & Stack 2020 · MGS/MOLA",
       );
     candidateLayer = L.layerGroup().addTo(map);
+    horizonHoverLayer = L.layerGroup().addTo(map);
     poiLayer = L.layerGroup().addTo(map);
     namesLayer = L.layerGroup().addTo(map);
     estimateMarker = L.circleMarker([18.44, 77.42], {
@@ -1591,6 +1679,12 @@ export function useMission() {
       state.result = null;
       state.status = "觀測設定已變更";
       state.message = "保留導航估計；請重新掃描。";
+      observation = null;
+      observationPose = null;
+      displayedCandidate = null;
+      candidateLayer?.clearLayers();
+      drawCurve();
+      render();
     },
   );
   watch(() => state.continuousLocalization, (enabled) => {
@@ -1601,7 +1695,10 @@ export function useMission() {
   watch(() => state.route, drawProfile);
   watch(profileCanvas, drawProfile);
   watch(panorama, render);
-  watch(() => [state.viewYaw, state.destination, state.poi, state.pois, state.targets], render);
+  watch(() => [state.viewYaw, state.destination, state.poi, state.pois, state.targets], () => {
+    render();
+    drawCurve(displayedCandidate);
+  });
   watch(curve, () => drawCurve(state.result?.candidates[0]));
   onScopeDispose(() => {
     disposed = true;
@@ -1620,6 +1717,8 @@ export function useMission() {
     matches,
     displayed,
     panorama,
+    hoverHorizon,
+    leaveHorizon,
     curve,
     profileCanvas,
     asset,
@@ -1639,7 +1738,8 @@ export function useMission() {
     focusView: () => {
       const target = state.poi || state.targets.find((p) => p.id === state.destination);
       if (!target) return;
-      state.viewYaw = C.modDeg(Math.atan2(target.x - state.truth.x, target.y - state.truth.y) / C.DEG - state.truth.heading);
+      const pose = observationPose || state.truth;
+      state.viewYaw = C.modDeg(Math.atan2(target.x - pose.x, target.y - pose.y) / C.DEG - pose.heading);
     },
     beginDrawing,
     beginStart: () => {

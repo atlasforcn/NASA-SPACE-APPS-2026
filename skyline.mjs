@@ -13,6 +13,20 @@ function profile(position,options={}){
  return {angles,elevations,valid,cameraHeight:o.cameraHeight,options:o};
 }
 function rng(seed){let s=seed>>>0;return ()=>{s=(1664525*s+1013904223)>>>0;return s/4294967296;};}
+// The skyline is set by maximum apparent elevation, not maximum terrain height.
+// Used only for explanatory map hover; never passed into the position search.
+function horizonPoint(position,bearing,options={}){
+ const o={...defaults,...options},base=C.elevation(position.x,position.y)+o.cameraHeight,t=bearing*C.DEG;
+ if(!Number.isFinite(base))return null;
+ let best=null;
+ for(let distance=o.rayStep;distance<=o.maxRange;distance+=o.rayStep){
+  const x=position.x+distance*Math.sin(t),y=position.y+distance*Math.cos(t),z=C.elevation(x,y);
+  if(!Number.isFinite(z))break;
+  const angle=Math.atan2(z-base-(o.curvature?distance*distance/(2*C.R):0),distance)/C.DEG;
+  if(!best||angle>best.angle)best={x,y,z,distance,angle};
+ }
+ return best;
+}
 function simulate(pose,options={}){
  const {seed=42,noise=.025,fov=360,occlusion=0,...o}=options,p=profile(pose,o),random=rng(seed),n=p.angles.length;
  // Generate at actual yaw, not a rounded cyclic index: search cannot read yaw.
@@ -24,6 +38,8 @@ function simulate(pose,options={}){
  }
  return {...p,kind:'simulated-dem-horizon',seed};
 }
+// Shared left-to-right camera window; angles are relative to the captured rover yaw.
+function viewport(obs,centre=0,fov=120){const step=360/obs.angles.length,count=Math.round(fov/step);return Array.from({length:count+1},(_,i)=>{const angle=centre-fov/2+i*fov/count,index=((Math.round(angle/step)%obs.angles.length)+obs.angles.length)%obs.angles.length;return {index,angle,elevation:obs.elevations[index],valid:obs.valid[index]&&Number.isFinite(obs.elevations[index])};});}
 function score(p,obs,yaw){const n=p.angles.length,shift=yaw/(360/n);let sum=0,count=0,obsCount=0;
  for(let i=0;i<n;i++){if(!obs.valid[i]||!Number.isFinite(obs.elevations[i]))continue;obsCount++;const q=(i+shift+n*2)%n,j=Math.floor(q),k=(j+1)%n,f=q-j;if(!p.valid[j]||!p.valid[k])continue;const predicted=p.elevations[j]*(1-f)+p.elevations[k]*f,d=predicted-obs.elevations[i];sum+=Math.min(d*d,25);count++;}
  return {score:count?Math.sqrt(sum/count):Infinity,coverage:count/n,overlap:obsCount?count/obsCount:0};
@@ -50,6 +66,6 @@ async function search(obs,bounds,options={}){
  }
  const candidates=distinct([...refined,...all].sort((a,b)=>a.score-b.score),3,candidateSeparation);onProgress(1);return {candidates,...classify(candidates,obs,thresholds),thresholds};
 }
-return {profile,simulate,score,search,classify,defaults,frozenThresholds};
+return {profile,simulate,viewport,horizonPoint,score,search,classify,defaults,frozenThresholds};
 })();
 export default api;
