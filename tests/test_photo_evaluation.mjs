@@ -18,4 +18,4 @@ for(const r of regions) {
   assert(Math.abs(C.elevation(0,0)-planet.sample(r.lat,r.lng))<0.02);
   assert.equal(grid.source.original_sha256,meta.source_sha256);
 }
-console.log('Photo evaluation rejects synthetic inputs; six regional DEMs retain source and centre heights.');
+console.log(`Photo evaluation rejects synthetic inputs; ${regions.length} regional MOLA samples retain source and centre heights.`);

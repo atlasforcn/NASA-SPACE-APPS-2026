@@ -41,6 +41,9 @@ for (let j = 0; j < size; j++) for (let i = 0; i < size; i++) {
   heights.push(30*Math.exp(-x*x/40000-y*y/640000));
 }
 C.setDEM({schema:'mars-local-grid-v1',crs:'MARS_EQ_LOCAL_TANGENT',origin:{lat:18.44,lng:77.42},width:size,height:size,xMin:-4000,xMax:4000,yMin:-4000,yMax:4000,heights,source:{url:'https://example.invalid/test-dem',sample_step_m:100}});
+for (const p of [{x:-4000,y:0},{x:4000,y:0},{x:0,y:-4000},{x:0,y:4000},{x:-4000,y:4000}])
+  assert(!C.risk(p.x,p.y).unknown, 'Valid DEM edges should have a one-sided terrain estimate');
+assert(C.risk(4001,0).unknown, 'Outside the DEM remains unknown');
 C.setSlopeLimit(24); C.setRoughnessLimit(1);
 const a = {x:-3000,y:0}, b = {x:3000,y:0,name:'粗糙地形後方'};
 assert(C.segmentSafe(a,b));

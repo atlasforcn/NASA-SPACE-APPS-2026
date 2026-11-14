@@ -10,7 +10,11 @@ watch(() => s.siteId, id => {
 });
 function loadPreset() {
   if (selectedRegion.value === 'gale') m.startGale();
-  else m.restore();
+  else if (selectedRegion.value === 'jezero-extended') m.startJezeroExtended();
+  else if (selectedRegion.value === 'jezero-hirise') m.startJezeroHiRISE();
+  else if (selectedRegion.value === 'valles-ctx') m.startValles();
+  else if (selectedRegion.value === 'jezero') m.restore();
+  else m.startRegion();
 }
 function selectRegion(event) {
   const region = regions.find(r => r.id === event.target.value);
@@ -27,7 +31,7 @@ function selectRegion(event) {
         <option v-for="r in regions" :key="r.id" :value="r.id">{{ r.name }}</option>
       </select></label>
       <button id="load-region" class="primary wide" :disabled="!s.ready || s.regionLoading" @click="loadPreset">{{ s.regionLoading ? '正在載入地形…' : '載入所選區域 →' }}</button>
-      <p class="hint">Jezero：CTX DEM，展示約 40 m／格。Gale：合併 DEM，取樣 20 m／格。各區使用相同操作流程，資料依來源提供。</p>
+      <p class="hint">Jezero：CTX 40 m／格、30×30 km 擴區與 HiRISE 5 m／格局部。Gale：20 m／格。Valles CTX：20×20 km、40 m／格。標示 MOLA 的選項為公里級。</p>
       <h3 class="subheading">自訂座標 / 全球 MOLA</h3>
       <p class="hint">自訂座標的區域格距至少 4 km，不代表高解析觀測。</p>
       <p class="hint">輸入中心座標建立任務；起點、目的地與繪製路線可跨區域，覆蓋範圍自動調整。</p>

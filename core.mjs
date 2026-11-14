@@ -113,9 +113,9 @@ function elevation(x,y){
   v+=14*Math.cos((x+y)/250)*Math.sin((x-y)/355);
   return v;
 }
-function roughness(x,y){if(realDEM){const z=elevation(x,y);if(!Number.isFinite(z))return NaN;const s=realDEM.cellMeters*2;const near=[elevation(x+s,y),elevation(x-s,y),elevation(x,y+s),elevation(x,y-s)];if(!near.every(Number.isFinite))return NaN;return clamp(Math.abs(z-near.reduce((a,b)=>a+b,0)/4)/8,0,1);}
+function roughness(x,y){if(realDEM){const z=elevation(x,y);if(!Number.isFinite(z))return NaN;const s=realDEM.cellMeters*2,d=realDEM;const positions=[[x+s,y],[x-s,y],[x,y+s],[x,y-s]].filter(([px,py])=>px>=d.xMin&&px<=d.xMax&&py>=d.yMin&&py<=d.yMax);const near=positions.map(([px,py])=>elevation(px,py));if(!near.length||!near.every(Number.isFinite))return NaN;return clamp(Math.abs(z-near.reduce((a,b)=>a+b,0)/near.length)/8,0,1);}
 return clamp(0.3+0.25*Math.sin(x/370)*Math.cos(y/420)+0.28*Math.exp(-((x-1050)**2+(y+170)**2)/740000),0,1);}
-function slopeDeg(x,y){const s=realDEM?Math.max(20,realDEM.cellMeters):40;const gx=(elevation(x+s,y)-elevation(x-s,y))/(2*s),gy=(elevation(x,y+s)-elevation(x,y-s))/(2*s);return Math.atan(Math.hypot(gx,gy))/DEG;}
+function slopeDeg(x,y){const s=realDEM?Math.max(20,realDEM.cellMeters):40,d=realDEM;const xl=d?Math.max(d.xMin,x-s):x-s,xr=d?Math.min(d.xMax,x+s):x+s,yl=d?Math.max(d.yMin,y-s):y-s,yr=d?Math.min(d.yMax,y+s):y+s;const gx=(elevation(xr,y)-elevation(xl,y))/(xr-xl),gy=(elevation(x,yr)-elevation(x,yl))/(yr-yl);return Math.atan(Math.hypot(gx,gy))/DEG;}
 let navigationContext=null;
 function setNavigationContext(context=null){navigationContext=context;}
 function navigationAt(x,y){return navigationContext?.sample(x,y)||{blocked:false,factor:1,reasons:[],unknown:false};}

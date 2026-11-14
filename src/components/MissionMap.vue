@@ -20,7 +20,9 @@ const activeLayer = computed(() => {
     radiation: "RAD 吸收劑量測站",
     chemical: "GRS 鐵濃度格網",
   };
-  return labels[m.state.layer] || "地圖圖層";
+  return m.state.layers.length
+    ? m.state.layers.map(id => labels[id] || id).join('、')
+    : labels.none;
 });
 function openLayers() {
   m.state.tab = "layers";

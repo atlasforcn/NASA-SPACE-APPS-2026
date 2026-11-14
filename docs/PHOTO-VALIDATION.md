@@ -12,11 +12,11 @@
 
 ## 已知阻礙
 
-現有 Jezero CTX 裁切僅 9.7×7 km。`skyline.profile` 的有效旗標只檢查射線至少到 1200 m，不代表包含照片內真正的遠山。實景實驗須補充足夠遠距的 DEM 並明確遮罩不完整射線；不能靠增加 maxRange 憑空補上地形。MOLA 格距約 3.7 km、區域輸出至少 4 km，不能代替精細山脊 DEM。不同 DEM 的垂直基準、火星投影與相機高度必須一致。
+預設 Jezero CTX 裁切為 9.7×7 km，另可選同源 30×30 km 擴區。`skyline.profile` 的有效旗標只檢查射線至少到 1200 m，不代表包含照片內真正的遠山；擴區也必須逐照片檢查完整視線。實景實驗須明確遮罩不完整射線；不能靠增加 maxRange 憑空補上地形。MOLA 格距約 3.7 km、區域輸出至少 4 km，不能代替精細山脊 DEM。不同 DEM 的垂直基準、火星投影與相機高度必須一致。
 
 ## 已新增的工具
 
-`node scripts/export-regions.mjs` 將既有數值 MOLA 轉為六個不同位置的區域 DEM（Jezero、Gale、Elysium、Olympus、Hellas、Valles），預設放在 `.build/dem-regions/`，附來源雜湊、格距及中心高程。這是同一觀測來源的不同裁切，並非六份獨立或高解析觀測。網站也提供區域座標快捷選擇，再按建立任務即可載入該區域。
+`node scripts/export-regions.mjs` 將既有數值 MOLA 轉為選單各中心的區域 DEM，預設放在 `.build/dem-regions/`，附來源雜湊、格距及中心高程。這是同一觀測來源的不同裁切，並非多份獨立或高解析觀測。網站也提供區域座標快捷選擇，再按建立任務即可載入該區域。
 
 `node scripts/evaluate-photo-horizon.mjs input.json result.json` 接受已完成相機幾何轉換與人工／自動標註的角度曲線；尚不直接處理照片像素。輸入格式如下（示意欄位，不能當作實測資料）：
 

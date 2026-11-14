@@ -34,7 +34,7 @@ npm run preview
 
 「圖層 → 疊加資料」可疊加已下載的 TES 熱慣量、TES 橄欖石豐度、GMM-3 重力異常及 GRS 鐵濃度格網，並讀取游標／目的地的格網值；MEDA 氣壓與 RAD 吸收劑量以 Sol 1 歷史測站呈現。所有資料由本站靜態提供，保留缺值、格距、原表與來源雜湊。`scripts/prepare-science.py` 可重建 `data/science/`，來源與限制見 `docs/SOURCES.md`。這些科學觀測不改寫 DEM 路線成本。
 
-「探索」可載入 Gale 10×10 km 的 USGS 高解析區域：原生格距 1 m DEM 經官方 overview 取樣為 20 m；25 cm 正射來源展示約 6.67 m/pixel，彩色未涵蓋處使用灰階影像。支援高程、坡度、地形陰影、粗糙度圖層與返回 Jezero；Gale 尚無地質單元圖。來源及處理方式見 `docs/SOURCES.md`。
+「探索」可載入 Jezero 30×30 km CTX 擴區、4×4 km HiRISE 局部、Gale 10×10 km 合併 DEM，以及 Valles Marineris 20×20 km CTX DTM。Jezero 擴區取樣 40 m；HiRISE 局部原生 1 m、取樣 5 m；Gale 原生 1 m、取樣 20 m；Valles CTX 取樣 40 m。來源及處理方式見 `docs/SOURCES.md`。
 
 - `src/`：Vue 元件、共用任務狀態與定位 Worker。
 - `core.mjs`、`planet.mjs`、`skyline.mjs`：網站與測試共用的計算核心。
@@ -48,7 +48,7 @@ npm run preview
 
 預設規劃假設為平地步速 3 km/h、每站停留 15 分鐘、時間預算 8 小時、高坡度標記 10°、通行坡度上限 15°（中等坡度情境）。粗糙度上限預設為 1（量尺最大值），因此初始規劃主要由坡度、缺測與人工禁行區限制；需要排除粗糙地形時，請降低粗糙度上限。地質材質成本預設啟用，熱慣量成本預設關閉。這些數值供情境比較，並非火星任務安全標準。
 
-DEM 快捷選擇提供 Jezero（CTX DEM）與 Gale（合併 DEM），使用相同載入與任務操作介面；自訂座標使用全球 MOLA。執行 `node scripts/export-regions.mjs` 可輸出附來源的兩份 MOLA 數值區域格網。毅力號實景照片驗證的來源、阻礙與評估指令見 [實景驗證說明](docs/PHOTO-VALIDATION.md)；目前尚無真實照片定位改善的實測結論。
+DEM 快捷選擇提供 Jezero、Jezero CTX 擴區、Jezero HiRISE 局部、Gale 與 Valles CTX，另有 Elysium、Olympus、Hellas、Valles 的公里級 MOLA 快捷中心；自訂座標同樣使用全球 MOLA。執行 `node scripts/export-regions.mjs` 可輸出附來源的各中心 MOLA 數值區域格網。毅力號實景照片驗證的來源、阻礙與評估指令見 [實景驗證說明](docs/PHOTO-VALIDATION.md)；目前尚無真實照片定位改善的實測結論。
 
 圖層為真實資料，觀測、車輛與漂移為模擬。Jezero 展示格網約 40 m；全球 MOLA 來源赤道約 3.7 km，區域格網從 4 km 起隨任務範圍調整。跨洲路線使用局部球面投影近似，距離、方位與通行判斷不代表真實任務導航。全球定位候選未校準，不自動校正。15° 為展示門檻，DEM 無法保證腳下或車輪尺度安全。來源與精度限制見 `docs/SOURCES.md`。
 

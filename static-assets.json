@@ -124,8 +124,8 @@
     "disposition": "publish",
     "reason": "Website runtime, reference, source record or presentation",
     "path": "docs/SOURCES.md",
-    "bytes": 14456,
-    "sha256": "83c5036f3c17f3df4e446465a6ae3ed6983fb8aac07184d8d27ae3580684b1fb"
+    "bytes": 16819,
+    "sha256": "dd1b26c909a6be30e04ffb6737741e56dc972fac265f425eaf93c8cb33a594c7"
   },
   {
     "source": "docs/Leaflet-LICENSE.txt",
@@ -140,8 +140,8 @@
     "disposition": "publish",
     "reason": "Real photo validation sources, protocol and current evidence limitations",
     "path": "docs/PHOTO-VALIDATION.md",
-    "bytes": 4549,
-    "sha256": "210fa91f82278c616b3fc7dac5107ddb0d9e68bcf2e9a6e16762dda0ffb76943"
+    "bytes": 4540,
+    "sha256": "92efe8359c0d8de6a905bc8d1f2a56b6c4af9455d847820ee410eb5c770dd860"
   },
   {
     "source": "data/gale/dem.json",
@@ -286,5 +286,45 @@
     "path": "data/mars-global-optical.jpg",
     "bytes": 657199,
     "sha256": "7a08bb47c5061815c2e358d1dc90248bce6919afcbacf5d7cf99a2eebf4b48f7"
+  },
+  {
+    "source": "data/jezero-extended/dem.json",
+    "disposition": "publish",
+    "reason": "Website runtime numeric CTX DEM and source record",
+    "path": "data/jezero-extended/dem.json",
+    "bytes": 5020809,
+    "sha256": "a2929aac26f7ef75fb186538d64ed86a59d2c3a25098c98fccf615de43d1dc53"
+  },
+  {
+    "source": "data/valles/dem.json",
+    "disposition": "publish",
+    "reason": "Website runtime CTX DTM or optical source",
+    "path": "data/valles/dem.json",
+    "bytes": 1858249,
+    "sha256": "13912b69465e95659ef7e65037fa0f1f4a8363f985ccb0d965da34779b9f35fc"
+  },
+  {
+    "source": "data/valles/optical.png",
+    "disposition": "publish",
+    "reason": "Website runtime CTX DTM or optical source",
+    "path": "data/valles/optical.png",
+    "bytes": 198960,
+    "sha256": "afdad804c5556238bfe14c331cf0bd8680e3210b6e19a13e8bf008e93af6d067"
+  },
+  {
+    "source": "data/valles/optical-source.json",
+    "disposition": "publish",
+    "reason": "Website runtime CTX DTM or optical source",
+    "path": "data/valles/optical-source.json",
+    "bytes": 1395,
+    "sha256": "6bca6aaf8ea39e9b55b6f287b0dd823cf66974313ce9737bf699c9a7d2ef95d7"
+  },
+  {
+    "source": "data/jezero-hirise/dem.json",
+    "disposition": "publish",
+    "reason": "Website runtime numeric HiRISE DTM and source record",
+    "path": "data/jezero-hirise/dem.json",
+    "bytes": 5489001,
+    "sha256": "d3fd5208d442436ddfb177ff3969c9645801d7cbd1797619889e4cbd693816eb"
   }
 ]

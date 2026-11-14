@@ -29,7 +29,10 @@
 |---|---|---|---|
 | 全球導覽、任務座標 | [NASA PDS MOLA MEGDR](https://pds-geosciences.wustl.edu/missions/mgs/megdr.html) | `data/mola16.bin`、`data/mars-global-dem.jpg`；數值高程、全球底圖與自訂座標任務 | MGS 雷射高度計；16 ppd 全球格網，衍生著色圖僅供顯示 |
 | Jezero 任務區 | [USGS CTX DEM](https://astrogeology.usgs.gov/search/map/mars_2020_science_investigation_ctx_dem_mosaic)、[USGS CTX 正射影像](https://asc-pds-services.s3.us-west-2.amazonaws.com/mosaic/mars2020_trn/CTX/ScienceInvestigationMaps_JPL/M20_JezeroCrater_CTXortho_mosaic_5m.tif)、[USGS 地質圖](https://www.usgs.gov/maps/geologic-map-jezero-crater-and-nili-planum-region-mars) | `data/jezero_dem.json`、`data/ctx.png`、`data/geology.json`；地形、影像、地質單元 | MRO CTX 觀測；地質為區域科學解釋，非障礙物實測 |
+| Jezero 擴區 | [同一 USGS CTX DEM](https://astrogeology.usgs.gov/search/map/mars_2020_science_investigation_ctx_dem_mosaic) | `data/jezero-extended/dem.json`；30×30 km 數值高程 | 原生 20 m，本站 40 m 取樣；光學影像僅覆蓋中央 9.7×7 km，未提供擴區地質圖 |
+| Jezero HiRISE 局部 | [USGS Mars Sample Return HiRISE DTM](https://astrogeology.usgs.gov/search/map/mars-sample-return-terrain-relative-navigation-hirise-dtm-mosaic) | `data/jezero-hirise/dem.json`；4×4 km 數值高程 | 單塊原生 1 m DTM 取樣 5 m；有效格點約 91.1%，底圖仍為 CTX 正射影像 |
 | Gale 任務區 | [USGS MSL Gale DEM](https://astrogeology.usgs.gov/search/map/mars_msl_gale_merged_dem_1m)、[USGS Gale 正射影像](https://astrogeology.usgs.gov/search/map/mars_msl_gale_merged_orthophoto_mosaic_25cm) | `data/gale/`；按需載入局部地形與光學影像 | MRO HiRISE／合併產品；本機展示格距較原生像素粗，色彩覆蓋不完整 |
+| Valles Marineris 局部 | [USGS CTX DTM STAC](https://stac.astrogeology.usgs.gov/docs/tutorials/qgis_3d/) | `data/valles/`；20×20 km 數值高程與灰階正射影像 | 單組 CTX 立體 DTM，原生約 20 m、本站 40 m 取樣；有效高程約 94.2%，缺值不外推 |
 | 全球科學圖層 | [ASU JMARS 數值圖層服務](https://ms-mars.mars.asu.edu/) | `data/science/*.bin`、`*.png` 與 `manifest.json`；熱慣量、橄欖石豐度、重力異常、鐵含量 | 多任務儀器產品與模型；解析度、有效覆蓋及引用各異，供區域背景探索 |
 | 歷史環境觀測 | [NASA PDS MEDA](https://pds-atmospheres.nmsu.edu/)；[NASA PDS RAD](https://pds-ppi.igpp.ucla.edu/) | `data/science/manifest.json`、`data/science/raw/`；毅力號著陸後 Sol 1 氣壓與好奇號 Sol 1 輻射樣本摘要 | 單站、單日歷史觀測，不代表目前天氣、整日平均或全球風險 |
 | Three Forks 樣本存放 | [NASA PDS Sample Depot](https://pds-geosciences.wustl.edu/m2020/urn-nasa-pds-mars2020_sample_depot_three_forks/) | `data/pds/` CSV/XML 與 `data/three-forks.geojson`；樣本名稱、存放點及時間 | 任務紀錄資料；非地形或材料遙測 |
@@ -38,6 +41,12 @@
 坡度、粗糙度、陰影、地平線、彩色 DEM 底圖、樣本 GeoJSON 及介面摘要均為本專案計算或格式轉換後的呈現，不應視為額外獨立觀測。模擬車輛位置、漂移與路線成本也不是資料來源。以下各節記錄重要產品細節及限制。
 
 ## Gale 高解析區域資料
+
+Jezero 擴區由 `scripts/prepare-jezero-extended.py` 以 HTTP range 讀取官方 CTX 數值 DEM，中心 18.44°N、77.42°E，取樣 751×751、40 m／格。來源 URL、ETag、尺寸、火星投影、讀取窗與取樣窗雜湊保存在輸出 JSON；未下載整份原始 TIFF，因此未宣稱原檔 SHA-256。有效格點為 100%。此擴區與原 Jezero 地形來自同一 CTX 產品，不是獨立觀測。原正射影像只在中央裁切展示；擴區的影像空白不代表 DEM 缺值。
+
+Jezero HiRISE 局部由 `scripts/prepare-jezero-hirise.py` 讀取官方 Jezero C HiRISE DTM 分塊，中心 18.44°N、77.425°E，取樣 801×801、5 m／格。來源原生格距 1 m，並不表示 1 m 垂直精度。有效格點約 91.1%，缺值保持空白；光學底圖沿用較粗的 CTX 影像。此局部與 CTX 裁切可用於比較格距對地形衍生量的影響，但須分開考慮覆蓋範圍與資料誤差。
+
+Valles 局部由 `scripts/prepare-valles.py` 使用 USGS STAC 的單組受控 CTX DTM 與對應正射影像；中心 −10.0°N、−69.3°E，格網 501×501、40 m／格。數值高程約 −364 至 4067 m，有效格點約 94.2%。兩份來源皆重新投影到本站的火星局部框架；正射影像做 1–99 百分位灰階拉伸，僅供顯示。來源項目、URL、原始投影、讀取窗與數值窗雜湊保存在輸出資料。單組 DTM 的缺值、雜訊和垂直誤差仍限制坡度與路線判讀；尚無獨立配準驗證。
 
 「探索 → Gale 高解析 DEM＋正射影像」按需載入 `data/gale/`。中心 planetocentric −4.59°、positive-East 137.44°，範圍東西／南北各 10 km，半徑 3,396,190 m，局部等距經緯度公尺框架。中心是示範任務起點，不是好奇號實際位置。
 
