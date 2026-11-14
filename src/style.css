@@ -132,7 +132,9 @@ input[type="checkbox"] {
   color: #edf2e9;
 }
 .brand-mark {
-  font-size: 36px;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
   color: var(--orange);
 }
 .brand strong {
@@ -326,6 +328,26 @@ input[type="checkbox"] {
   padding: 22px;
   border-bottom: 1px solid var(--border);
 }
+.plan-steps { display: flex; gap: 8px; padding: 0; margin: 16px 0; list-style: none; }
+.plan-steps li { flex: 1; padding: 8px 4px; border-bottom: 2px solid var(--border); color: #bacbc9; font-size: 11px; }
+.plan-steps li.complete { border-color: var(--mint); color: var(--mint); }
+.route-comparison { margin: 16px 0; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: #13232a; }
+.route-comparison h3 { margin: 0 0 10px; font-size: 14px; }
+.route-comparison table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.route-comparison caption { text-align: left; color: #bacbc9; font-size: 11px; margin-bottom: 10px; }
+.route-comparison th, .route-comparison td { text-align: left; padding: 9px 3px; border-bottom: 1px solid var(--border); }
+.planning-assumptions { margin: 16px 0; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; }
+.planning-assumptions summary { cursor: pointer; }
+.planner-controls h3 { font-size: 14px; margin: 18px 0 8px; }
+.planner-stops { padding-left: 22px; }
+.planner-stops li { margin: 8px 0; font-size: 12px; }
+.planner-stops li span { display: block; margin-bottom: 6px; overflow-wrap: anywhere; }
+.planner-stops button { padding: 5px 9px; margin-right: 5px; }
+.comparison-scroll { overflow-x: auto; }
+.route-comparison button[aria-pressed="true"] { border-color: var(--mint); color: var(--mint); }
+.itinerary { padding-left: 22px; font-size: 12px; }
+.itinerary li { margin: 12px 0; }
+.itinerary span { display: block; color: #bacbc9; margin-top: 5px; }
 .field-pair,
 .button-row,
 .stats {
@@ -585,7 +607,8 @@ details button {
     font-size: 17px;
   }
   .brand-mark {
-    font-size: 27px;
+    width: 30px;
+    height: 30px;
   }
   .brand small {
     font-size: 8px;

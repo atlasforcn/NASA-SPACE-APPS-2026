@@ -119,7 +119,7 @@ function risk(x,y){const slope=slopeDeg(x,y),rough=roughness(x,y);const hazard=r
 function segmentSafe(a,b){const n=Math.max(1,Math.ceil(distance(a,b)/(realDEM?(realDEM.cellMeters>100?realDEM.cellMeters/3:Math.min(realDEM.cellMeters/3,15)):15)));for(let i=0;i<=n;i++){const t=i/n,x=a.x+(b.x-a.x)*t,y=a.y+(b.y-a.y)*t;if(x<LIMIT.minX||x>LIMIT.maxX||y<LIMIT.minY||y>LIMIT.maxY||risk(x,y).blocked)return false;}return true;}
 function fieldValue(kind,x,y){const h=elevation(x,y);if(!Number.isFinite(h))return NaN;if(kind==='terrain')return realDEM?clamp((h+2600)/1300,0,1):clamp((h+2700)/850,0,1);if(kind==='geology')return (x+0.32*y>540)?0.82:(x-0.45*y< -650)?0.20:0.48;if(kind==='landform')return clamp((slopeDeg(x,y)+4*roughness(x,y))/27,0,1);if(kind==='temperature')return clamp(((-27+8*Math.sin(x/1250)*Math.cos(y/1100)-0.008*(h+2500))+43)/33,0,1);if(kind==='magnetic')return clamp((50+26*Math.sin(x/810+y/1360)+13*Math.cos(y/530))/100,0,1);return 0;}
 function minHeap(){const a=[];return {push(v){a.push(v);let i=a.length-1;while(i){let p=(i-1)>>1;if(a[p].f<=v.f)break;a[i]=a[p];i=p;}a[i]=v;},pop(){if(!a.length)return null;const top=a[0],t=a.pop();if(a.length){let i=0;while(true){let c=i*2+1;if(c>=a.length)break;if(c+1<a.length&&a[c+1].f<a[c].f)c++;if(a[c].f>=t.f)break;a[i]=a[c];i=c;}a[i]=t;}return top;},get length(){return a.length;}};}
-function planPath(start,goal,step=realDEM?Math.max(65,realDEM.cellMeters):105){
+function planPath(start,goal,step=realDEM?Math.max(65,realDEM.cellMeters):105,options={}){
   if(!Number.isFinite(step)||step<=0)throw Error('Invalid route grid step');
   const failure={path:[],length:0,expanded:0,reachable:false};
   if(![start.x,start.y,goal.x,goal.y].every(Number.isFinite)||!segmentSafe(start,start)||!segmentSafe(goal,goal))return failure;
@@ -135,7 +135,10 @@ function planPath(start,goal,step=realDEM?Math.max(65,realDEM.cellMeters):105){
   while(heap.length&&expanded<25000){const cur=heap.pop();if(closed[cur.id])continue;closed[cur.id]=1;expanded++;if(cur.id===en)break;const cx=cur.id%NX,cy=Math.floor(cur.id/NX);
     for(const [dx,dy] of moves){const nx=cx+dx,ny=cy+dy;if(nx<0||ny<0||nx>=NX||ny>=NY)continue;const id=ny*NX+nx;if(closed[id]||((id!==en&&id!==st)&&riskFor(id).blocked))continue;
       if(dx&&dy){const r1=riskFor(cy*NX+nx),r2=riskFor(ny*NX+cx);if(r1.blocked||r2.blocked)continue;}
-      const rr=riskFor(id);if(rr.blocked||!segmentSafe(coords(cur.id),coords(id)))continue;const cost=Math.hypot(dx,dy)*step*rr.cost, alt=gs[cur.id]+cost;
+      const rr=riskFor(id);if(rr.blocked||!segmentSafe(coords(cur.id),coords(id)))continue;
+      const a=coords(cur.id),b=coords(id),surface=Math.hypot(Math.hypot(dx,dy)*step,elevation(b.x,b.y)-elevation(a.x,a.y));
+      const weight=options.mode==='shortest'?0:(options.riskWeight??1);
+      const cost=surface*(1+weight*(rr.cost-1)), alt=gs[cur.id]+cost;
       if(alt<gs[id]){gs[id]=alt;prev[id]=cur.id;heap.push({id,f:alt+distance(coords(id),coords(en))});}}
   }
   if(!Number.isFinite(gs[en]))return {path:[],length:0,expanded,reachable:false};

@@ -1,0 +1,30 @@
+import assert from 'node:assert/strict';
+import C from '../core.mjs';
+import { buildItinerary, measureRoute } from '../src/routePlanner.mjs';
+C.clearDEM(); C.setSlopeLimit(24);
+const start = {x:-1400,y:-820}, stop = {x:-1000,y:-700,name:'採樣點'}, goal = {x:2200,y:780,name:'終點'};
+const options = {speedKmh:3,riskWeight:2,highSlope:5,roundTrip:true,stopMinutes:20,budgetHours:8};
+const plan = buildItinerary(start,[stop,goal],options);
+for (const route of Object.values(plan)) {
+  assert(route.reachable);
+  assert.equal(route.legs.length,3);
+  assert.deepEqual(route.path[0],start);
+  assert(C.distance(route.path.at(-1),start)<1e-6);
+  assert.deepEqual(route.stopIndices.slice(0,2).map(i => ({x:route.path[i].x,y:route.path[i].y})),[stop,goal].map(({x,y})=>({x,y})));
+  assert(route.path.every((p,i,path)=>!i || C.segmentSafe(path[i-1],p)));
+  assert(Math.abs(route.totalHours-route.hours-40/60)<1e-8);
+  assert.equal(route.legs.at(-1).stopMinutes,0);
+  assert(route.surface>=route.length && route.gain>0 && route.loss>0);
+}
+assert(plan.shortest.surface<=plan.safer.surface+1e-6);
+assert(plan.safer.riskDistance<=plan.shortest.riskDistance+1e-6);
+const fast=measureRoute(plan.shortest.path,{speedKmh:6});
+assert(Math.abs(fast.hours*2-plan.shortest.hours)<1e-8);
+const tiny=buildItinerary(start,[goal],{...options,budgetHours:0.01});
+assert(tiny.shortest.marginHours<0);
+const blocked=buildItinerary(start,[{x:50000,y:50000,name:'越界'}],options);
+assert(!blocked.shortest.reachable && !blocked.safer.reachable);
+assert.equal(blocked.shortest.failedStop,'越界');
+assert.throws(()=>buildItinerary(start,[goal],{speedKmh:0}));
+assert.throws(()=>buildItinerary(start,[goal],{budgetHours:NaN}));
+console.log('Dual objective routes, safety, ordered stops, return leg, walking times, budgets and failure handling passed');

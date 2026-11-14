@@ -10,6 +10,7 @@ import L from "leaflet";
 import C from "../core.mjs";
 import S from "../skyline.mjs";
 import P from "../planet.mjs";
+import { buildItinerary } from './routePlanner.mjs';
 import { asset, json } from "./asset";
 
 export const missionKey = Symbol("mission");
@@ -57,6 +58,11 @@ export function useMission() {
     pickingTarget: false,
     pickingStart: false,
     straightStatus: "先選端點，再評估直線。",
+    directRoute: null,
+    routeOptions: null,
+    selectedRoute: 'safer',
+    stopIds: [],
+    planner: { speedKmh: 3, riskWeight: 1, highSlope: 15, roundTrip: false, stopMinutes: 15, budgetHours: 8 },
     targetName: "",
     slope: 24,
     route: null,
@@ -248,6 +254,8 @@ export function useMission() {
     }
   }
   function clearRoute() {
+    state.routeOptions = null;
+    state.directRoute = null;
     remove(idealLayer);
     state.straightStatus = "請重新評估直線。";
     state.route = null;
@@ -345,14 +353,25 @@ export function useMission() {
     state.localizationCount = 0;
     lastScanDistance = -Infinity;
     trail.setLatLngs([ll(missionStart)]);
-    const result = C.planPath(missionStart, goal);
+    let alternatives;
+    try {
+      const stops = state.stopIds.map(id => state.targets.find(t => t.id === id)).filter(Boolean);
+      alternatives = buildItinerary(missionStart, [...stops, goal], state.planner);
+    } catch (error) {
+      clearRoute();
+      state.routeStatus = error.message;
+      return;
+    }
+    const result = alternatives[state.selectedRoute];
     installRoute(result);
+    state.routeOptions = alternatives;
     const n = Math.max(1, Math.ceil(C.distance(missionStart, goal) / checkStep()));
     const points = Array.from({ length: n + 1 }, (_, i) => ({
       x: missionStart.x + (goal.x - missionStart.x) * i / n,
       y: missionStart.y + (goal.y - missionStart.y) * i / n,
     }));
     const direct = routeCheck(points);
+    state.directRoute = direct;
     const unknown = points.some(p => C.risk(p.x, p.y).unknown || !C.validDEMPoint(p.x, p.y));
     idealLayer = L.layerGroup().addTo(map);
     points.slice(1).forEach((p, i) => L.polyline([ll(points[i]), ll(p)], {
@@ -364,8 +383,34 @@ export function useMission() {
     state.continuousLocalization = true;
     render();
     state.routeStatus = result.reachable
-      ? `沿線最大坡度 ${result.maxSlope.toFixed(1)}° · ${goal.unit} · 起點為使用者所選位置`
-      : "估計位置與目標無可通行路線，請重新定位或調整門檻。";
+      ? `已建立${state.selectedRoute === 'safer' ? '較低風險' : '最短'}路線 · ${result.legs.length} 段 · 可切換比較後行進`
+      : `無法抵達「${result.failedStop || goal.name}」，請調整停靠點或坡度門檻。`;
+  }
+  function selectRoute(key) {
+    if (!state.routeOptions || !['shortest','safer'].includes(key)) return;
+    stop(); cancel();
+    const alternatives = state.routeOptions, direct = state.directRoute;
+    state.selectedRoute = key;
+    state.truth = { ...missionStart, heading: 45 };
+    state.estimate = { ...missionStart, heading: 45 };
+    state.travelled = 0;
+    trail.setLatLngs([ll(missionStart)]);
+    installRoute(alternatives[key]);
+    state.routeOptions = alternatives;
+    state.directRoute = direct;
+    state.routeStatus = alternatives[key].reachable ? '已切換路線並返回規劃起點。' : '此方案無可達路線。';
+    nextTick(drawProfile);
+    render();
+  }
+  function addStop() {
+    if (!state.destination || state.stopIds.includes(state.destination)) return;
+    state.stopIds.push(state.destination);
+    state.destination = '';
+  }
+  function moveStop(index, delta) {
+    const next = index+delta;
+    if (next < 0 || next >= state.stopIds.length) return;
+    [state.stopIds[index],state.stopIds[next]] = [state.stopIds[next],state.stopIds[index]];
   }
   function motion(ts) {
     if (!state.running) return;
@@ -558,11 +603,16 @@ export function useMission() {
         else {
           const goal = state.targets.find(t => t.id === state.destination);
           if (goal) {
-            const remaining = C.planPath(state.estimate, goal);
+            const current = state.route;
+            const pending = current?.stopIndices
+              ? current.stopIndices.filter(index => index > waypoint).map(index => current.path[index])
+              : [goal];
+            const remaining = buildItinerary(state.estimate, pending.length ? pending : [goal], { ...state.planner, roundTrip: false })[state.selectedRoute];
             // Preserve the ideal baseline while updating only the remaining route.
-            const baseline = idealLayer, status = state.straightStatus;
+            const baseline = idealLayer, status = state.straightStatus, alternatives = state.routeOptions;
             idealLayer = null;
             installRoute(remaining);
+            state.routeOptions = alternatives;
             idealLayer = baseline;
             state.straightStatus = status;
             if (!remaining.reachable) {
@@ -867,6 +917,11 @@ export function useMission() {
     remove(analysis);
     state.units = [];
     const kind = state.layer;
+    if (['thermal', 'spectral', 'geophysical', 'atmospheric', 'radiation', 'chemical'].includes(kind)) {
+      state.legend = '已發布科學觀測；詳見下方來源與範圍。此項無可疊加的空間格網。';
+      estimateMarker?.bringToFront();
+      return;
+    }
     if (kind === "geology") {
       if (state.regional || !state.geologyAvailable) {
         state.legend = "此區尚無已接入的地質單元圖；不套用 Jezero 地質分類。";
@@ -1522,7 +1577,9 @@ export function useMission() {
     }
     profileSeries = [{ name: leg.name, samples, length: d, color: "#83e5d2" }];
     if (state.compareProfiles) {
-      const others = [state.route && { ...state.route, name: "目前路線", index: -1 },
+      const otherKey = state.selectedRoute === 'safer' ? 'shortest' : 'safer';
+      const alternative = state.routeOptions?.[otherKey];
+      const others = [alternative?.reachable && { ...alternative, name: otherKey === 'safer' ? '較低風險路線' : '最短路線', index: -2 }, state.route && { ...state.route, name: "目前路線", index: -1 },
         ...(!state.regional ? state.expedition.map((v, index) => ({ ...v, index })) : [])];
       for (const other of others.filter(v => v && v.index !== state.profileIndex && v.path?.length > 1)) {
         const points = [];
@@ -1854,6 +1911,17 @@ export function useMission() {
   });
   watch(() => [state.profileIndex, state.regional, state.compareProfiles, state.expedition], drawProfile);
   watch(() => state.route, drawProfile);
+  watch(() => [JSON.stringify(state.planner), state.stopIds.join('|')], () => {
+    stop(); clearRoute();
+    state.routeStatus = '規劃假設或停靠順序已變更，請重新建立路線。';
+  });
+  watch(() => state.targets.map(t => t.id).join('|'), () => {
+    state.stopIds = state.stopIds.filter(id => state.targets.some(t => t.id === id));
+  });
+  watch(() => state.destination, () => {
+    stop(); clearRoute();
+    state.routeStatus = '目的地已變更，請建立路線。';
+  });
   watch(profileCanvas, drawProfile);
   watch(panorama, render);
   watch(() => [state.viewYaw, state.destination, state.poi, state.pois, state.targets], () => {
@@ -1873,6 +1941,15 @@ export function useMission() {
   return {
     state,
     dem,
+    scienceAt: (point) => {
+      if (!state.ready || state.regionLoading || !dem.value || !point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) return null;
+      const geo = C.localToLatLng(point.x, point.y);
+      const height = C.demAt(point.x, point.y);
+      const unit = unitAt(point);
+      return { ...geo, height, slope: Number.isFinite(height) ? C.slopeDeg(point.x, point.y) : NaN,
+        unit: unit ? unitLabel(unit) : null, cellMeters: C.demInfo()?.cellMeters,
+        source: dem.value.source?.url };
+    },
     position,
     errorDistance,
     matches,
@@ -1908,6 +1985,20 @@ export function useMission() {
       state.viewYaw = C.modDeg(Math.atan2(target.x - pose.x, target.y - pose.y) / C.DEG - pose.heading);
     },
     beginDrawing,
+    selectRoute,
+    addStop,
+    moveStop,
+    removeStop: index => state.stopIds.splice(index, 1),
+    fitRoute: () => { if (state.route?.path.length) map.fitBounds(L.latLngBounds(state.route.path.map(ll)), { padding: [30,30] }); },
+    exportPlan: () => {
+      const route = state.routeOptions?.[state.selectedRoute];
+      if (!route?.reachable) return;
+      const { path, ...metrics } = route;
+      const payload = { type: 'FeatureCollection', properties: { body: 'Mars', coordinates: 'Planetocentric east-positive longitude/latitude; not Earth WGS84', assumptions: {...state.planner}, slopeLimit: Number(state.slope), dem: C.demInfo(), warning: 'Prototype terrain planning; not operational navigation' }, features: [{ type: 'Feature', properties: { mode: state.selectedRoute, ...metrics }, geometry: { type: 'LineString', coordinates: path.map(p => { const ll = C.localToLatLng(p.x,p.y); return [ll.lng,ll.lat,C.elevation(p.x,p.y)]; }) } }] };
+      const url = URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)], {type:'application/geo+json'}));
+      const link = document.createElement('a'); link.href=url; link.download='mars-mission.geojson'; link.click();
+      setTimeout(() => URL.revokeObjectURL(url),1000);
+    },
     beginStart: () => {
       if (state.regionLoading) return;
       stop(); cancel(); resetDrawing();

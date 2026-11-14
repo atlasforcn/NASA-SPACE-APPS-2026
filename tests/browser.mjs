@@ -106,6 +106,15 @@ try {
     await page.locator("#map").click({ position: { x: smokeMap.width / 2 + 35, y: smokeMap.height / 2 + 35 } });
     await page.locator("#plan").click();
     assert.equal(await page.locator("#simulate").isEnabled(), true);
+    await page.getByRole('button', { name: '圖層', exact: true }).click();
+    const science = page.locator('.science-context');
+    await page.locator('#analysis-layer').selectOption('atmospheric');
+    assert((await science.textContent()).includes('718 Pa'));
+    assert.equal(await science.locator('input[type="checkbox"]').count(), 0);
+    await page.locator('#analysis-layer').selectOption('terrain');
+    assert((await science.textContent()).includes('DEM 高程：'));
+    assert(!(await science.textContent()).includes('0.67 mSv'));
+    assert(!(await science.textContent()).includes('718 Pa'));
     assert.deepEqual(errors, []);
     assert.deepEqual(missing, []);
     assert.deepEqual(external, []);
@@ -121,6 +130,8 @@ try {
     assert.equal(await page.locator("#position").textContent(), "尚未設定起點");
     assert.equal(await page.locator('#map path[stroke="#9af0e0"]').count(), 0);
     assert.equal(await page.getByText("E -750 m", {exact: false}).count(), 0);
+    assert(await page.locator("#horizon-editor").isHidden());
+    await page.locator(".horizon-input summary").click();
     // Drawing and uploads must also work before any mission start is chosen.
     assert(await page.locator("#horizon-match").isEnabled());
     const initialEditor = page.locator("#horizon-editor");

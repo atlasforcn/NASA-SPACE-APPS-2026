@@ -1,6 +1,7 @@
 <script setup>
 import { inject } from "vue";
 import { missionKey } from "../useMission";
+import ScienceContext from './ScienceContext.vue';
 const m = inject(missionKey),
   s = m.state;
 </script>
@@ -26,6 +27,12 @@ const m = inject(missionKey),
           <option value="hillshade" :disabled="s.regional">DEM 衍生地形陰影</option>
           <option value="roughness" :disabled="s.regional">DEM 衍生粗糙度</option>
           <option value="geology" :disabled="!s.geologyAvailable">USGS 地質單元{{ !s.geologyAvailable ? "（此區未接入）" : "" }}</option>
+          <option value="thermal">熱 · THEMIS 研究</option>
+          <option value="spectral">光譜 · 礦物觀測</option>
+          <option value="geophysical">地球物理 · InSight 觀測</option>
+          <option value="atmospheric">大氣 · MEDA 歷史觀測</option>
+          <option value="radiation">輻射 · RAD 歷史觀測</option>
+          <option value="chemical">化學 · 岩樣分析</option>
         </select></label
       >
       <div v-if="['terrain', 'slope', 'roughness', 'hillshade'].includes(s.layer)" class="scale-legend">
@@ -37,6 +44,7 @@ const m = inject(missionKey),
       <div v-for="unit in s.units" :key="unit.label" class="unit-key">
         <i :style="{ background: unit.color }"></i>{{ unit.label }}
       </div>
+      <ScienceContext />
     </section>
     <section class="group">
       <h2>資料來源與限制</h2>

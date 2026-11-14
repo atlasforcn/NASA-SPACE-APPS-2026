@@ -4,16 +4,23 @@ import { missionKey } from "../useMission";
 import RouteProfile from "./RouteProfile.vue";
 import RouteDrawing from "./RouteDrawing.vue";
 import ExpeditionPanel from "./ExpeditionPanel.vue";
+import PlannerControls from './PlannerControls.vue';
+import RouteAlternatives from './RouteAlternatives.vue';
 const m = inject(missionKey),
   s = m.state;
 </script>
 <template>
   <div>
     <section class="group">
-      <p class="eyebrow">A* / TERRAIN COST</p>
+      <p class="eyebrow">MISSION PLAN / 路線規劃</p>
       <h2>先選端點，再決定怎麼走</h2>
+      <ol class="plan-steps" aria-label="規劃進度">
+        <li :class="{ complete: s.hasStart }">01 選起點</li>
+        <li :class="{ complete: !!s.destination }">02 選目的地</li>
+        <li :class="{ complete: !!s.route }">03 比較路線</li>
+      </ol>
       <p v-if="!s.hasStart" class="hint" role="status">尚未設定起點；選定後才會顯示導航位置並啟用規劃與定位。</p>
-      <p class="hint">① 選起點與終點 → ② 評估直線與繞行路線 → ③ 用地平線找回位置並行進。兩條路線都從所選起點開始。</p>
+      <p class="hint">① 選起點、停靠點與終點 → ② 比較最短與較低風險路線 → ③ 選擇方案並行進。</p>
       <button id="pick-start" :disabled="!s.ready" :aria-pressed="s.pickingStart" @click="m.beginStart">{{ s.pickingStart ? '取消選起點' : '在地圖選起點' }}</button>
         <label>目的地名稱<input id="target-name" v-model="s.targetName" maxlength="80" placeholder="輸入自訂名稱（可留空）" /></label>
         <div class="button-row">
@@ -26,12 +33,14 @@ const m = inject(missionKey),
           id="destination"
           v-model="s.destination"
         >
-          <option v-if="!s.targets.length" value="">請先在地圖新增目的地</option>
+          <option value="">{{ s.targets.length ? '請選擇終點或中途停靠點' : '請先在地圖新增目的地' }}</option>
           <option v-for="t in s.targets" :key="t.id" :value="t.id">
             {{ t.name }} · {{ t.unit }}
           </option>
         </select></label
-      ><label
+      >
+      <PlannerControls />
+      <label
         >示範坡度上限（非車輛工程規格）<input
           id="slope-limit"
           v-model="s.slope"
@@ -43,7 +52,7 @@ const m = inject(missionKey),
         <button
           id="plan"
           class="primary"
-          :disabled="!s.ready || !s.hasStart || !s.targets.length"
+          :disabled="!s.ready || !s.hasStart || !s.destination || s.regionLoading"
           @click="m.plan"
         >
           建立並評估兩條路線</button
@@ -57,6 +66,20 @@ const m = inject(missionKey),
       </div>
       <p class="hint">亮黃色虛線：理想直線 · 紅色：不可通行段 · 青色：建議路線 · 橘色：定位行進軌跡</p>
       <p id="straight-status" class="hint" role="status">{{ s.straightStatus }}</p>
+      <RouteAlternatives />
+      <div v-if="s.directRoute && s.route && !s.routeOptions" class="route-comparison">
+        <h3>同端點路線比較</h3>
+        <table>
+          <caption>依目前 DEM 與 {{ s.slope }}° 坡度門檻評估</caption>
+          <thead><tr><th scope="col">指標</th><th scope="col">理想直線</th><th scope="col">地形繞行</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">距離</th><td>{{ m.fmt(s.directRoute.length) }}</td><td>{{ m.fmt(s.route.length) }}</td></tr>
+            <tr><th scope="row">最大坡度</th><td>{{ s.directRoute.maxSlope.toFixed(1) }}°</td><td>{{ s.route.reachable ? s.route.maxSlope.toFixed(1) + '°' : '—' }}</td></tr>
+            <tr><th scope="row">DEM 檢查</th><td :class="s.directRoute.reachable ? 'mint' : 'red'">{{ s.directRoute.reachable ? '通過' : '未通過' }}</td><td :class="s.route.reachable ? 'mint' : 'red'">{{ s.route.reachable ? '通過' : '無可達路線' }}</td></tr>
+          </tbody>
+        </table>
+        <p v-if="s.route.reachable && s.directRoute.length > 0" class="hint">繞行比直線增加 {{ m.fmt(Math.max(0, s.route.length - s.directRoute.length)) }}；通過檢查僅代表符合目前地形模型與門檻。</p>
+      </div>
       <div class="stats">
         <div>
           <small>路線長度</small
@@ -70,6 +93,12 @@ const m = inject(missionKey),
         </div>
       </div>
       <p id="route-status" class="hint" role="status">{{ s.routeStatus }}</p>
+      <details class="planning-assumptions">
+        <summary>規劃假設與資料限制</summary>
+        <p class="hint">黃色直線只用於距離對照；最短與較低風險方案都使用 A* 搜尋。最短方案最小化格網三維距離，較低風險方案加入坡度與粗糙度成本；結果受搜尋格網限制，不保證連續地形上的全域最優。</p>
+        <p class="hint">{{ s.regional ? '全球 MOLA 為公里尺度高程，遠距結果僅供粗略模擬。' : '區域 DEM 的格距與取樣尺度限制了坡度判讀。' }}缺測與越界區段不視為可通行；未納入車輪尺度障礙、能源及真實任務時程。</p>
+        <a href="https://www.momar.si/planner/" target="_blank" rel="noopener noreferrer">路線規劃介面參考：MOMAR ↗</a>
+      </details>
       <p class="hint">
         建立路線將車放回所選起點；{{ s.regional ? "行進中更新地平線實驗候選，不套用位置校正。" : "行進中用地平線校正位置並重新規劃剩餘路線。" }}DEM 無法辨識小於格距的岩石與車輪風險。
       </p>
