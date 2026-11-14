@@ -82,16 +82,27 @@ try {
     await page.locator('#map').click({position: {x: box.width / 2, y: box.height / 2}});
     await page.waitForFunction(() => document.getElementById('scan').disabled === false);
   }
+  const layerInput = kind => page.locator(`.layer-controls:visible input[type="checkbox"][value="${kind}"]`);
+  async function setLayer(kind) {
+    const selected=page.locator('.layer-controls:visible input[type="checkbox"][value]:checked');
+    while(await selected.count()) await selected.first().uncheck();
+    if(kind!=='none') await layerInput(kind).check();
+  }
+  async function selectedLayer() {
+    const selected=page.locator('.layer-controls:visible input[type="checkbox"][value]:checked');
+    return await selected.count()?selected.first().getAttribute('value'):'none';
+  }
+  const layerDisabled=kind=>layerInput(kind).isDisabled();
   await page.goto(url);
   if (process.env.PRODUCTION_SMOKE === "1") {
     await page.waitForFunction(() => !document.getElementById("pick-start").disabled);
     await page.locator('#mars-overview').click();
     await page.waitForFunction(() => /視野中心高程 -?\d+\.\d m/.test(document.querySelector('.map-height')?.textContent || ''));
-    await page.locator('#map-analysis-layer').selectOption('terrain');
-    assert.equal(await page.locator('#analysis-layer').inputValue(), 'terrain');
+    await setLayer('terrain');
+    assert.equal(await selectedLayer(), 'terrain');
     await page.waitForFunction(() => [...document.images].some(i => i.src.endsWith('/data/mars-global-dem.jpg') && i.complete && i.naturalWidth > 0));
     await page.screenshot({path: 'test-results/overview-height.png'});
-    await page.locator('#map-analysis-layer').selectOption('none');
+    await setLayer('none');
     await page.waitForFunction(() => [...document.images].some(i => i.src.endsWith('/data/mars-global-optical.jpg') && i.complete && i.naturalWidth === 2048));
     await page.setViewportSize({width: 390, height: 844});
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
@@ -134,7 +145,7 @@ try {
     assert.equal(await page.locator('#path-distance').textContent(), plannedDistance);
     await page.locator('#task-navigation-risk').check();
     await page.getByRole('button', {name: '查看坡度', exact: true}).click();
-    assert.equal(await page.locator('#map-analysis-layer').inputValue(), 'slope');
+    assert.equal(await selectedLayer(), 'slope');
     await page.screenshot({path:'test-results/navigation-risk.png'});
     await page.locator('#roughness-limit').fill('0.5');
     assert.equal(await page.locator('#simulate').isDisabled(), true);
@@ -160,13 +171,13 @@ try {
     assert(await page.locator('#simulate').isEnabled());
     const materialDistance=await page.locator('#path-distance').textContent();
     await page.getByRole('button',{name:'圖層',exact:true}).click();
-    await page.locator('#analysis-layer').selectOption('spectral');
+    await setLayer('spectral');
     await page.waitForFunction(() => document.querySelector('.science-context')?.textContent.includes('已疊加下載格網'));
     await page.getByRole('button',{name:'任務',exact:true}).click();
     assert(await page.locator('#nav-thermal').isChecked());
     assert(await page.locator('#simulate').isEnabled());
     assert.equal(await page.locator('#path-distance').textContent(),materialDistance);
-    await page.locator('#map-analysis-layer').selectOption('none');
+    await setLayer('none');
     await page.locator('#no-go-name').fill('人工影像禁行測試');
     await page.locator('#no-go-radius').fill('50');
     await page.locator('#pick-no-go').click();
@@ -189,12 +200,12 @@ try {
 
     await page.getByRole('button', { name: '圖層', exact: true }).click();
     const science = page.locator('.science-context');
-    await page.locator('#analysis-layer').selectOption('atmospheric');
+    await setLayer('atmospheric');
     await page.waitForFunction(() => document.querySelector('.science-context')?.textContent.includes('715.002'));
     assert((await science.textContent()).includes('MEDA'));
     assert.equal(await science.locator('input[type="checkbox"]').count(), 0);
     for (const layer of ['thermal','spectral','geophysical','chemical']) {
-      await page.locator('#analysis-layer').selectOption(layer);
+      await setLayer(layer);
       await page.waitForFunction(() => document.querySelector('.science-context')?.textContent.includes('已疊加下載格網'));
       await page.waitForFunction(() => {
         const images = [...document.querySelectorAll('img.science-raster')];
@@ -204,12 +215,12 @@ try {
     }
     await science.getByRole('button', { name: '查看全球疊圖' }).click();
     await page.screenshot({path:'test-results/science-global-chemical.png'});
-    await page.locator('#analysis-layer').selectOption('radiation');
+    await setLayer('radiation');
     await page.waitForFunction(() => document.querySelector('.science-context')?.textContent.includes('8.925'));
     assert.equal(await page.locator('img.science-raster').count(), 0);
     await science.getByRole('button', { name: '查看測站位置' }).click();
     await page.screenshot({path:'test-results/science-rad-station.png'});
-    await page.locator('#analysis-layer').selectOption('terrain');
+    await setLayer('terrain');
     assert((await science.textContent()).includes('DEM 高程：'));
     assert(!(await science.textContent()).includes('0.67 mSv'));
     assert(!(await science.textContent()).includes('715.002'));
@@ -318,10 +329,10 @@ try {
     await page.waitForFunction(()=>Array.from(document.images).some(i=>i.src.endsWith('/data/gale/optical.png')&&i.complete&&i.naturalWidth===1500));
     await page.getByRole('button',{name:'圖層',exact:true}).click();
     for(const kind of ['terrain','slope','hillshade','roughness']) {
-      await page.locator('#analysis-layer').selectOption(kind);
-      await page.waitForFunction(()=>window.__mission.inspect().analysis?.getElement()?.src.startsWith('data:image/png'));
+      await setLayer(kind);
+      await page.waitForFunction(()=>window.__mission.inspect().analysis?.getLayers().some(layer=>layer.getElement?.()?.src?.startsWith('data:image/png')));
     }
-    assert.equal(await page.locator('#analysis-layer option[value="geology"]').isDisabled(),true);
+    assert.equal(await layerDisabled('geology'),true);
     fs.mkdirSync('test-results',{recursive:true});
     await page.screenshot({path:'test-results/gale-layers.png'});
     await page.getByRole('button',{name:'探索',exact:true}).click();
@@ -536,7 +547,7 @@ try {
     );
     await page.getByRole("button", { name: "圖層", exact: true }).click();
     for (const layer of ["geology", "terrain", "slope", "none"])
-      await page.locator("#analysis-layer").selectOption(layer);
+      await setLayer(layer);
     await page.locator("#optical").uncheck();
     await page.locator("#optical").check();
     await page.getByRole("button", { name: "探索", exact: true }).click();
@@ -578,9 +589,9 @@ try {
       );
     }
     await page.getByRole("button", { name: "圖層", exact: true }).click();
-    assert(await page.locator("#analysis-layer option[value=geology]").isDisabled());
-    await page.locator("#analysis-layer").selectOption("terrain");
-    await page.locator("#analysis-layer").selectOption("slope");
+    assert(await layerDisabled('geology'));
+    await setLayer("terrain");
+    await setLayer("slope");
     await page.getByRole("button", { name: "探索", exact: true }).click();
     await page.locator("#region-lat").fill("0");
     await page.locator("#region-lng").fill("179.9");
@@ -653,12 +664,12 @@ try {
     assert.equal(await inspect(() => window.__mission.state.targets[1].name),"遠距目的地");
     assert(await inspect(() => window.__mission.inspect().dem.xMax-window.__mission.inspect().dem.xMin>512000));
     await page.getByRole("button", { name: "圖層", exact: true }).click();
-    await page.locator("#analysis-layer").selectOption("terrain");
-    assert(await page.locator("#analysis-layer option[value=geology]").isDisabled());
+    await setLayer("terrain");
+    assert(await layerDisabled('geology'));
     const layerGrid = await inspect(() => {
       const {dem, analysis} = window.__mission.inspect();
       return {origin:dem.origin,xMin:dem.xMin,step:dem.source.sample_step_m,
-        samples:analysis.getLayers().map(layer => layer.getLatLng())};
+        samples:analysis.getLayers().flatMap(layer => layer.getLayers?.() || [layer]).filter(layer => layer.getLatLng).map(layer => layer.getLatLng())};
     });
     const firstSample = P.geoToLocal(layerGrid.origin, layerGrid.samples[0]);
     const lastSample = P.geoToLocal(layerGrid.origin, layerGrid.samples.at(-1));
@@ -698,8 +709,8 @@ try {
     await page.waitForFunction(() => window.__mission.state.globalView);
     await page.waitForFunction(() => [...document.images].some(i => i.src.endsWith('/data/mars-global-optical.jpg') && i.complete && i.naturalWidth === 2048));
     await page.getByRole('button', {name: '任務', exact: true}).click();
-    await page.locator('#map-analysis-layer').selectOption('terrain');
-    assert.equal(await page.locator('#analysis-layer').inputValue(), 'terrain');
+    await setLayer('terrain');
+    assert.equal(await selectedLayer(), 'terrain');
     await page.waitForFunction(() => [...document.images].some(i => i.src.endsWith('/data/mars-global-dem.jpg') && i.complete && i.naturalWidth > 0));
     const overviewMap = await page.locator('#map').boundingBox();
     await page.waitForTimeout(500);
@@ -707,9 +718,9 @@ try {
     await page.waitForFunction(() => window.__mission.state.elevation.includes('MOLA 16 ppd'));
     await page.getByRole('button', {name: '圖層', exact: true}).click();
     assert.equal(await page.locator('.map-layer-status').count(), 0);
-    await page.locator('#analysis-layer').selectOption('none');
+    await setLayer('none');
     await page.getByRole('button', {name: '任務', exact: true}).click();
-    assert.equal(await page.locator('#map-analysis-layer').inputValue(), 'none');
+    assert.equal(await selectedLayer(), 'none');
     await page.locator('#map-optical').uncheck();
     assert.equal(await page.locator('#optical').isChecked(), false);
     await page.getByRole('button', {name: '圖層', exact: true}).click();
