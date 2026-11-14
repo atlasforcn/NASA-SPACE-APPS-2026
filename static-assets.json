@@ -166,5 +166,13 @@
     "path": "data/gale/optical-source.json",
     "bytes": 3013,
     "sha256": "0462623dff2b8183c9a1a671a6d8f26b7d980791949d8243d80c3cb939c9e933"
+  },
+  {
+    "source": "data/favicon.ico",
+    "disposition": "publish",
+    "reason": "Website browser tab icon",
+    "path": "favicon.ico",
+    "bytes": 4286,
+    "sha256": "f413ff0bf3ed40a047b96d3ed5405f68ea6c7b4abafa2c1f11640e3366c4df10"
   }
 ]
