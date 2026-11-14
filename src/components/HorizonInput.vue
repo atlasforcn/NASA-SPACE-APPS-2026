@@ -82,8 +82,8 @@ onMounted(paint);
 onBeforeUnmount(() => { loadToken++; image?.close(); });
 </script>
 <template>
-  <section class="horizon-input group" aria-label="手繪或照片定位">
-    <h3>手繪／照片山稜線比對</h3>
+  <details class="horizon-input group" aria-label="手繪或照片定位">
+    <summary>手繪／照片山稜線比對</summary>
     <p class="hint">畫出山稜線，或上傳探測器照片轉成 2D 輪廓。照片只在本機處理。有起點時搜尋估計位置附近；沒有起點時搜尋目前載入的 DEM 區域，並非全火星辨識。</p>
     <div class="button-row">
       <button id="horizon-blank" @click="blank">空白手繪</button>
@@ -104,10 +104,12 @@ onBeforeUnmount(() => { loadToken++; image?.close(); });
     <p id="horizon-search-scope" class="hint">{{ !s.ready ? "正在載入 DEM，完成後即可比對。" : s.regionLoading ? "正在切換地形區域，完成後即可比對。" : s.searching ? "正在比對；可使用「取消」停止搜尋。" : s.hasStart ? "搜尋範圍：目前估計位置附近。" : "未設定起點也可比對：將搜尋目前載入的 DEM 區域；設定大致起點可縮小範圍。" }}</p>
     <button id="horizon-match" class="primary" :disabled="!s.ready || s.searching || s.regionLoading" @click="match">比對 DEM 找回候選位置</button>
     <p class="hint">手繪與照片尚未校準定位可信度；結果只提供候選，不自動校正導航。視角狹窄、平坦山稜或相機角度有誤時，可能無法判定位置。</p>
-  </section>
+  </details>
 </template>
 <style scoped>
 .horizon-input { margin-bottom: 20px; }
+summary { cursor: pointer; font-weight: 700; }
+.horizon-input[open] > summary { margin-bottom: 16px; }
 #horizon-editor { width: 100%; height: auto; max-height: none; display: block; touch-action: none; cursor: crosshair; border: 1px solid #597078; }
 input[type="number"] { width: 110px; }
 input[type="file"] { max-width: 230px; }
