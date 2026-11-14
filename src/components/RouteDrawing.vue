@@ -14,14 +14,14 @@ const m = inject(missionKey),
     <div class="button-row">
       <button
         id="draw-points"
-        :disabled="!s.ready"
+        :disabled="!s.ready || !s.hasStart"
         :aria-pressed="s.drawMode === 'points'"
         @click="m.beginDrawing('points')"
       >
         逐點繪製</button
       ><button
         id="draw-freehand"
-        :disabled="!s.ready"
+        :disabled="!s.ready || !s.hasStart"
         :aria-pressed="s.drawMode === 'freehand'"
         @click="m.beginDrawing('freehand')"
       >
@@ -39,6 +39,10 @@ const m = inject(missionKey),
       ><button id="route-undo" :disabled="s.regionLoading || s.points.length < 2" @click="m.undo">
         撤銷</button
       ><button id="route-clear" @click="m.clearDrawing">清除</button>
+    </div>
+    <div class="button-row">
+      <button id="draw-locate" :disabled="!s.hasStart" @click="m.locateDrawing()">找回目前位置</button>
+      <button id="draw-fit" :disabled="s.points.length < 2 && !s.route" @click="m.locateDrawing(true)">顯示完整路線</button>
     </div>
     <p id="draw-status" class="hint" role="status">{{ s.drawStatus }}</p>
   </section>

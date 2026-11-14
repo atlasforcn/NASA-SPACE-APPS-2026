@@ -32,7 +32,7 @@ const m = inject(missionKey),
         <button
           id="scan"
           class="primary"
-          :disabled="!s.ready || s.searching || s.regionLoading"
+          :disabled="!s.ready || !s.hasStart || s.searching || s.regionLoading"
           @click="m.scan"
         >
           ◎ 掃描並重新定位</button
@@ -40,23 +40,24 @@ const m = inject(missionKey),
           取消
         </button>
       </div>
-      <button id="drift" :disabled="!s.ready" @click="m.drift">
+      <button id="drift" :disabled="!s.ready || !s.hasStart" @click="m.drift">
         注入里程偏差 +650 / −520 m
       </button>
       <p class="hint" id="search-progress" role="status">{{ s.progress }}</p>
       <p class="position" id="position">{{ m.position.value }}</p>
-      <p class="hint">
+      <p v-if="s.hasStart" class="hint">
         E {{ s.estimate.x.toFixed(0) }} m · N {{ s.estimate.y.toFixed(0) }} m ·
         yaw {{ s.estimate.heading.toFixed(1) }}°
       </p>
       <label class="checkbox"
         ><input
           id="evaluation"
+          :disabled="!s.hasStart"
           v-model="s.truthVisible"
           type="checkbox"
         />顯示模擬真值（評估用）</label
       >
-      <div v-if="s.truthVisible" id="truth-panel">
+      <div v-if="s.hasStart && s.truthVisible" id="truth-panel">
         <p class="hint">
           位置誤差 {{ m.errorDistance.value }} · 累積行進
           {{ m.fmt(s.travelled) }}
@@ -69,11 +70,16 @@ const m = inject(missionKey),
         <span>DEM 模擬掃描視角</span><span>非真實照片 / 120°</span>
       </div>
       <div class="button-row">
-        <button :disabled="!s.ready" @click="m.turnView(-30)">← 左轉 30°</button>
-        <button :disabled="!s.ready" @click="m.turnView(30)">右轉 30° →</button>
-        <button :disabled="!s.ready || (!s.poi && !s.destination)" @click="m.focusView">對準標記點</button>
+        <button :disabled="!s.ready || !s.hasStart" @click="m.turnView(-30)">← 左轉 30°</button>
+        <button :disabled="!s.ready || !s.hasStart" @click="m.turnView(30)">右轉 30° →</button>
+        <button :disabled="!s.ready || !s.hasStart || (!s.poi && !s.destination)" @click="m.focusView">對準標記點</button>
       </div>
       <p class="hint">標記為已知地圖位置的輔助投影，不參與地平線定位；虛線與空心點表示不可見或視野外，並非相機辨識結果。可點選地圖標記後對準。</p>
+      <div class="chart-legend" aria-label="地平線圖例">
+        <span><i class="legend-line orange"></i>橘線：模擬觀測</span>
+        <span><i class="legend-line mint"></i>青線：候選地平線</span>
+        <span>深色／缺口：無觀測資料</span>
+      </div>
       <canvas
         id="panorama"
         @pointermove="m.hoverHorizon"
@@ -115,7 +121,7 @@ const m = inject(missionKey),
         <p class="hint">
           模擬 descriptor 配對已知峰頂，以方位角最小平方法解算；僅展示數學結果。
         </p>
-        <button id="bearing-demo" :disabled="!s.ready" @click="m.bearingDemo">
+        <button id="bearing-demo" :disabled="!s.ready || !s.hasStart" @click="m.bearingDemo">
           執行模擬地標解算
         </button>
         <p class="hint">{{ s.bearing }}</p>

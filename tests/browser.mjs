@@ -75,9 +75,18 @@ try {
     }
     return route.continue();
   });
+  async function chooseStart() {
+    await page.getByRole('button', { name: '任務', exact: true }).click();
+    await page.locator('#pick-start').click();
+    const box = await page.locator('#map').boundingBox();
+    await page.locator('#map').click({position: {x: box.width / 2, y: box.height / 2}});
+    await page.waitForFunction(() => document.getElementById('scan').disabled === false);
+  }
   await page.goto(url);
   if (process.env.PRODUCTION_SMOKE === "1") {
-    await page.waitForFunction(() => !document.getElementById("scan").disabled);
+    await page.waitForFunction(() => !document.getElementById("pick-start").disabled);
+    assert(await page.locator("#scan").isDisabled());
+    await chooseStart();
     assert.equal(
       await page.evaluate(() => typeof window.__mission),
       "undefined",
@@ -106,16 +115,28 @@ try {
       timeout: 30000,
     });
     const inspect = (fn) => page.evaluate(fn);
+    assert.equal(await inspect(() => window.__mission.state.hasStart), false);
+    assert(await page.locator("#scan").isDisabled());
+    assert(await page.locator("#drift").isDisabled());
+    assert.equal(await page.locator("#position").textContent(), "尚未設定起點");
+    assert.equal(await page.locator('#map path[stroke="#9af0e0"]').count(), 0);
+    assert.equal(await page.getByText("E -750 m", {exact: false}).count(), 0);
     // A second detailed site must switch the numeric frame AND every local overlay.
     assert(!requests.some(p=>p.includes('/data/gale/')), 'Gale is loaded on demand');
     await page.getByRole('button',{name:'探索',exact:true}).click();
-    await page.locator('#load-gale').click();
+    assert.deepEqual(await page.locator('#dem-region-preset option').evaluateAll(options => options.map(o => o.value)), ['jezero', 'gale']);
+    await page.locator('#dem-region-preset').selectOption('gale');
+    await page.locator('#load-region').click();
     await page.waitForFunction(()=>window.__mission.state.siteId==='gale'&&!window.__mission.state.regionLoading);
     assert.equal(await inspect(()=>window.__mission.inspect().dem.schema),'mars-local-grid-v1');
     assert.equal(await inspect(()=>window.__mission.inspect().dem.source.sample_step_m),20);
     assert.equal(await inspect(()=>window.__mission.state.regional),false);
     assert.equal(await inspect(()=>window.__mission.state.pois.some(p=>p.id==='butler')),false);
     assert.equal(await inspect(()=>window.__mission.state.geologyAvailable),false);
+    await page.getByRole('button',{name:'任務',exact:true}).click();
+    assert.equal(await page.locator('#expedition-plan').isVisible(),true);
+    assert.equal(await page.locator('#expedition-plan').isDisabled(),true);
+    assert.equal(await page.locator('.map-legend').isVisible(),true);
     await page.waitForFunction(()=>Array.from(document.images).some(i=>i.src.endsWith('/data/gale/optical.png')&&i.complete&&i.naturalWidth===1500));
     await page.getByRole('button',{name:'圖層',exact:true}).click();
     for(const kind of ['terrain','slope','hillshade','roughness']) {
@@ -126,7 +147,8 @@ try {
     fs.mkdirSync('test-results',{recursive:true});
     await page.screenshot({path:'test-results/gale-layers.png'});
     await page.getByRole('button',{name:'探索',exact:true}).click();
-    await page.locator('#restore-jezero').click();
+    await page.locator('#dem-region-preset').selectOption('jezero');
+    await page.locator('#load-region').click();
     await page.waitForFunction(()=>window.__mission.state.siteId==='jezero');
     assert.equal(await inspect(()=>window.__mission.inspect().dem.schema),'jezero-dem-grid-v1');
     assert.equal(await inspect(()=>window.__mission.state.geologyAvailable),true);
@@ -142,6 +164,9 @@ try {
     assert.equal(await inspect(() => window.__mission.state.targets[0]?.name), "Jezero 自訂點");
     await page.locator("#remove-target").click();
     assert.equal(await inspect(() => window.__mission.state.targets.length), 0);
+    await chooseStart();
+    assert.equal(await inspect(() => window.__mission.state.hasStart), true);
+    assert.equal(await page.locator('#map path[stroke="#9af0e0"]').count(), 1);
     // Keep the navigation scenarios on a fixed destination for reproducibility.
     await inspect(() => {
       window.__mission.state.targets = [{ id: "test-goal", name: "導航測試點", x: -2200, y: -800, unit: "測試地形" }];
@@ -260,6 +285,8 @@ try {
     assert(await inspect(() => window.__mission.state.route.path.length >= 2));
     assert(await page.locator("#route-profile").isVisible());
     await inspect(() => window.__mission.restore());
+    assert(await page.locator("#scan").isDisabled());
+    await chooseStart();
     await page.locator("#route-clear").click();
     await page.locator("#draw-freehand").click();
     const box = await page.locator("#map").boundingBox();
@@ -281,6 +308,19 @@ try {
       canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height)
         .data.some((value, i) => i % 4 === 3 && value > 0),
     ));
+    assert(await inspect(() => {
+      const m = window.__mission;
+      return Math.hypot(m.state.expedition[0].path[0].x - m.state.truth.x,
+        m.state.expedition[0].path[0].y - m.state.truth.y) < 100;
+    }));
+    await page.getByRole("checkbox", { name: "比較不同路線" }).check();
+    await page.waitForFunction(() => window.__mission.state.profileLegend.length === 2);
+    await page.locator("#route-profile").hover({ position: { x: 100, y: 60 } });
+    await page.waitForFunction(() => window.__mission.state.profileHover.includes("高程"));
+    await page.locator("#draw-locate").click();
+    await inspect(() => window.__mission.reset());
+    await page.waitForFunction(() => window.__mission.state.expedition.length === 0 &&
+      !window.__mission.state.profileHover && window.__mission.state.profileLegend.length === 0);
     await page.locator("#malay-card").click();
     assert(
       await page
@@ -348,20 +388,21 @@ try {
     assert.equal(await inspect(() => window.__mission.state.pickingStart), false);
     assert(await inspect(() => window.__mission.state.routeStatus.includes("起點已設定")));
     assert.equal(await page.locator("#plan").isEnabled(), false);
-    await page.locator("#target-name").fill("我的觀測點");
+    await page.locator("#target-name").fill("我的目的地");
     await page.locator("#add-target").click();
     await page.locator("#add-target").click();
     assert.equal(await inspect(() => window.__mission.state.pickingTarget), false);
     await page.locator("#add-target").click();
     const regionMap = await page.locator("#map").boundingBox();
     await page.locator("#map").click({ position: { x: regionMap.width / 2 + 35, y: regionMap.height / 2 + 35 } });
-    assert.equal(await inspect(() => window.__mission.state.targets[0]?.name), "我的觀測點");
+    assert.equal(await inspect(() => window.__mission.state.targets[0]?.name), "我的目的地");
     assert.equal(await inspect(() => window.__mission.state.pickingTarget), false);
     assert.equal(await page.locator("#plan").isEnabled(), true);
     await page.locator("#plan").click();
     assert(await inspect(() => window.__mission.state.route !== null));
     assert(await inspect(() => !window.__mission.state.straightStatus.includes(" 0 m")));
-    assert.equal(await page.locator("#expedition-plan").count(), 0);
+    assert.equal(await page.locator("#expedition-plan").isVisible(), true);
+    assert.equal(await page.locator("#expedition-plan").isDisabled(), true);
     await inspect(() => { window.__mission.planExpedition(); window.__mission.showStation(); });
     assert(await inspect(() => window.__mission.state.regional && window.__mission.state.targets.length === 1));
     await page.waitForFunction(() => window.__mission.state.profileInfo.includes("MOLA DEM"));
@@ -391,18 +432,18 @@ try {
       "good",
     );
     await page.getByRole("button", { name: "任務", exact: true }).click();
-    await page.locator("#target-name").fill("保留的觀測點");
+    await page.locator("#target-name").fill("保留的目的地");
     await page.locator("#add-target").click();
     await page.locator("#map").click({position:{x:regionMap.width/2+20,y:regionMap.height/2+20}});
     const retainedId = await inspect(() => window.__mission.state.targets[0].id);
     await page.evaluate(() => window.__mission.overview());
-    await page.locator("#target-name").fill("遠距觀測點");
+    await page.locator("#target-name").fill("遠距目的地");
     await page.locator("#add-target").click();
     await page.locator("#map").click({position:{x:regionMap.width/2+100,y:regionMap.height/2+60}});
     await page.waitForFunction(() => !window.__mission.state.regionLoading);
     await page.waitForFunction(() => window.__mission.state.targets.length===2 && !window.__mission.state.regionLoading);
     assert.equal(await inspect(() => window.__mission.state.targets[0].id),retainedId);
-    assert.equal(await inspect(() => window.__mission.state.targets[1].name),"遠距觀測點");
+    assert.equal(await inspect(() => window.__mission.state.targets[1].name),"遠距目的地");
     assert(await inspect(() => window.__mission.inspect().dem.xMax-window.__mission.inspect().dem.xMin>512000));
     await page.getByRole("button", { name: "圖層", exact: true }).click();
     await page.locator("#analysis-layer").selectOption("terrain");
@@ -428,7 +469,8 @@ try {
     assert.equal(await inspect(() => window.__mission.state.targets.length), 2);
     assert.equal(await inspect(() => window.__mission.state.targets[0].id), retainedId);
     await page.getByRole("button", { name: "探索", exact: true }).click();
-    await page.locator("#restore-jezero").click();
+    await page.locator('#dem-region-preset').selectOption('jezero');
+    await page.locator('#load-region').click();
     assert.equal(await inspect(() => window.__mission.state.regional), false);
     assert.equal(await inspect(() => window.__mission.state.targets.length), 0);
     // Fetch every published byte, not just the resources requested on initial load.

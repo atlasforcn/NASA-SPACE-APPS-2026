@@ -5,18 +5,19 @@ const m = inject(missionKey),
   s = m.state;
 </script>
 <template>
-  <section v-if="!s.regional && s.siteId === 'jezero'" class="group">
+  <section class="group">
     <p class="eyebrow">MARSOPS / THREE FORKS</p>
     <h2>重訪樣本存放區</h2>
     <p class="hint">
-      假想人員考察：起點 → Three Forks → 返回。金色站點為 NASA
+      假想人員考察：使用你選定的任務起點 → Three Forks → 返回。亮黃色站點為 NASA
       歷史車體位置；路線為情境模擬。
     </p>
+    <p v-if="s.regional || s.siteId !== 'jezero'" class="hint">此區未提供 Three Forks 歷史樣本資料；請使用自訂目的地規劃路線。</p>
     <div class="button-row">
       <button
         id="expedition-plan"
         class="primary"
-        :disabled="!s.ready"
+        :disabled="!s.ready || !s.hasStart || s.regional || s.siteId !== 'jezero'"
         @click="m.planExpedition"
       >
         建立往返路線</button

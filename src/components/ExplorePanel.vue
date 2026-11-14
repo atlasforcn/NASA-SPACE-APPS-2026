@@ -1,9 +1,17 @@
 <script setup>
-import { inject } from "vue";
+import { inject, ref, watch } from "vue";
 import { missionKey } from "../useMission";
 import regions from "../../regions.mjs";
 const m = inject(missionKey),
   s = m.state;
+const selectedRegion = ref('jezero');
+watch(() => s.siteId, id => {
+  if (regions.some(region => region.id === id)) selectedRegion.value = id;
+});
+function loadPreset() {
+  if (selectedRegion.value === 'gale') m.startGale();
+  else m.restore();
+}
 function selectRegion(event) {
   const region = regions.find(r => r.id === event.target.value);
   if (region) { s.lat = region.lat; s.lng = region.lng; }
@@ -12,13 +20,17 @@ function selectRegion(event) {
 <template>
   <div>
     <section class="group">
-      <button id="load-gale" class="primary wide" :disabled="!s.ready || s.regionLoading" @click="m.startGale">Gale 高解析 DEM＋正射影像 →</button>
-      <label>DEM 區域快捷選擇<select id="dem-region-preset" :disabled="s.regionLoading" @change="selectRegion">
-        <option value="">自行輸入座標</option>
+      <p class="eyebrow">01 / SELECT REGION</p>
+      <h2>選擇探索區域</h2>
+      <p class="hint">先載入地形，再到「任務」選擇起點與目的地；「圖層」可查看資料與色階。</p>
+      <label>DEM 區域快捷選擇<select id="dem-region-preset" v-model="selectedRegion" :disabled="!s.ready || s.regionLoading" @change="selectRegion">
         <option v-for="r in regions" :key="r.id" :value="r.id">{{ r.name }}</option>
       </select></label>
-      <p class="hint">快捷區域使用同一份全球 MOLA，區域格距至少 4 km，並非新增高解析觀測。Jezero 精細 CTX 請使用「回到 Jezero」。</p>
-      <p class="hint">輸入中心座標建立任務；起點、觀測點與繪製路線可跨區域，覆蓋範圍自動調整。</p>
+      <button id="load-region" class="primary wide" :disabled="!s.ready || s.regionLoading" @click="loadPreset">{{ s.regionLoading ? '正在載入地形…' : '載入所選區域 →' }}</button>
+      <p class="hint">Jezero：CTX DEM，展示約 40 m／格。Gale：合併 DEM，取樣 20 m／格。各區使用相同操作流程，資料依來源提供。</p>
+      <h3 class="subheading">自訂座標 / 全球 MOLA</h3>
+      <p class="hint">自訂座標的區域格距至少 4 km，不代表高解析觀測。</p>
+      <p class="hint">輸入中心座標建立任務；起點、目的地與繪製路線可跨區域，覆蓋範圍自動調整。</p>
       <div class="field-pair">
         <label
           >緯度 °N<input
@@ -50,15 +62,7 @@ function selectRegion(event) {
       >
         {{
           s.regionLoading ? "正在載入 MOLA…" : "以此處建立區域任務 →"
-        }}</button
-      ><button
-        id="restore-jezero"
-        v-if="s.regional || s.siteId !== 'jezero' || s.regionLoading"
-        class="wide"
-        @click="m.restore"
-      >
-        回到 Jezero / 取消載入
-      </button>
+        }}</button>
       <p id="region-status" class="hint" role="status">{{ s.regionStatus }}</p>
       <p class="hint">{{ s.elevation }}</p>
     </section>

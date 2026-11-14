@@ -40,6 +40,7 @@ export const typeLabels = {
 export function useMission() {
   const state = reactive({
     ready: false,
+    hasStart: false,
     loading: true,
     error: "",
     tab: "mission",
@@ -68,8 +69,8 @@ export function useMission() {
     continuousLocalization: true,
     localizationCount: 0,
     progress: "",
-    status: "尚未定位",
-    message: "完整 360° 模擬觀測；導航起始含里程偏差。",
+    status: "尚未設定起點",
+    message: "請先在「任務」選擇起點，再進行導航與地平線定位。",
     result: null,
     truthVisible: false,
     evaluation: "",
@@ -98,12 +99,15 @@ export function useMission() {
     poi: null,
     drawMode: null,
     points: [],
-    drawStatus: "從導航估計位置開始繪製，完成後檢查每一段。",
+    drawStatus: "請先設定起點，再繪製路線。",
     stations: [],
     expedition: [],
     expeditionStatus: "",
     profileIndex: 0,
     profileInfo: "",
+    profileHover: "",
+    compareProfiles: false,
+    profileLegend: [],
   });
   const dem = shallowRef(null),
     panorama = shallowRef(null),
@@ -131,7 +135,7 @@ export function useMission() {
     horizonHoverLayer,
     stationLayer,
     expeditionLayer;
-  let idealLayer;
+  let idealLayer, profileMarker, profileSeries = [], profileScale;
   let bounds,
     planet,
     pendingPlanet,
@@ -149,12 +153,12 @@ export function useMission() {
     stroke = false;
   const abort = new AbortController();
   const position = computed(() => {
-    if (!dem.value) return "—";
+    if (!dem.value || !state.hasStart) return "尚未設定起點";
     const p = C.localToLatLng(state.estimate.x, state.estimate.y);
     return `${p.lat.toFixed(5)}°N / ${p.lng.toFixed(5)}°E`;
   });
   const errorDistance = computed(() =>
-    fmt(C.distance(state.truth, state.estimate)),
+    state.hasStart ? fmt(C.distance(state.truth, state.estimate)) : "—",
   );
   const matches = computed(() =>
     state.entries.filter(
@@ -223,7 +227,9 @@ export function useMission() {
     state.points = [];
     remove(preview);
     preview = null;
-    state.drawStatus = "從導航估計位置開始繪製，完成後檢查每一段。";
+    state.drawStatus = state.hasStart
+      ? "從導航估計位置開始繪製，完成後檢查每一段。"
+      : "請先設定起點，再繪製路線。";
   }
   function stop() {
     state.running = false;
@@ -251,6 +257,7 @@ export function useMission() {
     if (!dem.value) return;
     stop();
     cancel();
+    clearExpedition();
     // A task reset also removes user-created destinations and custom list filters.
     if (!preserveTargets) state.targets = state.targets.filter((target) => !target.id.startsWith("custom-"));
     state.destination = state.targets[0]?.id || "";
@@ -288,6 +295,12 @@ export function useMission() {
         ? "完整 360° 模擬觀測；導航起始含里程偏差。"
         : "60° 視角並遮擋 55%；觀測不足時保留導航估計。";
     state.routeStatus = "選擇科學點並規劃路線";
+    if (!state.hasStart) {
+      state.status = "尚未設定起點";
+      state.message = "請先在「任務」選擇起點，再進行導航與地平線定位。";
+      state.routeStatus = "請先在地圖選擇起點，再選終點並規劃路線。";
+      state.drawStatus = "請先設定起點，再繪製路線。";
+    }
     drawCurve();
     render();
   }
@@ -316,6 +329,7 @@ export function useMission() {
       }).addTo(routeLayer);
   }
   function plan() {
+    if (!state.hasStart) return;
     if (state.regionLoading) return;
     stop();
     cancel();
@@ -340,7 +354,7 @@ export function useMission() {
     const unknown = points.some(p => C.risk(p.x, p.y).unknown || !C.validDEMPoint(p.x, p.y));
     idealLayer = L.layerGroup().addTo(map);
     points.slice(1).forEach((p, i) => L.polyline([ll(points[i]), ll(p)], {
-      color: direct.invalidSegments.includes(i + 1) ? "#ff736e" : "#f4d19d",
+      color: direct.invalidSegments.includes(i + 1) ? "#ff736e" : "#f2ed48",
       weight: 3, dashArray: "7 6", interactive: false,
     }).addTo(idealLayer));
     state.straightStatus = `理想直線 ${fmt(direct.length)} · 最大坡度 ${direct.maxSlope.toFixed(1)}° · ` +
@@ -408,7 +422,7 @@ export function useMission() {
   }
   function toggleMotion() {
     if (state.running) return stop();
-    if (!state.route?.reachable) return;
+    if (!state.hasStart || !state.route?.reachable) return;
     cancel();
     state.running = true;
     lastTime = null;
@@ -416,6 +430,7 @@ export function useMission() {
     frame = requestAnimationFrame(motion);
   }
   function drift() {
+    if (!state.hasStart) return;
     stop();
     cancel();
     resetDrawing();
@@ -429,6 +444,7 @@ export function useMission() {
     render();
   }
   function scan(continuous = false) {
+    if (!state.hasStart) return;
     // Click handlers pass an event; only explicit true enables moving capture.
     continuous = continuous === true;
     if (continuous) {
@@ -498,7 +514,7 @@ export function useMission() {
       result.candidates.forEach((v, i) => {
         L.circleMarker(ll(v), {
           radius: 12 - i * 2,
-          color: i ? "#f4d19d" : "#7fe9d4",
+          color: i ? "#f2ed48" : "#7fe9d4",
           fillOpacity: 0.15,
         })
           .addTo(candidateLayer)
@@ -637,6 +653,15 @@ export function useMission() {
     clearHorizonHover();
     panoramaFrame = null;
     if (!dem.value || !map) return;
+    if (!state.hasStart) {
+      remove(estimateMarker);
+      remove(truthMarker);
+      for (const cv of [panorama.value, curve.value]) {
+        if (cv) cv.getContext("2d").clearRect(0, 0, cv.width, cv.height);
+      }
+      return;
+    }
+    scope();
     estimateMarker.setLatLng(ll(state.estimate));
     truthMarker.setLatLng(ll(state.truth));
     const cv = panorama.value;
@@ -722,7 +747,7 @@ export function useMission() {
       if (row === 3) continue;
       occupied.push({ row, left, right: left + width });
       const top = 34 + row * 25;
-      const color = selected ? '#82e6d2' : '#ffe0a3';
+      const color = selected ? '#82e6d2' : '#f2ed48';
       ctx.strokeStyle = color;
       ctx.setLineDash(hidden || outside ? [4, 3] : []);
       ctx.beginPath();
@@ -911,13 +936,14 @@ export function useMission() {
     state.points.forEach((p) =>
       L.circleMarker(ll(p), {
         radius: 3,
-        color: "#e9d5ad",
+        color: "#f2ed48",
         interactive: false,
       }).addTo(preview),
     );
     state.drawStatus = `已繪製 ${state.points.length} 個點；起點為導航估計位置。`;
   }
   function beginDrawing(mode) {
+    if (!state.hasStart) return;
     if (!dem.value || state.regionLoading) return;
     stop();
     cancel();
@@ -1012,7 +1038,7 @@ export function useMission() {
     state.pickingTarget = !state.pickingTarget;
     state.routeStatus = state.pickingTarget
       ? "請在地圖上點選任意觀測位置；超出範圍會自動擴大 MOLA 覆蓋。"
-      : "已取消新增觀測點。";
+      : "已取消新增目的地。";
   }
   async function coverTarget(geo) {
     if (inDem(geo)) {
@@ -1027,14 +1053,14 @@ export function useMission() {
     const targets = state.targets.map(t => ({ ...t, ...C.localToLatLng(t.x, t.y) }));
     const drawing = state.points.map(p => C.localToLatLng(p.x, p.y));
     const mode = state.drawMode, pickingStart = state.pickingStart, pickingTarget = state.pickingTarget;
-    const destination = state.destination, travelled = state.travelled;
+    const destination = state.destination, travelled = state.travelled, hasStart = state.hasStart;
     const history = trail.getLatLngs();
     const name = state.targetName;
     const points = [start, truth, estimate, ...targets, ...drawing, geo];
     const origin = P.coverageOrigin(points);
     stop(); cancel();
     state.regionLoading = true;
-    state.regionStatus = "正在擴大 MOLA 覆蓋範圍，保留起點與觀測點…";
+    state.regionStatus = "正在擴大 MOLA 覆蓋範圍，保留起點與目的地…";
     try {
       const planet = await loadPlanet();
       if (disposed || token !== regionToken) return false;
@@ -1049,6 +1075,7 @@ export function useMission() {
       profileOptions = regionalProfile(grid);
       refreshMission();
       // refreshMission resets custom destinations; restore them in the new frame afterwards.
+      state.hasStart = hasStart;
       state.targets = targets.map(t => ({...t,...C.latLngToLocal(t.lat,t.lng),unit:"MOLA 區域地形"}));
       refreshPois();
       state.truth = {...truth,...C.latLngToLocal(truth.lat,truth.lng)};
@@ -1085,9 +1112,9 @@ export function useMission() {
     const target = {
       ...p,
       id: "custom-" + crypto.randomUUID(),
-      name: state.targetName.trim() || "自訂觀測點 " + (state.targets.length + 1),
+      name: state.targetName.trim() || "自訂目的地 " + (state.targets.length + 1),
       unit: state.regional ? "MOLA 區域地形" : unitLabel(unitAt(p)),
-      kind: "使用者自訂觀測點",
+      kind: "使用者自訂目的地",
     };
     stop();
     clearRoute();
@@ -1108,7 +1135,7 @@ export function useMission() {
     if (state.poi?.id === id) state.poi = null;
     state.destination = state.targets[0]?.id || "";
     refreshPois();
-    state.routeStatus = "已刪除觀測點，請選擇或新增觀測點。";
+    state.routeStatus = "已刪除目的地，請選擇或新增目的地。";
   }
   function refreshPois() {
     poiLayer.clearLayers();
@@ -1131,7 +1158,7 @@ export function useMission() {
     for (const p of [...state.pois, ...state.targets.filter((p) => p.id.startsWith("custom-"))])
       L.circleMarker(ll(p), {
         radius: p.id.startsWith("P") ? 4 : 6,
-        color: "#e3cb86",
+        color: "#f2ed48",
         fillOpacity: 0.8,
       })
         .addTo(poiLayer)
@@ -1144,7 +1171,7 @@ export function useMission() {
     for (const p of displayed.value)
       L.circleMarker([p.lat, p.lng], {
         radius: p.featured ? 6 : 4,
-        color: "#ffd181",
+        color: "#f2ed48",
         weight: 1.5,
         fillOpacity: 0.8,
       })
@@ -1184,10 +1211,10 @@ export function useMission() {
           8);
     for (const layer of [estimateMarker, trail, routeLayer, poiLayer]) {
       if (!layer) continue;
-      if (isLocal) layer.addTo(map);
+      if (isLocal && (layer === poiLayer || state.hasStart)) layer.addTo(map);
       else remove(layer);
     }
-    if (isLocal && state.truthVisible) truthMarker.addTo(map);
+    if (isLocal && state.hasStart && state.truthVisible) truthMarker.addTo(map);
     else remove(truthMarker);
     state.mapTitle = isLocal
       ? state.regional
@@ -1233,6 +1260,8 @@ export function useMission() {
     return pendingPlanet;
   }
   function refreshMission() {
+    state.hasStart = false;
+    state.pickingStart = false;
     state.expedition = [];
     state.pickingTarget = false;
     state.targetName = "";
@@ -1318,7 +1347,7 @@ export function useMission() {
       state.targets = [];
       refreshMission();
       state.regionStatus = `已建立 512×512 km 區域任務 · 中心高程 ${p.sample(lat, lng).toFixed(0)} m。定位候選未校準，不自動校正；極區顯示會變形。`;
-      state.routeStatus = "請自行新增觀測點，再規劃路線。";
+      state.routeStatus = "請先選擇起點，並新增目的地，再規劃路線。";
       return true;
     } catch (e) {
       if (!disposed && token === regionToken)
@@ -1347,7 +1376,7 @@ export function useMission() {
       optical.setUrl(asset("data/gale/optical.png"));
       optical.setBounds([ll({x:C.LIMIT.minX,y:C.LIMIT.minY}),ll({x:C.LIMIT.maxX,y:C.LIMIT.maxY})]);
       refreshMission();
-      state.regionStatus="Gale 10×10 km · DEM 20 m 取樣 · 正射影像約 6.67 m/pixel；起點為區域中心，非好奇號實際位置。";
+      state.regionStatus="Gale 10×10 km · DEM 20 m 取樣 · 正射影像約 6.67 m/pixel；請在「任務」選擇起點；非好奇號實際位置。";
     } catch(e) {
       if(!disposed && token===regionToken) state.regionStatus="Gale 載入失敗："+e.message+"；可重試。";
     } finally { if(token===regionToken) state.regionLoading=false; }
@@ -1369,9 +1398,10 @@ export function useMission() {
     optical.setUrl(asset("data/ctx.png"));
     optical.setBounds([ll({x:C.LIMIT.minX,y:C.LIMIT.minY}),ll({x:C.LIMIT.maxX,y:C.LIMIT.maxY})]);
     refreshMission();
-    state.regionStatus = "已切回 Jezero 較細的 CTX DEM。";
+    state.regionStatus = "";
   }
   function bearingDemo() {
+    if (!state.hasStart) return;
     const a = C.associate(
         C.captureObservations(state.truth, state.truth.heading),
       ),
@@ -1380,12 +1410,26 @@ export function useMission() {
       ? `模擬方位解算 E ${r.x.toFixed(0)} / N ${r.y.toFixed(0)}，yaw ${r.heading.toFixed(1)}°，RMS ${r.rmsDeg.toFixed(3)}°；未套用導航估計。`
       : "有效地標不足或未收斂。";
   }
+  function clearExpedition() {
+    remove(expeditionLayer);
+    expeditionLayer = null;
+    state.expedition = [];
+    state.expeditionStatus = "";
+    state.profileIndex = -1;
+    leaveProfile();
+  }
+  function locateDrawing(fit = false) {
+    if (!map || !state.hasStart) return;
+    const points = state.points.length ? state.points : state.route?.path || [];
+    if (fit && points.length > 1) map.fitBounds(L.latLngBounds(points.map(ll)), { padding: [40, 40], maxZoom: 16 });
+    else map.setView(ll(state.estimate), Math.max(map.getZoom(), 14));
+  }
   function planExpedition() {
-    if (state.regional || state.siteId !== "jezero") return;
+    if (!state.hasStart || state.regional || state.siteId !== "jezero") return;
     stop();
     cancel();
     if (!slopeValid()) return;
-    const start = { x: -1400, y: -820 },
+    const start = { ...missionStart },
       end = C.latLngToLocal(18.45262651, 77.40775601),
       points = [start, end, start],
       names = ["規劃起點 → Three Forks", "Three Forks → 返回"];
@@ -1417,6 +1461,9 @@ export function useMission() {
     map.fitBounds(bounds, { animate: false });
   }
   function drawProfile() {
+    leaveProfile();
+    profileSeries = [];
+    state.profileLegend = [];
     const leg = state.profileIndex === -1
         ? state.route && { ...state.route, name: "目前路線" }
         : !state.regional && state.expedition[state.profileIndex],
@@ -1449,7 +1496,7 @@ export function useMission() {
           s = C.slopeDeg(x, y);
         if (Number.isFinite(s)) maxSlope = Math.max(maxSlope, s);
         if (!Number.isFinite(z)) missing++;
-        samples.push({ distance: d + len * t, z });
+        samples.push({ distance: d + len * t, z, x, y });
       }
       d += len;
     }
@@ -1458,25 +1505,73 @@ export function useMission() {
       state.profileInfo = "不可達路段，沒有可用剖面。";
       return;
     }
-    const lo = finite.reduce((min, z) => Math.min(min, z), Infinity),
-      hi = finite.reduce((max, z) => Math.max(max, z), -Infinity);
-    ctx.strokeStyle = "#83e5d2";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    let open = false;
-    for (const p of samples) {
-      if (!Number.isFinite(p.z)) {
-        open = false;
-        continue;
+    profileSeries = [{ name: leg.name, samples, length: d, color: "#83e5d2" }];
+    if (state.compareProfiles) {
+      const others = [state.route && { ...state.route, name: "目前路線", index: -1 },
+        ...(!state.regional ? state.expedition.map((v, index) => ({ ...v, index })) : [])];
+      for (const other of others.filter(v => v && v.index !== state.profileIndex && v.path?.length > 1)) {
+        const points = [];
+        let distance = 0;
+        for (let i = 1; i < other.path.length; i++) {
+          const a = other.path[i - 1], b = other.path[i], len = C.distance(a, b);
+          const count = Math.max(1, Math.ceil(len / Math.max(sampleStep, (other.length || len) / 4096)));
+          for (let k = i === 1 ? 0 : 1; k <= count; k++) {
+            const t = k / count, x = a.x + (b.x - a.x) * t, y = a.y + (b.y - a.y) * t;
+            points.push({ distance: distance + len * t, x, y, z: C.elevation(x, y) });
+          }
+          distance += len;
+        }
+        profileSeries.push({ name: other.name, samples: points, length: distance,
+          color: ["#ffbb79", "#b9b1ef"][ (profileSeries.length - 1) % 2] });
       }
-      const x = 12 + (p.distance / Math.max(d, 1)) * (cv.width - 24),
-        y = 20 + ((hi - p.z) / Math.max(hi - lo, 1)) * (cv.height - 40);
-      if (open) ctx.lineTo(x, y);
-      else ctx.moveTo(x, y);
-      open = true;
     }
-    ctx.stroke();
+    const heights = profileSeries.flatMap(v => v.samples.map(p => p.z)).filter(Number.isFinite);
+    const lo = Math.min(...heights), hi = Math.max(...heights);
+    const longest = Math.max(...profileSeries.map(v => v.length), 1);
+    profileScale = { longest, lo, hi };
+    ctx.fillStyle = "#aebfc8";
+    ctx.font = "10px sans-serif";
+    ctx.fillText(`${hi.toFixed(0)} m`, 12, 12);
+    ctx.fillText(`${lo.toFixed(0)} m`, 12, cv.height - 4);
+    ctx.fillText(fmt(longest), cv.width - 70, cv.height - 4);
+    for (const series of profileSeries) {
+      ctx.strokeStyle = series.color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      let open = false;
+      for (const p of series.samples) {
+        if (!Number.isFinite(p.z)) { open = false; continue; }
+        const x = 12 + p.distance / longest * (cv.width - 24),
+          y = 20 + (hi - p.z) / Math.max(hi - lo, 1) * (cv.height - 40);
+        if (open) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+        open = true;
+      }
+      ctx.stroke();
+    }
+    state.profileLegend = profileSeries.map(v => ({ name: v.name, color: v.color, length: fmt(v.length) }));
     state.profileInfo = `${leg.name} · ${state.regional ? "MOLA" : state.siteName} DEM · ${fmt(d)} · 最大格網坡度 ${maxSlope.toFixed(1)}° · 缺值 ${missing}；每 ≤${Math.ceil(sampleStep)} m 取樣數值 DEM，非影像高程。`;
+  }
+  function leaveProfile() {
+    remove(profileMarker);
+    profileMarker = null;
+    state.profileHover = "";
+  }
+  function hoverProfile(event) {
+    const cv = profileCanvas.value;
+    if (!cv || !profileSeries.length) return;
+    drawProfile();
+    const rect = cv.getBoundingClientRect(), px = (event.clientX - rect.left) / rect.width * cv.width;
+    const distance = Math.max(0, Math.min(1, (px - 12) / (cv.width - 24))) * profileScale.longest;
+    const hits = profileSeries.filter(v => distance <= v.length).map(v => ({ ...v,
+      point: v.samples.reduce((a, b) => Math.abs(a.distance - distance) < Math.abs(b.distance - distance) ? a : b) }));
+    state.profileHover = hits.map(v => `${v.name} · ${fmt(v.point.distance)} · 高程 ${Number.isFinite(v.point.z) ? v.point.z.toFixed(1) + " m" : "缺測"}`).join("；");
+    if (hits.length && map) {
+      profileMarker = L.layerGroup(hits.map(v => L.circleMarker(ll(v.point), { radius: 7, color: v.color, fillOpacity: 1 })
+        .bindTooltip(`${esc(v.name)} · ${Number.isFinite(v.point.z) ? v.point.z.toFixed(1) + " m" : "缺測"}`))).addTo(map);
+    }
+    const ctx = cv.getContext("2d");
+    ctx.strokeStyle = "#ffffff";
+    ctx.beginPath(); ctx.moveTo(px, 18); ctx.lineTo(px, cv.height - 20); ctx.stroke();
   }
   function showStation(f) {
     if (state.regional || state.siteId !== "jezero" || !f) return;
@@ -1490,7 +1585,7 @@ export function useMission() {
     for (const f of data.features)
       L.circleMarker([f.geometry.coordinates[1], f.geometry.coordinates[0]], {
         radius: 5,
-        color: "#f4ce81",
+        color: "#f2ed48",
         fillOpacity: 0.8,
       })
         .addTo(stationLayer)
@@ -1531,9 +1626,7 @@ export function useMission() {
       radius: 8,
       color: "#9af0e0",
       fillOpacity: 1,
-    })
-      .addTo(map)
-      .bindTooltip("導航估計位置");
+    }).bindTooltip("導航估計位置");
     truthMarker = L.circleMarker([18.44, 77.42], {
       radius: 6,
       color: "#ffad72",
@@ -1564,10 +1657,12 @@ export function useMission() {
           return;
         }
         missionStart = { ...p };
+        state.hasStart = true;
         reset(state.scenario, {preserveTargets:true});
         state.pickingStart = false;
         state.truth = { ...p, heading: 45 };
         state.estimate = { ...p, heading: 45 };
+        state.message = "導航位置已設為所選起點；行進後可用地平線檢查與校正偏差。";
         trail.setLatLngs([ll(p)]);
         state.routeStatus = "起點已設定，請選終點並建立路線。";
         render();
@@ -1727,7 +1822,8 @@ export function useMission() {
       cancel();
       state.result = null;
       state.status = "觀測設定已變更";
-      state.message = "保留導航估計；請重新掃描。";
+      state.message = state.hasStart ? "保留導航估計；請重新掃描。" : "請先在「任務」選擇起點。";
+      if (!state.hasStart) state.status = "尚未設定起點";
       observation = null;
       observationPose = null;
       displayedCandidate = null;
@@ -1740,7 +1836,7 @@ export function useMission() {
     cancel();
     if (enabled && state.running) scan(true);
   });
-  watch(() => [state.profileIndex, state.regional], drawProfile);
+  watch(() => [state.profileIndex, state.regional, state.compareProfiles, state.expedition], drawProfile);
   watch(() => state.route, drawProfile);
   watch(profileCanvas, drawProfile);
   watch(panorama, render);
@@ -1770,6 +1866,9 @@ export function useMission() {
     leaveHorizon,
     curve,
     profileCanvas,
+    hoverProfile,
+    leaveProfile: () => drawProfile(),
+    locateDrawing,
     asset,
     fmt,
     typeLabels,
@@ -1796,7 +1895,7 @@ export function useMission() {
       stop(); cancel(); resetDrawing();
       state.pickingTarget = false;
       state.pickingStart = !state.pickingStart;
-      state.routeStatus = state.pickingStart ? "請在地圖選起點；跨區域時自動擴大 MOLA 覆蓋並保留觀測點。" : "已取消選起點。";
+      state.routeStatus = state.pickingStart ? "請在地圖選起點；跨區域時自動擴大 MOLA 覆蓋並保留目的地。" : "已取消選起點。";
     },
     beginTarget,
     removeTarget,

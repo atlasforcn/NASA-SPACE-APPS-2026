@@ -59,8 +59,9 @@ if (import.meta.env.MODE === "test") window.__mission = mission;
             MISSION CONTROL / {{ s.regional ? "GLOBAL" : s.siteName.toUpperCase() }}
           </p>
           <h1>
-            {{ s.regional ? "探索火星區域地形" : "探索古湖泊的地質線索" }}
+            探索火星地形與導航
           </h1>
+          <p class="hint">選擇區域 → 規劃路線 → 地平線定位</p>
           <p class="hint" role="status">{{ s.warning }}</p>
         </div>
         <nav class="tabs" aria-label="控制面板分頁">

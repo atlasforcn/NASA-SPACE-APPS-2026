@@ -12,20 +12,21 @@ const m = inject(missionKey),
     <section class="group">
       <p class="eyebrow">A* / TERRAIN COST</p>
       <h2>先選端點，再決定怎麼走</h2>
+      <p v-if="!s.hasStart" class="hint" role="status">尚未設定起點；選定後才會顯示導航位置並啟用規劃與定位。</p>
       <p class="hint">① 選起點與終點 → ② 評估直線與繞行路線 → ③ 用地平線找回位置並行進。兩條路線都從所選起點開始。</p>
       <button id="pick-start" :disabled="!s.ready" :aria-pressed="s.pickingStart" @click="m.beginStart">{{ s.pickingStart ? '取消選起點' : '在地圖選起點' }}</button>
-        <label>觀測點名稱<input id="target-name" v-model="s.targetName" maxlength="80" placeholder="輸入自訂名稱（可留空）" /></label>
+        <label>目的地名稱<input id="target-name" v-model="s.targetName" maxlength="80" placeholder="輸入自訂名稱（可留空）" /></label>
         <div class="button-row">
-          <button id="add-target" :disabled="!s.ready" @click="m.beginTarget">{{ s.pickingTarget ? "取消選點" : "在地圖新增觀測點" }}</button>
-          <button id="remove-target" :disabled="!s.destination" @click="m.removeTarget">刪除所選觀測點</button>
+          <button id="add-target" :disabled="!s.ready" @click="m.beginTarget">{{ s.pickingTarget ? "取消選點" : "在地圖新增目的地" }}</button>
+          <button id="remove-target" :disabled="!s.destination" @click="m.removeTarget">刪除所選目的地</button>
         </div>
-        <p class="hint" role="status">{{ s.pickingTarget ? "點選地圖設定位置；遠處會自動擴大 MOLA 覆蓋範圍。" : "自行命名並點選地圖新增觀測點，再選擇目的地規劃路線。" }}</p>
+        <p class="hint" role="status">{{ s.pickingTarget ? "點選地圖設定位置；遠處會自動擴大 MOLA 覆蓋範圍。" : "自行命名並點選地圖新增目的地，再選擇目的地規劃路線。" }}</p>
       <label
-        >自訂觀測點<select
+        >自訂目的地<select
           id="destination"
           v-model="s.destination"
         >
-          <option v-if="!s.targets.length" value="">請先在地圖新增觀測點</option>
+          <option v-if="!s.targets.length" value="">請先在地圖新增目的地</option>
           <option v-for="t in s.targets" :key="t.id" :value="t.id">
             {{ t.name }} · {{ t.unit }}
           </option>
@@ -42,7 +43,7 @@ const m = inject(missionKey),
         <button
           id="plan"
           class="primary"
-          :disabled="!s.ready || !s.targets.length"
+          :disabled="!s.ready || !s.hasStart || !s.targets.length"
           @click="m.plan"
         >
           建立並評估兩條路線</button
@@ -54,7 +55,7 @@ const m = inject(missionKey),
           {{ s.running ? "Ⅱ 暫停" : "▶ 開始行進" }}
         </button>
       </div>
-      <p class="hint">金色虛線：理想直線 · 紅色：不可通行段 · 青色：建議路線 · 橘色：定位行進軌跡</p>
+      <p class="hint">亮黃色虛線：理想直線 · 紅色：不可通行段 · 青色：建議路線 · 橘色：定位行進軌跡</p>
       <p id="straight-status" class="hint" role="status">{{ s.straightStatus }}</p>
       <div class="stats">
         <div>
@@ -79,13 +80,13 @@ const m = inject(missionKey),
       <div class="button-row">
         <button
           id="scenario-good"
-          :disabled="!s.ready"
+          :disabled="!s.ready || !s.hasStart"
           @click="m.reset('good')"
         >
           完整觀測</button
         ><button
           id="scenario-poor"
-          :disabled="!s.ready"
+          :disabled="!s.ready || !s.hasStart"
           @click="m.reset('poor')"
         >
           遮擋觀測
