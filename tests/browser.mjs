@@ -230,16 +230,16 @@ try {
     await page.locator('#stop-named-search').fill('Olympus Mons');
     await page.locator('#stop-named-place').selectOption('Olympus Mons');
     await page.locator('#stop-add-named').click();
-    await page.waitForFunction(() => document.querySelector('.planner-stops')?.textContent.includes('奧林帕斯') || document.querySelector('.planner-stops')?.textContent.includes('Olympus Mons'));
+    await page.waitForFunction(() => [...document.querySelectorAll('.planner-controls [role="status"]')].some(el => el.textContent.includes('200 km')));
     assert.equal(await page.locator('#destination').inputValue(), previousDestination);
     assert.equal(await page.locator('#slope-limit').inputValue(), '20');
-    assert.equal(await page.locator('.planner-stops li').count(), 1);
+    assert.equal(await page.locator('.planner-stops li').count(), 0);
     await page.locator('#stop-add-named').click();
-    assert.equal(await page.locator('.planner-stops li').count(), 1);
+    assert.equal(await page.locator('.planner-stops li').count(), 0);
     await page.locator('#stop-named-search').fill('Alba Mons');
     await page.locator('#stop-named-place').selectOption('Alba Mons');
     await page.locator('#stop-add-named').click();
-    await page.waitForFunction(() => document.querySelectorAll('.planner-stops li').length === 2);
+    await page.waitForFunction(() => [...document.querySelectorAll('.planner-controls [role="status"]')].some(el => el.textContent.includes('加入失敗') && el.textContent.includes('200 km')));
     assert.equal(await page.locator('#destination').inputValue(), previousDestination);
     assert.equal(await page.locator('#slope-limit').inputValue(), '20');
     await page.getByRole('button', {name:'探索',exact:true}).click();
@@ -247,7 +247,7 @@ try {
     await page.locator('#named-list button').first().click();
     await page.locator('#named-set-destination').click();
     await page.waitForFunction(() => document.querySelector('#destination')?.value === 'custom-named-Jezero');
-    assert.equal(await page.locator('.planner-stops li').count(), 2);
+    assert.equal(await page.locator('.planner-stops li').count(), 0);
     await page.screenshot({path:'test-results/named-stops.png'});
 
     assert.deepEqual(errors, []);
@@ -499,9 +499,9 @@ try {
       m.appendPoint({ x: 999999, y: 999999 });
       await m.finishDrawing();
     });
-    assert(await inspect(() => window.__mission.state.regional));
-    assert(await inspect(() => window.__mission.state.route.path.length >= 2));
-    assert(await page.locator("#route-profile").isVisible());
+    assert.equal(await inspect(() => window.__mission.state.regional),false);
+    assert.equal(await inspect(() => window.__mission.state.route),null);
+    assert(await inspect(() => window.__mission.state.regionStatus.includes('200 km')));
     await inspect(() => window.__mission.restore());
     assert(await page.locator("#scan").isDisabled());
     await chooseStart();
