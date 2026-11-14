@@ -124,8 +124,8 @@
     "disposition": "publish",
     "reason": "Website runtime, reference, source record or presentation",
     "path": "docs/SOURCES.md",
-    "bytes": 4818,
-    "sha256": "97335cfd57911dc527d3ebd25ed3f567987963cc84b1e6472a78f617dfbc64f6"
+    "bytes": 7275,
+    "sha256": "58472ee66f1ba4ae74458155819fe0f3c597696cd32cfb6fbe2e472c9e1dd427"
   },
   {
     "source": "docs/Leaflet-LICENSE.txt",
@@ -134,5 +134,37 @@
     "reason": "Leaflet license required for website distribution",
     "bytes": 1369,
     "sha256": "bbc959aaef7488b38942e7f05cfd1244351f8bce54261951ea17dd7cf60f894b"
+  },
+  {
+    "source": "docs/PHOTO-VALIDATION.md",
+    "disposition": "publish",
+    "reason": "Real photo validation sources, protocol and current evidence limitations",
+    "path": "docs/PHOTO-VALIDATION.md",
+    "bytes": 4549,
+    "sha256": "210fa91f82278c616b3fc7dac5107ddb0d9e68bcf2e9a6e16762dda0ffb76943"
+  },
+  {
+    "source": "data/gale/dem.json",
+    "disposition": "publish",
+    "reason": "Offline Gale high-resolution DEM and orthophoto science pack",
+    "path": "data/gale/dem.json",
+    "bytes": 2235763,
+    "sha256": "1158b4d10bc229fe4862f7d0485c73d5b002649f66bcefb17b9829343d8d6b0c"
+  },
+  {
+    "source": "data/gale/optical.png",
+    "disposition": "publish",
+    "reason": "Offline Gale high-resolution DEM and orthophoto science pack",
+    "path": "data/gale/optical.png",
+    "bytes": 2574555,
+    "sha256": "91670643b47e864d269285a910f616dea7a668c86827ad3fc0f51e569f8e6012"
+  },
+  {
+    "source": "data/gale/optical-source.json",
+    "disposition": "publish",
+    "reason": "Offline Gale high-resolution DEM and orthophoto science pack",
+    "path": "data/gale/optical-source.json",
+    "bytes": 3013,
+    "sha256": "0462623dff2b8183c9a1a671a6d8f26b7d980791949d8243d80c3cb939c9e933"
   }
 ]

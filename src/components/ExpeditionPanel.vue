@@ -5,7 +5,7 @@ const m = inject(missionKey),
   s = m.state;
 </script>
 <template>
-  <section v-if="!s.regional" class="group">
+  <section v-if="!s.regional && s.siteId === 'jezero'" class="group">
     <p class="eyebrow">MARSOPS / THREE FORKS</p>
     <h2>重訪樣本存放區</h2>
     <p class="hint">

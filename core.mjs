@@ -82,18 +82,20 @@ function findDEMFeatures(d,maxCount=7){
     status:`高程格網自動抽出的候選局部峰，h=${Math.round(c.height)} m、相對高差指標 ${c.relief.toFixed(1)} m；尚未經影像人工驗證。${regional?"公里級 MOLA 地形候選，非精確峰頂。":""}`,kind:'DEM 峰候選'}));
 }
 function setDEM(input){
-  if(!input||!['jezero-dem-grid-v1','mars-region-grid-v1'].includes(input.schema)||input.crs!==(input.schema==='mars-region-grid-v1'?'MARS_AZIMUTHAL_EQUIDISTANT':'MARS_EQ_LOCAL_TANGENT')||!input.source||!input.source.url)throw Error('不支援的 DEM 格式或缺少來源 metadata');
+  if(!input||!['jezero-dem-grid-v1','mars-local-grid-v1','mars-region-grid-v1'].includes(input.schema)||input.crs!==(input.schema==='mars-region-grid-v1'?'MARS_AZIMUTHAL_EQUIDISTANT':'MARS_EQ_LOCAL_TANGENT')||!input.source||!input.source.url)throw Error('不支援的 DEM 格式或缺少來源 metadata');
+  const localGrid=input.schema==='mars-local-grid-v1';
+  if(localGrid&&(!input.origin||!Number.isFinite(input.origin.lat)||Math.abs(input.origin.lat)>=90||!Number.isFinite(input.origin.lng)||Math.abs(input.origin.lng)>180))throw Error('Invalid Mars local origin');
   const {width,height,xMin,xMax,yMin,yMax}=input;const regional=input.schema==='mars-region-grid-v1';if(regional&&(!input.origin||!Number.isFinite(input.origin.lat)||Math.abs(input.origin.lat)>90||!Number.isFinite(input.origin.lng)||Math.abs(input.origin.lng)>180))throw Error('Invalid Mars region origin');
   if(!Number.isInteger(width)||!Number.isInteger(height)||width<3||height<3||width*height>3000000)throw Error('DEM 網格尺寸異常');
-  if(![xMin,xMax,yMin,yMax].every(Number.isFinite)||xMax<=xMin||yMax<=yMin||(!regional&&(xMin> -4850||xMax<4850||yMin> -3500||yMax<3500)))throw Error('DEM 未涵蓋示範全區');
+  if(![xMin,xMax,yMin,yMax].every(Number.isFinite)||xMax<=xMin||yMax<=yMin||(!regional&&!localGrid&&(xMin> -4850||xMax<4850||yMin> -3500||yMax<3500)))throw Error('DEM 未涵蓋示範全區');
   if(!Array.isArray(input.heights)||input.heights.length!==width*height)throw Error('DEM 格網長度不正確');
   const values=Float64Array.from(input.heights.map(v=>v===null?NaN:Number(v)));
   if(values.some(v=>Number.isFinite(v)&&Math.abs(v)>(regional?30000:12000)))throw Error('高程不合理，請檢查 Mars 垂直基準與單位');
   const validCount=values.reduce((n,v)=>n+(Number.isFinite(v)?1:0),0);
   if(validCount<width*height*.4)throw Error('DEM 有效區域不足 40%');
   const d={width,height,xMin,xMax,yMin,yMax,values,validCount,cellMeters:(xMax-xMin)/(width-1),metadata:{...input.source}};
-  const prev=realDEM,frame={lat:LAT0,lng:LON0,regional:regionalProjection,bounds:{...LIMIT}};realDEM=d;LAT0=regional?input.origin.lat:18.44;LON0=regional?input.origin.lng:77.42;regionalProjection=regional;Object.assign(LIMIT,regional?{minX:xMin,maxX:xMax,minY:yMin,maxY:yMax}:{minX:-4850,maxX:4850,minY:-3500,maxY:3500});
-  if(!validDEMPoint(regional?0:-1400,regional?0:-820)){realDEM=prev;LAT0=frame.lat;LON0=frame.lng;regionalProjection=frame.regional;Object.assign(LIMIT,frame.bounds);throw Error('探測車起點沒有有效高程，無法使用該裁切範圍');}
+  const prev=realDEM,frame={lat:LAT0,lng:LON0,regional:regionalProjection,bounds:{...LIMIT}};realDEM=d;LAT0=regional||localGrid?input.origin.lat:18.44;LON0=regional||localGrid?input.origin.lng:77.42;regionalProjection=regional;Object.assign(LIMIT,regional||localGrid?{minX:xMin,maxX:xMax,minY:yMin,maxY:yMax}:{minX:-4850,maxX:4850,minY:-3500,maxY:3500});
+  if(!validDEMPoint(regional||localGrid?0:-1400,regional||localGrid?0:-820)){realDEM=prev;LAT0=frame.lat;LON0=frame.lng;regionalProjection=frame.regional;Object.assign(LIMIT,frame.bounds);throw Error('探測車起點沒有有效高程，無法使用該裁切範圍');}
   const peaks=findDEMFeatures(d);FEATURES.splice(0,FEATURES.length,...peaks);
   return {validCount,cells:values.length,featureCount:FEATURES.length,metadata:demInfo()};
 }

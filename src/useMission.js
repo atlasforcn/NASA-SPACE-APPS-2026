@@ -45,6 +45,9 @@ export function useMission() {
     tab: "mission",
     panelOpen: true,
     regional: false,
+    siteId: "jezero",
+    siteName: "Jezero",
+    geologyAvailable: true,
     truth: { x: -1400, y: -820, heading: 45 },
     estimate: { x: -750, y: -1340, heading: 69 },
     travelled: 0,
@@ -190,7 +193,7 @@ export function useMission() {
     return C.validDEMPoint(v.x, v.y);
   }
   function unitAt(p) {
-    if (state.regional) return;
+    if (state.regional || !state.geologyAvailable) return;
     return geology?.features.find((f) =>
       f.rings.reduce((hit, r) => {
         let inside = false;
@@ -244,12 +247,12 @@ export function useMission() {
     remove(routeLayer);
     routeLayer = null;
   }
-  function reset(kind = state.scenario) {
+  function reset(kind = state.scenario, { preserveTargets = false } = {}) {
     if (!dem.value) return;
     stop();
     cancel();
     // A task reset also removes user-created destinations and custom list filters.
-    state.targets = state.targets.filter((target) => !target.id.startsWith("custom-"));
+    if (!preserveTargets) state.targets = state.targets.filter((target) => !target.id.startsWith("custom-"));
     state.destination = state.targets[0]?.id || "";
     state.targetName = "";
     state.query = "";
@@ -786,8 +789,10 @@ export function useMission() {
   }
   function terrainImage(kind) {
     const cv = document.createElement("canvas");
-    cv.width = 243;
-    cv.height = 176;
+    cv.width = Math.min(601, dem.value.width);
+    cv.height = Math.min(601, dem.value.height);
+    const finite = dem.value.heights.filter(Number.isFinite);
+    const low = finite.reduce((a,b)=>Math.min(a,b),Infinity), high = finite.reduce((a,b)=>Math.max(a,b),-Infinity);
     const ctx = cv.getContext("2d"),
       img = ctx.createImageData(cv.width, cv.height);
     for (let j = 0; j < cv.height; j++)
@@ -797,16 +802,22 @@ export function useMission() {
           y =
             C.LIMIT.maxY -
             (j / (cv.height - 1)) * (C.LIMIT.maxY - C.LIMIT.minY),
-          z = kind === "slope" ? C.slopeDeg(x, y) : C.elevation(x, y),
+          z = kind === "slope" ? C.slopeDeg(x, y) : kind === "roughness" ? C.roughness(x,y) : C.elevation(x, y),
           v =
             kind === "slope"
               ? C.clamp(z / 30, 0, 1)
-              : C.clamp((z + 2700) / 900, 0, 1),
+              : kind === "roughness" ? z : C.clamp((z-low)/Math.max(1,high-low),0,1),
           k = (j * cv.width + i) * 4;
         img.data[k] = 50 + 200 * v;
         img.data[k + 1] = 115 + 70 * v;
         img.data[k + 2] = 130 - 50 * v;
         img.data[k + 3] = Number.isFinite(z) ? 210 : 0;
+        if(kind === "hillshade") {
+          const h=cellMeters(), gx=(C.elevation(x+h,y)-C.elevation(x-h,y))/(2*h), gy=(C.elevation(x,y+h)-C.elevation(x,y-h))/(2*h);
+          const light=Math.max(0,(-gx*-.5-gy*.5+Math.SQRT1_2)/Math.hypot(gx,gy,1));
+          img.data[k]=img.data[k+1]=img.data[k+2]=255*light;
+          img.data[k+3]=Number.isFinite(light)?230:0;
+        }
       }
     ctx.putImageData(img, 0, 0);
     return cv.toDataURL();
@@ -817,7 +828,7 @@ export function useMission() {
     state.units = [];
     const kind = state.layer;
     if (kind === "geology") {
-      if (state.regional) {
+      if (state.regional || !state.geologyAvailable) {
         state.legend = "此區尚無已接入的地質單元圖；不套用 Jezero 地質分類。";
         return;
       }
@@ -871,12 +882,12 @@ export function useMission() {
         state.legend =
           kind === "slope"
             ? "0–30° 坡度 · DEM 衍生；缺值透明"
-            : "−2700 至 −1800 m 高程色階";
+            : kind === "hillshade" ? "DEM 衍生陰影 · 西北光源、高度角 45°；非照片" : kind === "roughness" ? "DEM 衍生粗糙度指標 0–1；非車輪尺度實測" : "依目前 DEM 最小／最大高程縮放色階";
       }
     } else
       state.legend = state.regional
         ? "MOLA 全球地形陰影 · 16 ppd，赤道約 3.7 km/格"
-        : "CTX 光學影像 · 原生 5 m，展示約 8.1 m/pixel";
+        : state.siteId === "gale" ? "USGS HiRISE 正射影像 · 展示約 6.67 m/pixel；約 51.5% 彩色，其餘灰階補足，非地質分區" : "CTX 光學影像 · 原生 5 m，展示約 8.1 m/pixel";
     estimateMarker.bringToFront();
   }
   function stopDrawing() {
@@ -1032,9 +1043,14 @@ export function useMission() {
       dem.value = grid;
       state.regional = true;
       missionStart = C.latLngToLocal(start.lat,start.lng);
-      state.targets = targets.map(t => ({...t,...C.latLngToLocal(t.lat,t.lng),unit:"MOLA 區域地形"}));
+      state.siteId = "mola";
+      state.siteName = "MOLA";
+      state.geologyAvailable = false;
       profileOptions = regionalProfile(grid);
       refreshMission();
+      // refreshMission resets custom destinations; restore them in the new frame afterwards.
+      state.targets = targets.map(t => ({...t,...C.latLngToLocal(t.lat,t.lng),unit:"MOLA 區域地形"}));
+      refreshPois();
       state.truth = {...truth,...C.latLngToLocal(truth.lat,truth.lng)};
       state.estimate = {...estimate,...C.latLngToLocal(estimate.lat,estimate.lng)};
       trail.setLatLngs(history);
@@ -1106,7 +1122,7 @@ export function useMission() {
         "https://science.nasa.gov/resource/welcome-to-octavia-e-butler-landing/",
     };
     state.pois = [
-      ...(state.regional ? [] : [landing]),
+      ...(state.regional || state.siteId !== "jezero" ? [] : [landing]),
       ...C.FEATURES.map((p) => ({
         ...p,
         kind: "DEM 自動候選峰（非正式地名）",
@@ -1176,12 +1192,12 @@ export function useMission() {
     state.mapTitle = isLocal
       ? state.regional
         ? `MOLA 區域 / ${dem.value.origin.lat.toFixed(2)}°, ${dem.value.origin.lng.toFixed(2)}°`
-        : "Jezero / 18.44°N, 77.42°E"
+        : `${state.siteName} / ${C.LAT0.toFixed(2)}°, ${C.LON0.toFixed(2)}°`
       : "火星地理導覽 / MGS MOLA";
     state.mapContext = isLocal
       ? state.regional
         ? (inDem(c) ? `MOLA 格距 ${fmt(cellMeters())} · 未校準定位` : "視野中心超出任務 DEM · 選點與路線將自動擴大覆蓋")
-        : "局部 CTX 影像 · DEM 導航有效區"
+        : `${state.siteName} 正射影像 · DEM 導航有效區`
       : "全球彩色地形陰影 · 可建立區域任務";
   }
   function overview() {
@@ -1217,6 +1233,7 @@ export function useMission() {
     return pendingPlanet;
   }
   function refreshMission() {
+    state.expedition = [];
     state.pickingTarget = false;
     state.targetName = "";
     state.poi = null;
@@ -1249,7 +1266,7 @@ export function useMission() {
     reset("good");
     map.closePopup();
     map.fitBounds(bounds, { animate: false });
-    if (state.regional) {
+    if (state.regional || state.siteId !== "jezero") {
       remove(stationLayer);
       remove(expeditionLayer);
     } else {
@@ -1258,10 +1275,10 @@ export function useMission() {
     }
     state.warning = state.regional
       ? "全球真實 MOLA 高程 · 區域規劃 · 非障礙物尺度導航"
-      : `真實 Jezero DEM · ${dem.value.width}×${dem.value.height} · 觀測為模擬`;
+      : `真實 ${state.siteName} DEM · ${dem.value.width}×${dem.value.height} · 觀測為模擬`;
     state.source = state.regional
       ? `NASA PDS MOLA 16 ppd，來源含插值；球面方位等距投影。SHA-256 ${dem.value.source.original_sha256}`
-      : `USGS CTX 原生 20 m，展示約 40 m；光學原生 5 m。地質 Sun & Stack 2020，1:75,000。SHA-256 ${dem.value.source.original_sha256}；未獨立估計配準誤差。`;
+      : state.siteId === "gale" ? "USGS Gale 合併 DEM：原生格距 1 m，本站取樣 20 m；混合來源不代表全域 1 m 精度。HiRISE 彩色正射影像展示 6.67 m；尚無 Gale 地質分類。未獨立評估配準精度。" : `USGS CTX 原生 20 m，展示約 40 m；光學原生 5 m。地質 Sun & Stack 2020，1:75,000。SHA-256 ${dem.value.source.original_sha256}；未獨立估計配準誤差。`;
     scope();
   }
   async function startRegion() {
@@ -1292,6 +1309,9 @@ export function useMission() {
       C.setDEM(grid);
       dem.value = grid;
       state.regional = true;
+      state.siteId = "mola";
+      state.siteName = "MOLA";
+      state.geologyAvailable = false;
       missionStart = { x: 0, y: 0 };
       profileOptions = regionalProfile(grid);
       state.estimate = { x: 650, y: -520, heading: 69 };
@@ -1308,17 +1328,46 @@ export function useMission() {
       if (token === regionToken) state.regionLoading = false;
     }
   }
+  async function startGale() {
+    if (!state.ready || !slopeValid()) return;
+    const token=++regionToken;
+    stop(); cancel();
+    state.regionLoading=true;
+    state.regionStatus="載入 Gale 高解析 DEM 與正射影像來源…";
+    try {
+      const [grid] = await Promise.all([json("data/gale/dem.json",{signal:abort.signal}),json("data/gale/optical-source.json",{signal:abort.signal})]);
+      if(disposed || token!==regionToken) return;
+      C.setDEM(grid);
+      dem.value=grid;
+      state.regional=false;
+      state.siteId="gale"; state.siteName="Gale"; state.geologyAvailable=false;
+      geology=null; missionStart={x:0,y:0}; state.targets=[];
+      state.lat=grid.origin.lat; state.lng=grid.origin.lng;
+      profileOptions={angleStep:3,rayStep:40,maxRange:6000,cameraHeight:1.7,curvature:true};
+      optical.setUrl(asset("data/gale/optical.png"));
+      optical.setBounds([ll({x:C.LIMIT.minX,y:C.LIMIT.minY}),ll({x:C.LIMIT.maxX,y:C.LIMIT.maxY})]);
+      refreshMission();
+      state.regionStatus="Gale 10×10 km · DEM 20 m 取樣 · 正射影像約 6.67 m/pixel；起點為區域中心，非好奇號實際位置。";
+    } catch(e) {
+      if(!disposed && token===regionToken) state.regionStatus="Gale 載入失敗："+e.message+"；可重試。";
+    } finally { if(token===regionToken) state.regionLoading=false; }
+  }
   function restore() {
     regionToken++;
     state.regionLoading = false;
     if (!snapshot) return;
     state.regional = false;
+    state.siteId = "jezero";
+    state.siteName = "Jezero";
+    state.geologyAvailable = true;
     dem.value = snapshot.dem;
     geology = snapshot.geology;
     missionStart = snapshot.mission.start;
     state.targets = [];
     profileOptions = undefined;
     C.setDEM(dem.value);
+    optical.setUrl(asset("data/ctx.png"));
+    optical.setBounds([ll({x:C.LIMIT.minX,y:C.LIMIT.minY}),ll({x:C.LIMIT.maxX,y:C.LIMIT.maxY})]);
     refreshMission();
     state.regionStatus = "已切回 Jezero 較細的 CTX DEM。";
   }
@@ -1332,7 +1381,7 @@ export function useMission() {
       : "有效地標不足或未收斂。";
   }
   function planExpedition() {
-    if (state.regional) return;
+    if (state.regional || state.siteId !== "jezero") return;
     stop();
     cancel();
     if (!slopeValid()) return;
@@ -1427,10 +1476,10 @@ export function useMission() {
       open = true;
     }
     ctx.stroke();
-    state.profileInfo = `${leg.name} · ${state.regional ? "MOLA" : "CTX"} DEM · ${fmt(d)} · 最大格網坡度 ${maxSlope.toFixed(1)}° · 缺值 ${missing}；每 ≤${Math.ceil(sampleStep)} m 取樣數值 DEM，非影像高程。`;
+    state.profileInfo = `${leg.name} · ${state.regional ? "MOLA" : state.siteName} DEM · ${fmt(d)} · 最大格網坡度 ${maxSlope.toFixed(1)}° · 缺值 ${missing}；每 ≤${Math.ceil(sampleStep)} m 取樣數值 DEM，非影像高程。`;
   }
   function showStation(f) {
-    if (state.regional || !f) return;
+    if (state.regional || state.siteId !== "jezero" || !f) return;
     state.selected = null;
     state.station = f;
     map.setView([f.geometry.coordinates[1], f.geometry.coordinates[0]], 14);
@@ -1499,7 +1548,7 @@ export function useMission() {
         height = Number.isFinite(z) ? `高度 ${z.toFixed(1)} m` : "高度：無資料";
       state.coords = `${e.latlng.lat.toFixed(5)}°N ${e.latlng.lng.toFixed(5)}°E · ${height} · ${unitLabel(unitAt(p))}`;
       state.elevation = Number.isFinite(z)
-        ? `游標高程 ${z.toFixed(1)} m · ${Number.isFinite(localZ) && !state.regional ? "Jezero DEM" : "MOLA 16 ppd"}`
+        ? `游標高程 ${z.toFixed(1)} m · ${Number.isFinite(localZ) && !state.regional ? state.siteName + " DEM" : "MOLA 16 ppd"}`
         : "游標高程：無資料";
     });
     map.on("click", async (e) => {
@@ -1515,7 +1564,7 @@ export function useMission() {
           return;
         }
         missionStart = { ...p };
-        reset();
+        reset(state.scenario, {preserveTargets:true});
         state.pickingStart = false;
         state.truth = { ...p, heading: 45 };
         state.estimate = { ...p, heading: 45 };
@@ -1616,7 +1665,7 @@ export function useMission() {
           { opacity: 1 },
         ).addTo(map);
         optical.on("error", () => {
-          state.warning = "CTX 光學裁切載入失敗；地圖不可視為影像底圖。";
+          state.warning = "正射影像裁切載入失敗；地圖不可視為影像底圖。";
         });
         for (const offset of [-360, 0, 360])
           L.imageOverlay(
@@ -1758,6 +1807,7 @@ export function useMission() {
     selectName,
     overview,
     startRegion,
+    startGale,
     restore,
     bearingDemo,
     planExpedition,

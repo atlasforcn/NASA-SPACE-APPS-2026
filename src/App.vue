@@ -26,7 +26,7 @@ if (import.meta.env.MODE === "test") window.__mission = mission;
     >
     <div class="mission-signal">
       <i :class="{ busy: s.searching || s.loading }"></i
-      >{{ s.regional ? "MOLA 區域任務" : "JEZERO · MARS"
+      >{{ s.regional ? "MOLA 區域任務" : s.siteName.toUpperCase() + " · MARS"
       }}<span>真實地形 / 模擬觀測</span>
     </div>
     <button id="reset" :disabled="!s.ready" @click="mission.reset()">
@@ -56,7 +56,7 @@ if (import.meta.env.MODE === "test") window.__mission = mission;
       <div id="panel-content" v-show="s.panelOpen">
         <div class="panel-heading">
           <p class="eyebrow">
-            MISSION CONTROL / {{ s.regional ? "GLOBAL" : "JEZERO" }}
+            MISSION CONTROL / {{ s.regional ? "GLOBAL" : s.siteName.toUpperCase() }}
           </p>
           <h1>
             {{ s.regional ? "探索火星區域地形" : "探索古湖泊的地質線索" }}

@@ -1,5 +1,18 @@
 # 真實資料與來源
 
+## Gale 高解析區域資料
+
+「探索 → Gale 高解析 DEM＋正射影像」按需載入 `data/gale/`。中心 planetocentric −4.59°、positive-East 137.44°，範圍東西／南北各 10 km，半徑 3,396,190 m，局部等距經緯度公尺框架。中心是示範任務起點，不是好奇號實際位置。
+
+- [USGS MSL Gale Merged DEM](https://astrogeology.usgs.gov/search/map/mars_msl_gale_merged_dem_1m)：Calef／Parker 合併產品 v3，原生像素格距 1 m；使用官方 4 m 基底外部 overview 的數值高程，經雙線性取樣及火星座標重投影成本站 501×501、20 m 格點。混合來源的細節與精度不均勻，不能聲稱處處有 1 m 地形精度。有效格點 100%，高程約 −4542 至 −4079 m。
+- [USGS Gale 正射影像](https://astrogeology.usgs.gov/search/map/mars_msl_gale_merged_orthophoto_mosaic_25cm)：原生像素格距 25 cm。本站顯示 1500×1500、約 6.67 m/pixel；使用同目錄 HiRISE-LRGB 78 quads 彩色 COG，彩色覆蓋約 51.5%，其餘以同套灰階正射影像 overview 補足，最終有效覆蓋 100%。彩色為人工配準、混色和銳化產品；色彩接縫是來源覆蓋差異，不是地質單元邊界。
+- 高程、坡度、粗糙度、陰影：由上述數值 DEM 計算，不是額外獨立觀測。陰影採西北向光源、高度角 45°，只是合成視覺化；粗糙度是鄰域高程指標，無法驗證車輪尺度障礙。
+- Gale 尚未接入可追溯的地質多邊形，因此停用地質單元選項。Three Forks 站點、Jezero 著陸標記與考察路線不套用到 Gale。
+
+`scripts/prepare-gale.py` 可重建裁切，需 rasterio、numpy、Pillow 與 pyproj；它透過 HTTP range 讀取官方大型 TIFF 及 overview，不需下載完整約 3.9 GB DEM、24 GB 灰階影像。網站本身仍不需要 Python。來源 URL、ETag、大小、Mars WKT、原生 transform、overview、實際讀取 window 及取樣陣列 SHA-256 保存在 DEM／影像 JSON。未下載整份來源，沒有聲稱取得完整原檔 SHA-256；ETag 也不當作 SHA-256。輸出檔由靜態資產清單另外以 SHA-256 驗證。
+
+影像／DEM 致謝 NASA/JPL-Caltech、USGS、UArizona 與相關團隊；彩色拼圖由 Timothy J. Parker／Fred J. Calef III 製作。DEM 與影像已轉到相同火星局部框架，但尚無獨立控制點配準精度評估。10 km 裁切不保證涵蓋照片的遠山，仍不能宣稱實景定位或安全導航已驗證。
+
 | 資料 | 產品／來源 | 解析度與用途 |
 |---|---|---|
 | 地形 | [USGS Mars 2020 Science Investigation CTX DEM](https://astrogeology.usgs.gov/search/map/mars_2020_science_investigation_ctx_dem_mosaic) | 原生 20 m；本機 243×176 格網，東 40.082645 m／北 40 m；100% 有效 |

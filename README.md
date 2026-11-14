@@ -30,6 +30,8 @@ npm run preview
 
 ## 原始碼與資產
 
+「探索」可載入 Gale 10×10 km 的 USGS 高解析區域：原生格距 1 m DEM 經官方 overview 取樣為 20 m；25 cm 正射來源展示約 6.67 m/pixel，彩色未涵蓋處使用灰階影像。支援高程、坡度、地形陰影、粗糙度圖層與返回 Jezero；Gale 尚無地質單元圖。來源及處理方式見 `docs/SOURCES.md`。
+
 - `src/`：Vue 元件、共用任務狀態與定位 Worker。
 - `core.mjs`、`planet.mjs`、`skyline.mjs`：網站與測試共用的計算核心。
 - `data/`：必要 DEM、底圖、地質、任務、地名、PDS 原表與來源標籤。
@@ -39,5 +41,7 @@ npm run preview
 `static-assets.json` 列出靜態資產。建置前複製到自動產生的 `public/`，建置後驗證路徑、大小、SHA-256 與 HTML/CSS 引用。缺檔、大小寫錯誤、未分類檔案或雜湊不符會使建置失敗。修改資料後先檢視內容與清單，再執行 `npm run assets:update`。
 
 ## 資料限制
+
+區域 DEM 快捷選擇涵蓋 Jezero、Gale、Elysium、Olympus、Hellas 與 Valles；均使用既有全球 MOLA，並非新增高解析觀測。執行 `node scripts/export-regions.mjs` 可輸出附來源的六份數值區域格網。毅力號實景照片驗證的來源、阻礙與評估指令見 [實景驗證說明](docs/PHOTO-VALIDATION.md)；目前尚無真實照片定位改善的實測結論。
 
 圖層為真實資料，觀測、車輛與漂移為模擬。Jezero 展示格網約 40 m；全球 MOLA 來源赤道約 3.7 km，區域格網從 4 km 起隨任務範圍調整。跨洲路線使用局部球面投影近似，距離、方位與通行判斷不代表真實任務導航。全球定位候選未校準，不自動校正。24° 為展示門檻，DEM 無法保證腳下或車輪尺度安全。來源與精度限制見 `docs/SOURCES.md`。

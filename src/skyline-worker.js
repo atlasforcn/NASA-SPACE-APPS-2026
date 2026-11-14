@@ -5,6 +5,8 @@ self.onmessage = async ({ data }) => {
   const { id, dem, observation, bounds, options = {} } = data;
   try {
     C.setDEM(dem);
+    // Cached profiles include terrain values; equal coordinates in different sites are not interchangeable.
+    cache.clear();
     const result = await S.search(observation, bounds, {
       ...options,
       cache,

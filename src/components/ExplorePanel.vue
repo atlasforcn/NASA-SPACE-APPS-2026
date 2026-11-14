@@ -1,12 +1,23 @@
 <script setup>
 import { inject } from "vue";
 import { missionKey } from "../useMission";
+import regions from "../../regions.mjs";
 const m = inject(missionKey),
   s = m.state;
+function selectRegion(event) {
+  const region = regions.find(r => r.id === event.target.value);
+  if (region) { s.lat = region.lat; s.lng = region.lng; }
+}
 </script>
 <template>
   <div>
     <section class="group">
+      <button id="load-gale" class="primary wide" :disabled="!s.ready || s.regionLoading" @click="m.startGale">Gale 高解析 DEM＋正射影像 →</button>
+      <label>DEM 區域快捷選擇<select id="dem-region-preset" :disabled="s.regionLoading" @change="selectRegion">
+        <option value="">自行輸入座標</option>
+        <option v-for="r in regions" :key="r.id" :value="r.id">{{ r.name }}</option>
+      </select></label>
+      <p class="hint">快捷區域使用同一份全球 MOLA，區域格距至少 4 km，並非新增高解析觀測。Jezero 精細 CTX 請使用「回到 Jezero」。</p>
       <p class="hint">輸入中心座標建立任務；起點、觀測點與繪製路線可跨區域，覆蓋範圍自動調整。</p>
       <div class="field-pair">
         <label
@@ -42,7 +53,7 @@ const m = inject(missionKey),
         }}</button
       ><button
         id="restore-jezero"
-        v-if="s.regional || s.regionLoading"
+        v-if="s.regional || s.siteId !== 'jezero' || s.regionLoading"
         class="wide"
         @click="m.restore"
       >
