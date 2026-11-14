@@ -67,10 +67,10 @@ function selectRegion(event) {
       <p class="hint">{{ s.elevation }}</p>
     </section>
     <section class="group">
-      <p class="eyebrow">IAU / USGS GAZETTEER</p>
+      <p class="eyebrow">IAU / USGS GAZETTEER · NASA LANDING</p>
       <h2>火星已命名奇觀</h2>
       <label
-        >搜尋正式地名<input
+        >搜尋地名與著陸點<input
           id="named-search"
           v-model="s.query"
           type="search"
@@ -78,6 +78,7 @@ function selectRegion(event) {
       ><label
         >地形類型<select id="named-type" v-model="s.type">
           <option value="">全部類型</option>
+          <option value="LANDING">歷史著陸點</option>
           <option v-for="(label, key) in m.typeLabels" :key="key" :value="key">
             {{ label }}
           </option>
@@ -86,7 +87,7 @@ function selectRegion(event) {
       <p id="named-count" class="hint">
         {{
           s.namesError ||
-          `${s.entries.length} 個正式地名 · 符合 ${m.matches.value.length} 個 · 顯示 ${m.displayed.value.length} 個`
+          `${s.entries.length} 個地名與著陸點 · 符合 ${m.matches.value.length} 個 · 顯示 ${m.displayed.value.length} 個`
         }}
       </p>
       <div id="named-list" class="list">
@@ -107,22 +108,21 @@ function selectRegion(event) {
           {{ s.selected.name }} ·
           {{ m.typeLabels[s.selected.code] || s.selected.type }}
         </p>
-        <p>IAU 正式地名 · 核准 {{ s.selected.approvedAt }}</p>
+        <p>{{ s.selected.kind || `IAU 正式地名 · 核准 ${s.selected.approvedAt}` }}</p>
         <p>{{ s.selected.description }}</p>
         <p>{{ s.selected.origin }}</p>
         <p>
-          目錄中心 {{ s.selected.lat.toFixed(4) }}°N /
-          {{ s.selected.eastLongitude.toFixed(4) }}°E · 尺度
-          {{ s.selected.diameterKm }} km
+          {{ s.selected.kind ? '歷史著陸座標' : '目錄中心' }} {{ s.selected.lat.toFixed(4) }}°N /
+          {{ s.selected.eastLongitude.toFixed(4) }}°E<span v-if="!s.selected.kind"> · 尺度 {{ s.selected.diameterKm }} km</span>
         </p>
-        <p class="hint">加入任務時採用目錄中心；是否可達由地形與避險門檻檢查。</p>
+        <p class="hint">加入任務時採用上述座標；是否可達由地形與避險門檻檢查。</p>
         <div class="button-row">
           <button id="named-add-stop" :disabled="!s.ready || s.regionLoading" @click="m.addNamedTarget(s.selected, 'stop')">加入停靠順序</button>
           <button id="named-set-destination" :disabled="!s.ready || s.regionLoading" @click="m.addNamedTarget(s.selected, 'destination')">設為終點</button>
         </div>
         <p class="hint" role="status">{{ s.namedTargetStatus }}</p>
         <a :href="s.selected.url" target="_blank" rel="noopener noreferrer"
-          >USGS／IAU 資料 ↗</a
+          >{{ s.selected.kind ? 'NASA 命名資料 ↗' : 'USGS／IAU 資料 ↗' }}</a
         ><button
           class="primary wide"
           :disabled="s.regionLoading"
