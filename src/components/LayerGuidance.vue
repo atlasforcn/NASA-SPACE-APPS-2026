@@ -5,7 +5,7 @@ import {missionKey} from '../useMission';
 import {layerNames,scienceGuidance} from '../layer-guidance.mjs';
 import {scienceLayerIds} from '../science-layers.mjs';
 const m=inject(missionKey), s=m.state;
-const route=computed(()=>s.route?.reachable && s.route.path?.length ? s.route.path : null);
+const route=computed(()=>s.walk?.assessment?.samples ?? (s.route?.reachable ? s.route.path : null));
 const points=computed(()=>route.value?.map(p=>C.localToLatLng(p.x,p.y)) || [s.guidanceView?.center ?? {lat:s.lat,lng:s.lng}]);
 function terrain(id) {
   const local=route.value || points.value.map(p=>C.latLngToLocal(p.lat,p.lng));
@@ -29,7 +29,7 @@ const cards=computed(()=>s.layers.map(id=>({id,...(!s.ready || s.regionLoading ?
 <template>
 <section class="layer-guidance" aria-label="圖層判讀與警示">
   <h3>圖層判讀與警示 · {{ cards.length }}</h3>
-  <p class="hint">{{ route ? '依目前規劃路線的節點取樣，含往返或中途停靠的路段。' : '目前依地圖中心判讀；規劃後會比較沿途節點。' }}</p>
+  <p class="hint">{{ s.walk ? route ? '依基地到 A 直線沿途取樣。' : '目前依地圖中心判讀；檢查基地到 A 後可看沿途變化。' : route ? '依目前規劃路線的節點取樣，含往返或中途停靠的路段。' : '目前依地圖中心判讀；規劃後會比較沿途節點。' }}</p>
   <article v-for="c in cards" :key="c.id" :data-layer="c.id">
     <h4>{{ layerNames[c.id] }}</h4><p>{{ c.text }}</p>
     <p v-if="c.warning" class="warning" role="status">警示 · {{ c.warning }}</p>

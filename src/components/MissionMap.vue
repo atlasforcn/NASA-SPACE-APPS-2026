@@ -45,13 +45,26 @@ onUnmounted(() => observer?.disconnect());
     aria-label="火星地圖"
   ></div>
   <div class="map-badge">
-    <p class="eyebrow">02 / TERRAIN EXPLORER</p>
-    <h2>{{ m.state.mapTitle }}</h2>
-    <p>拖曳移動 · 滾輪縮放 · 在「任務」設定起終點</p>
+    <h2>{{ m.state.walk ? '基地 → 觀測點 A' : m.state.mapTitle }}</h2>
+    <p v-if="m.state.pickingNoGo" role="status">點選地圖，設定禁行區中心。</p>
+    <p v-else-if="!m.state.walk">拖曳移動 · 滾輪縮放 · 在「任務」設定起終點</p>
   </div>
   <details class="map-legend">
     <summary>地圖標示與顏色</summary>
-    <div class="legend-grid">
+    <div v-if="m.state.walk" class="legend-grid">
+      <span><i class="legend-dot gold"></i>任務基地與觀測點 A</span>
+      <span><i class="legend-line gold dashed"></i>待檢查的直線</span>
+      <span><i class="legend-line mint"></i>符合通行門檻</span>
+      <span><i class="legend-line red"></i>需改道的路線</span>
+      <span><i class="legend-line orange"></i>暫緩出發</span>
+      <span><i class="assessment-marker"></i>判定依據的位置</span>
+      <template v-if="m.state.showNavigationRisk && !m.state.globalView">
+        <span><i class="risk-area red"></i>超出通行門檻或禁行區</span>
+        <span><i class="risk-area orange"></i>地形資料不足區</span>
+      </template>
+      <span v-if="m.state.walk.detour"><i class="legend-line dashed" :class="{ go: 'mint', reroute: 'red', hold: 'orange' }[m.state.walk.detour.verdict]"></i>替代路線</span>
+    </div>
+    <div v-else class="legend-grid">
       <span><i class="legend-dot mint"></i>青色圓點：導航估計</span>
       <span><i class="legend-dot gold"></i>亮黃色標記：目的地／站點</span>
       <span><i class="legend-line mint"></i>青色實線：建議路線</span>
@@ -68,13 +81,17 @@ onUnmounted(() => observer?.disconnect());
     <div v-if="m.state.tab !== 'layers' || !m.state.panelOpen" class="map-layer-status" aria-live="polite">
       <span class="map-layer-status__label">目前圖層</span>
       <strong>{{ activeLayer }}</strong>
-      <details v-if="m.state.walk"><summary>全部圖層</summary><LayerControls compact /></details>
-      <LayerControls v-else compact />
+      <LayerControls v-if="!m.state.walk" compact />
       <span class="map-height" role="status">{{ m.state.elevation || "移動游標查看高度" }}</span>
       <span v-if="m.state.legend" class="map-layer-status__detail">{{ m.state.legend }}</span>
       <button type="button" @click="openLayers">調整圖層 ↗</button>
     </div>
-    <button id="mars-overview" :disabled="!m.state.ready" @click="m.overview">
+    <button v-if="!m.state.walk" id="mars-overview" :disabled="!m.state.ready" @click="m.overview">
       火星全覽 ↗</button>
   </div>
 </template>
+
+<style scoped>
+.assessment-marker { width: 12px; height: 12px; flex-shrink: 0; border: 2px solid #17242a; border-radius: 50%; background: #d8ddd5; outline: 1px solid #a2b5b2; }
+.risk-area { width: 11px; height: 11px; flex-shrink: 0; background: currentColor; opacity: .8; }
+</style>

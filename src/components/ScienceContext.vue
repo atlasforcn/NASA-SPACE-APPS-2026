@@ -8,7 +8,6 @@ const location = computed(() => s.walk?.station || s.targets.find(t => t.id === 
 const point = computed(() => m.scienceAt(location.value));
 const meta = computed(() => s.scienceMeta);
 const cell = computed(() => m.scienceCellAt(point.value));
-const stationCells = computed(() => (s.walk?.stations || []).map(p => m.scienceCellAt(m.scienceAt(p))));
 const range = computed(() => s.scienceLayers[s.layer]?.range || meta.value?.scale);
 const sampled = computed(() => m.scienceValueAt(point.value));
 const value = (n, digits = 0) => Number.isFinite(n) ? n.toFixed(digits) : '無有效資料';
@@ -64,7 +63,6 @@ const active = computed(() => examples.filter(e => e.id === (
             <div class="science-scale" :style="{ background: 'linear-gradient(to right,' + palettes[s.layerStyles[s.layer].palette].map(c => 'rgb(' + c.join(',') + ')').join(',') + ')' }" aria-hidden="true"></div>
             <p class="hint">{{ range[0] }} → {{ range[1] }} {{ meta.unit }} · 缺值透明</p>
             <p v-if="cell" class="hint">列 {{ cell.row }}、欄 {{ cell.col }} · 東經 {{ cell.west }}°–{{ cell.east }}°、北緯 {{ cell.south }}°–{{ cell.north }}°</p>
-            <p v-if="stationCells.length === 2 && stationCells.every(Boolean)">{{ stationCells[0].row === stationCells[1].row && stationCells[0].col === stationCells[1].col ? 'A、B 位於同一格，此產品無法區分兩站。' : 'A、B 位於不同格，可比較各格有效讀值。' }}</p>
             <p v-if="point" class="science-sample">所選位置：{{ sampled === null ? '此格無有效資料' : value(sampled, 3) + ' ' + meta.unit }}</p>
             <p class="hint">原生產品最高 {{ meta.native_ppd }} pixels/degree；下載展示 {{ meta.display_ppd }} pixels/degree。游標及所選位置讀取下載格網，不跨缺值內插。</p>
             <p v-if="item.id === 'geophysical'" class="hint">GMM-3 截至球諧階數 100 的重力異常模型；顯示格距不代表模型能解析同尺度地形。</p>

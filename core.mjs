@@ -156,7 +156,15 @@ function risk(x,y) {
   const cost = unknown ? Infinity : 1 + (coarse ? 0 : 2.1*rough) + 2*(slope/slopeLimit)**2 + (navigation.factor-1);
   return {slope,rough,hazard,unknown,navigation,blocked,cost};
 }
-function segmentSafe(a,b){if(navigationContext?.segmentBlocked(a,b))return false;const n=Math.max(1,Math.ceil(distance(a,b)/(realDEM?(realDEM.cellMeters>100?realDEM.cellMeters/3:Math.min(realDEM.cellMeters/3,15)):15)));for(let i=0;i<=n;i++){const t=i/n,x=a.x+(b.x-a.x)*t,y=a.y+(b.y-a.y)*t;if(x<LIMIT.minX||x>LIMIT.maxX||y<LIMIT.minY||y>LIMIT.maxY||risk(x,y).blocked)return false;}return true;}
+function navigationSegmentBlocked(a, b) {
+  return navigationContext?.segmentBlocked(a, b) ?? false;
+}
+function routeSampleSpacing() {
+  if (!realDEM) return 15;
+  const thirdCell = realDEM.cellMeters / 3;
+  return realDEM.cellMeters > 100 ? thirdCell : Math.min(thirdCell, 15);
+}
+function segmentSafe(a,b){if(navigationSegmentBlocked(a,b))return false;const n=Math.max(1,Math.ceil(distance(a,b)/routeSampleSpacing()));for(let i=0;i<=n;i++){const t=i/n,x=a.x+(b.x-a.x)*t,y=a.y+(b.y-a.y)*t;if(x<LIMIT.minX||x>LIMIT.maxX||y<LIMIT.minY||y>LIMIT.maxY||risk(x,y).blocked)return false;}return true;}
 function fieldValue(kind,x,y){const h=elevation(x,y);if(!Number.isFinite(h))return NaN;if(kind==='terrain')return realDEM?clamp((h+2600)/1300,0,1):clamp((h+2700)/850,0,1);if(kind==='geology')return (x+0.32*y>540)?0.82:(x-0.45*y< -650)?0.20:0.48;if(kind==='landform')return clamp((slopeDeg(x,y)+4*roughness(x,y))/27,0,1);if(kind==='temperature')return clamp(((-27+8*Math.sin(x/1250)*Math.cos(y/1100)-0.008*(h+2500))+43)/33,0,1);if(kind==='magnetic')return clamp((50+26*Math.sin(x/810+y/1360)+13*Math.cos(y/530))/100,0,1);return 0;}
 function minHeap(){const a=[];return {push(v){a.push(v);let i=a.length-1;while(i){let p=(i-1)>>1;if(a[p].f<=v.f)break;a[i]=a[p];i=p;}a[i]=v;},pop(){if(!a.length)return null;const top=a[0],t=a.pop();if(a.length){let i=0;while(true){let c=i*2+1;if(c>=a.length)break;if(c+1<a.length&&a[c+1].f<a[c].f)c++;if(a[c].f>=t.f)break;a[i]=a[c];i=c;}a[i]=t;}return top;},get length(){return a.length;}};}
 function planPath(start,goal,step=realDEM?Math.max(65,realDEM.cellMeters):105,options={}){
@@ -222,6 +230,6 @@ function refinePose(pairs,init){if(pairs.length<3)return {ok:false,reason:'need_
  const rms=Math.sqrt(loss(q)/pairs.length)/DEG;
  return {ok:rms<2.5,x:q[0]*1000,y:q[1]*1000,heading:modDeg(q[2]/DEG),rmsDeg:rms,count:pairs.length,initialRmsDeg:Math.sqrt(initialLoss/pairs.length)/DEG};
 }
-return {R,get LAT0(){return LAT0;},get LON0(){return LON0;},DEG,FEATURES,LIMIT,setDEM,clearDEM,setMolaFallback,clearMolaFallback,heightSource,terrainProduct,sameHeightGrid,demAt,demInfo,validDEMPoint,findDEMFeatures,clamp,localToLatLng,latLngToLocal,wrapRad,modDeg,bearingDeg,distance,elevation,slopeDeg,roughness,risk,navigationAt,setNavigationContext,setSlopeLimit,setRoughnessLimit,segmentSafe,fieldValue,planPath,apparentSizeDeg,featureGeometry,captureObservations,associate,refinePose};
+return {R,get LAT0(){return LAT0;},get LON0(){return LON0;},DEG,FEATURES,LIMIT,setDEM,clearDEM,setMolaFallback,clearMolaFallback,heightSource,terrainProduct,sameHeightGrid,demAt,demInfo,validDEMPoint,findDEMFeatures,clamp,localToLatLng,latLngToLocal,wrapRad,modDeg,bearingDeg,distance,elevation,slopeDeg,roughness,risk,navigationAt,navigationSegmentBlocked,routeSampleSpacing,setNavigationContext,setSlopeLimit,setRoughnessLimit,segmentSafe,fieldValue,planPath,apparentSizeDeg,featureGeometry,captureObservations,associate,refinePose};
 })();
 export default api;

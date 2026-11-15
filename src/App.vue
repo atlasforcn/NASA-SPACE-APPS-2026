@@ -21,14 +21,18 @@ function enterFree() {
   s.tab = 'explore';
   s.panelOpen = true;
   choosing.value = false;
+  nextTick(() => document.getElementById('region-title')?.focus());
 }
 async function enterWalk() {
   if (!s.ready || s.regionLoading) return;
   if (s.regional || s.siteId !== 'jezero') mission.restore();
   if (!s.walk) await mission.startWalk();
+  if (!s.walk) return;
+  s.localizationOpen = false;
   s.tab = 'mission';
   s.panelOpen = true;
   choosing.value = false;
+  nextTick(() => document.getElementById('region-title')?.focus());
 }
 function chooseMode() {
   s.localizationOpen = false;
@@ -67,9 +71,9 @@ if (import.meta.env.MODE === "test") window.__mission = mission;
     <div class="mission-signal">
       <i :class="{ busy: s.searching || s.loading }"></i
       >{{ s.regional ? "MOLA 區域任務" : s.siteName.toUpperCase() + " · MARS"
-      }}<span>真實地形 / 模擬觀測</span>
+      }}<span>{{ s.walk ? '出發前路線檢查' : '真實地形 / 模擬觀測' }}</span>
     </div>
-    <button id="open-localization" aria-controls="localization-tool" :aria-expanded="s.localizationOpen" @click="mission.openLocalization">山頂相儀定位</button>
+    <button v-if="!s.walk" id="open-localization" aria-controls="localization-tool" :aria-expanded="s.localizationOpen" @click="mission.openLocalization">用山頂相儀找出我的位置</button>
     <button id="reset" :disabled="!s.ready" @click="resetMode">
       ↻ 重設任務
     </button>
@@ -77,8 +81,8 @@ if (import.meta.env.MODE === "test") window.__mission = mission;
   <section v-if="choosing" class="mode-landing" :style="{'--landing-image': 'url(' + asset('data/jezero-extended/optical.png') + ')'}" aria-labelledby="mode-title">
     <div class="mode-menu">
       <p class="eyebrow">Journey to the Mars</p><h1 id="mode-title" tabindex="-1">這次想怎麼探索火星？</h1>
-      <button id="start-walk" :disabled="!s.ready || s.regionLoading" @click="enterWalk"><strong>Jezero 科學任務</strong><span>比較 A、B 的地質與往返時間，決定是否值得加訪 B。</span><b>{{ s.walk ? '繼續科學任務' : '從任務基地出發' }} →</b></button>
-      <button id="start-free" @click="enterFree"><strong>自由探索</strong><span>選一個區域，看地圖回答當地問題，或自己選起點規劃路線。</span><b>選擇探索區域 →</b></button>
+      <button id="start-walk" :disabled="!s.ready || s.regionLoading" @click="enterWalk"><strong>Jezero 科學任務</strong><span>檢查基地到 A 的坡度、粗糙度與地形資料，決定可否前往或需要改道。</span><b>{{ s.walk ? '繼續科學任務' : '開始路線檢查' }} →</b></button>
+      <button id="start-free" @click="enterFree"><strong>自由探索</strong><span>選一處隕石坑或峽谷，跟著當地問題讀圖。也可以自選起點和終點，再用山頂相儀找出自己的位置。</span><b>選擇探索區域 →</b></button>
       <p v-if="s.error" role="alert">{{ s.error }} <button @click="mission.boot">重試載入</button></p>
     </div>
   </section>
@@ -107,10 +111,10 @@ if (import.meta.env.MODE === "test") window.__mission = mission;
           <div aria-live="polite" aria-atomic="true">
             <button class="mode-switch" @click="chooseMode">切換模式</button>
             <p class="region-name">{{ s.walk ? "科學任務" : "自由探索" }} <span lang="en">{{ region.english }}</span></p>
-            <h1>{{ region.title }}</h1>
-            <p class="region-description">{{ region.description }}</p>
+            <h1 id="region-title" tabindex="-1">{{ region.title }}</h1>
+            <p v-if="!s.walk" class="region-description">{{ region.description }}</p>
           </div>
-          <p class="region-status" role="status">{{ s.warning }}</p>
+          <p v-if="!s.walk || s.warning.includes('失敗')" class="region-status" role="status">{{ s.warning }}</p>
         </header>
         <nav class="tabs" aria-label="控制面板分頁">
           <button
@@ -123,7 +127,7 @@ if (import.meta.env.MODE === "test") window.__mission = mission;
             :aria-pressed="s.tab === tab.id"
             @click="s.tab = tab.id"
           >
-            {{ tab.name }}
+            {{ s.walk && tab.id === 'mission' ? '路線檢查' : tab.name }}
           </button>
         </nav>
         <div class="panel-scroll">
@@ -137,12 +141,12 @@ if (import.meta.env.MODE === "test") window.__mission = mission;
             <button v-if="s.hasStart && s.tab === 'explore'" :aria-pressed="s.pickingTarget" @click="mission.beginTarget">{{ s.pickingTarget ? '取消選點' : '在地圖上選目的地' }}</button>
             <button v-if="s.hasStart && s.destination && s.tab === 'explore'" :disabled="s.regionLoading || s.navigationLoading || !!s.navigationError" @click="s.tab='mission'; mission.plan()">規劃這條路線 →</button>
           </section>
-          <ExplorePanel v-show="s.tab === 'explore'" /><TaskPanel
+          <ExplorePanel v-if="!s.walk" v-show="s.tab === 'explore'" /><TaskPanel
             v-show="s.tab === 'mission'"
           /><LayersPanel v-show="s.tab === 'layers'" />
         </div>
       </div>
     </aside>
-    <LocalizationPanel v-show="s.localizationOpen" />
+    <LocalizationPanel v-if="!s.walk" v-show="s.localizationOpen" />
   </main>
 </template>
