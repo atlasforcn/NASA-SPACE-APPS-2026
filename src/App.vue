@@ -68,12 +68,13 @@ function closeDemo() {
 onMounted(() => window.addEventListener('hashchange', syncDemoFromUrl));
 onBeforeUnmount(() => window.removeEventListener('hashchange', syncDemoFromUrl));
 
-function enterFree() {
+function enterFree(event, openPhoto = false) {
   if (s.walk) mission.reset();
   s.tab = 'explore';
   s.panelOpen = true;
   choosing.value = false;
-  nextTick(() => document.getElementById('region-title')?.focus());
+  if (openPhoto) mission.openLocalization(event, 'horizon-photo');
+  else nextTick(() => document.getElementById('region-title')?.focus());
 }
 async function enterWalk() {
   if (!s.ready || s.regionLoading) return;
@@ -135,7 +136,10 @@ if (import.meta.env.MODE === "test") window.__mission = mission;
       <p class="eyebrow">Journey to the Mars</p><h1 id="mode-title" tabindex="-1">這次想怎麼探索火星？</h1>
       <button id="start-walk" :disabled="!s.ready || s.regionLoading" @click="enterWalk"><strong>Jezero 科學任務</strong><span>找出前往 A 站途中的陡坡，比較兩條繞行路線。選好路線後，也能看山稜判斷自己在哪裡。</span><b>{{ s.walk ? '繼續科學任務' : '開始路線檢查' }} →</b></button>
       <button id="start-free" @click="enterFree"><strong>自由探索</strong><span>自己選起點和終點，也可以用山頂相儀找位置。</span><b>選擇探索區域 →</b></button>
-      <a id="curiosity-demo-entry" class="demo-entry" :href="demoHash" aria-haspopup="dialog" @click="openDemo">用好奇號實拍山稜找位置 <span aria-hidden="true">→</span></a>
+      <div class="landing-skyline-tools">
+        <a id="curiosity-demo-entry" class="demo-entry" :href="demoHash" aria-haspopup="dialog" @click="openDemo">用好奇號實拍山稜找位置 <span aria-hidden="true">→</span></a>
+        <button id="start-photo" type="button" class="demo-entry" aria-controls="localization-tool" @click="enterFree($event, true)">上傳自己的火星照片，搜尋可能的拍攝位置 <span aria-hidden="true">→</span></button>
+      </div>
       <p v-if="s.error" role="alert">{{ s.error }} <button @click="mission.boot">重試載入</button></p>
       <details class="project-about">
         <summary>關於這個計畫</summary>

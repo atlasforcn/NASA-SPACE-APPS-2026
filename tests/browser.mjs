@@ -132,6 +132,17 @@ try {
   await page.goto(url);
   if (process.env.PRODUCTION_SMOKE === '1') await verifyEnvironmentAlerts(page, url);
   if (process.env.PRODUCTION_SMOKE === '1') await verifyCuriosityLanding(page, url);
+  await page.locator('#curiosity-demo-entry + #start-photo').click();
+  const photoUpload = page.locator('.horizon-input[open] #horizon-photo:focus');
+  await photoUpload.waitFor();
+  await photoUpload.setInputFiles(path.resolve('data/gale/dingo-gap/panorama.webp'));
+  await page.locator('.horizon-input .hint').filter({hasText: 'panorama.webp'}).waitFor();
+  await page.locator('#horizon-projection').selectOption('equirectangular');
+  await page.locator('#horizon-fov').fill('360');
+  await page.locator('#horizon-pitch').fill('-34.1');
+  await page.locator('#horizon-match').click();
+  await page.locator('#candidates li button').first().waitFor({timeout: 120000});
+  await page.goto(url);
   await page.locator('#start-free').click();
   if (process.env.PRODUCTION_SMOKE !== '1') { await verifyScienceOrder(page, url); await verifyWalk(page, url); }
   if (process.env.PRODUCTION_SMOKE === "1") {
