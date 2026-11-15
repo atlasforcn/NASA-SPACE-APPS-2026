@@ -117,7 +117,7 @@ if (import.meta.env.MODE === "test") window.__mission = mission;
   <section v-if="choosing" class="mode-landing" :style="{'--landing-image': 'url(' + asset('data/jezero-extended/optical.png') + ')'}" aria-labelledby="mode-title">
     <div class="mode-menu">
       <p class="eyebrow">Journey to the Mars</p><h1 id="mode-title" tabindex="-1">這次想怎麼探索火星？</h1>
-      <button id="start-walk" :disabled="!s.ready || s.regionLoading" @click="enterWalk"><strong>Jezero 科學任務</strong><span>檢查基地到 A 的坡度、粗糙度與地形資料，決定可否前往或需要改道。</span><b>{{ s.walk ? '繼續科學任務' : '開始路線檢查' }} →</b></button>
+      <button id="start-walk" :disabled="!s.ready || s.regionLoading" @click="enterWalk"><strong>Jezero 科學任務</strong><span>前往觀測站 A。找出直線上的陡坡，比較兩條繞行路線的距離與坡度。</span><b>{{ s.walk ? '繼續科學任務' : '開始路線檢查' }} →</b></button>
       <button id="start-free" @click="enterFree"><strong>自由探索</strong><span>選一處隕石坑或峽谷，跟著當地問題讀圖。也可以自選起點和終點，再用山頂相儀找出自己的位置。</span><b>選擇探索區域 →</b></button>
       <a id="curiosity-demo-entry" class="demo-entry" :href="demoHash" aria-haspopup="dialog" @click="openDemo">用好奇號實拍山稜找位置 <span aria-hidden="true">→</span></a>
       <p v-if="s.error" role="alert">{{ s.error }} <button @click="mission.boot">重試載入</button></p>
@@ -134,7 +134,7 @@ if (import.meta.env.MODE === "test") window.__mission = mission;
           <span>{{ s.mapContext }}</span><span>{{ s.coords }}</span>
         </div>
       </div>
-      <RouteProfile v-if="!choosing && !s.walk" />
+      <RouteProfile v-if="!choosing" />
     </section>
     <aside class="control-panel" aria-label="任務操作">
       <button

@@ -56,16 +56,16 @@ onUnmounted(() => observer?.disconnect());
     <summary>地圖標示與顏色</summary>
     <div v-if="m.state.walk" class="legend-grid">
       <span><i class="legend-dot gold"></i>任務基地與觀測點 A</span>
-      <span><i class="legend-line gold dashed"></i>待檢查的直線</span>
+      <span><i class="legend-line gold dashed"></i>基地到 A 的直線</span>
       <span><i class="legend-line mint"></i>符合通行門檻</span>
-      <span><i class="legend-line red"></i>需改道的路線</span>
+      <span><i class="legend-line red"></i>直線取樣超過坡度上限的路段</span>
       <span><i class="legend-line orange"></i>暫緩出發</span>
       <span><i class="assessment-marker"></i>判定依據的位置</span>
       <template v-if="m.state.showNavigationRisk && !m.state.globalView">
         <span><i class="risk-area red"></i>超出通行門檻或禁行區</span>
         <span><i class="risk-area orange"></i>地形資料不足區</span>
       </template>
-      <span v-if="m.state.walk.detour"><i class="legend-line dashed" :class="{ go: 'mint', reroute: 'red', hold: 'orange' }[m.state.walk.detour.verdict]"></i>替代路線</span>
+      <span v-for="option in m.state.walk.alternatives" :key="option.id"><i class="legend-line" :class="{ dashed: m.state.walk.selectedAlternative !== option.id }" :style="{ color: option.color }"></i>{{ option.name }}{{ m.state.walk.selectedAlternative === option.id ? '（已選）' : '' }}</span>
     </div>
     <div v-else class="legend-grid">
       <span><i class="legend-dot mint"></i>青色圓點：導航估計</span>

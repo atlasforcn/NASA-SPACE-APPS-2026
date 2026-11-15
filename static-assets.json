@@ -28,8 +28,8 @@
     "disposition": "publish",
     "reason": "Website runtime, reference, source record or presentation",
     "path": "data/mission.json",
-    "bytes": 2731,
-    "sha256": "250e58c1b91e595444d7ad8a64e25ab7d675c91ce132b4f40476fc40ef597847"
+    "bytes": 2784,
+    "sha256": "6a61906b52c6eb4aa0fcca8a8a1037671c6346a0b02b7ea563ce90a5974b54a9"
   },
   {
     "source": "data/mola16.bin",

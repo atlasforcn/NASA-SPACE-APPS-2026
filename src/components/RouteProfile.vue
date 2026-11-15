@@ -15,7 +15,7 @@ watch(() => s.profileRevision, async () => {
   if (!hasRoute.value && !hasDirect.value && !hasExpedition.value) return;
   expanded.value = true;
   await nextTick();
-  if (window.matchMedia('(max-width: 700px)').matches) {
+  if (!s.walk && window.matchMedia('(max-width: 700px)').matches) {
     panel.value?.scrollIntoView({ block: 'nearest' });
   }
 });

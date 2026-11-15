@@ -317,7 +317,8 @@ export function useMission() {
   function clearRoute() {
     if (state.walk) {
       state.walk.assessment = null;
-      state.walk.detour = null;
+      state.walk.alternatives = [];
+      state.walk.selectedAlternative = null;
       state.walk.detourUnavailable = false;
       drawScienceRoute();
     }
@@ -337,6 +338,7 @@ export function useMission() {
       scienceRouteLayer = null;
       scienceEvidenceMarker = null;
       state.walk = null;
+      missionStart = snapshot.mission.start;
       state.stopIds = [];
       state.planner.roundTrip = false;
       state.hasStart = false;
@@ -488,11 +490,16 @@ export function useMission() {
     reset();
     const station = snapshot.mission.targets.find(target => target.id === 's1');
     if (!station) return;
-    missionStart = {...snapshot.mission.start};
+    missionStart = {...(snapshot.mission.guidedStart ?? snapshot.mission.start)};
     state.hasStart = true;
     state.estimate = {...missionStart, heading:45};
     state.truth = {...state.estimate};
-    state.walk = {station, assessment:null, detour:null, detourUnavailable:false};
+    state.walk = {
+      station, assessment:null, alternatives:[], selectedAlternative:null, detourUnavailable:false,
+      get detour() {
+        return this.alternatives.find(option => option.id === this.selectedAlternative)?.result ?? null;
+      },
+    };
     state.targets = [station];
     state.destination = station.id;
     state.pickingStart = false;
@@ -513,7 +520,7 @@ export function useMission() {
     if (!state.walk) return;
     state.routeStatus = '請檢查基地到 A 的路線。';
     drawScienceRoute();
-    map.fitBounds(L.latLngBounds([ll(missionStart), ll(station)]), {padding:[35,35], maxZoom:14, animate:false});
+    fitScienceRoutes();
     render();
   }
   function drawScienceRoute(focusDetour = false) {
@@ -521,16 +528,26 @@ export function useMission() {
     if (!scienceRouteLayer) scienceRouteLayer = L.layerGroup().addTo(map);
     scienceRouteLayer.clearLayers();
     scienceEvidenceMarker = null;
-    const {station, assessment, detour} = state.walk;
+    const {station, assessment, detour, alternatives, selectedAlternative} = state.walk;
     const colors = {go:'#8be4d0', reroute:'#ff736e', hold:'#e6b772'};
     const line = (points, options) => L.polyline(points.map(ll), {
       pane:'navigationRoute', interactive:false, ...options,
     }).addTo(scienceRouteLayer);
-    line([missionStart,station], {
-      color:assessment ? colors[assessment.verdict] : '#f2ed48',
-      weight:4, dashArray:assessment ? null : '7 6',
-    });
-    if (detour) line(detour.samples, {color:colors[detour.verdict], weight:4, dashArray:'9 5'});
+    line([missionStart,station], {color:'#f2ed48', weight:3, dashArray:'7 6'});
+    for (const section of assessment?.steepSections ?? []) {
+      line(section, {className:'science-route-steep', color:colors.reroute, weight:6});
+    }
+    let selectedLine;
+    for (const option of alternatives) {
+      const selected = option.id === selectedAlternative;
+      const layer = line(option.path, {
+        className:`science-route-${option.id}${selected ? ' selected' : ''}`,
+        color:option.color, weight:selected ? 5 : 3, opacity:selected ? 1 : 0.85,
+        dashArray:selected ? null : '8 5',
+      });
+      if (selected) selectedLine = layer;
+    }
+    selectedLine?.bringToFront();
     const evidence = focusDetour ? detour : assessment;
     if (!evidence?.point) return;
     if (evidence.segment) line(evidence.segment, {color:colors[evidence.verdict], weight:8});
@@ -541,7 +558,8 @@ export function useMission() {
     const slope = product ? C.slopeDeg(point.x, point.y) : NaN;
     const measurement = Number.isFinite(slope) ? ` · 坡度 ${slope.toFixed(2)}°（上限 ${Number(state.slope)}°）` : ' · 坡度缺測';
     const source = product ? product.coarse ? '公里級 MOLA' : 'Jezero 區域 DEM' : '缺少高程資料';
-    const popup = `<strong>${title}</strong><p>${endpoint}${measurement}<br>${source}</p><p>${esc(evidence.reason)}</p>`;
+    const location = focusDetour ? endpoint : `${endpoint} · 距基地 ${fmt(C.distance(missionStart,point))}`;
+    const popup = `<strong>${title}</strong><p>${location}${measurement}<br>${source}</p><p>${esc(evidence.reason)}</p>`;
     scienceEvidenceMarker = L.circleMarker(ll(evidence.point), {
       pane:'markerPane', className:'preflight-evidence', radius:8, color:'#17242a', weight:3,
       fillColor:colors[evidence.verdict], fillOpacity:1,
@@ -553,18 +571,50 @@ export function useMission() {
   function checkScienceRoute() {
     const walk = state.walk;
     if (!walk || state.regionLoading || state.navigationLoading || state.navigationError || !slopeValid()) return;
-    walk.detour = null;
+    walk.alternatives = [];
+    walk.selectedAlternative = null;
     walk.detourUnavailable = false;
     walk.assessment = assessRouteSafety([missionStart, walk.station], scienceLimits());
+    state.directRoute = {path:[missionStart, walk.station], reachable:walk.assessment.verdict === 'go', length:walk.assessment.length};
+    state.profileRevision++;
     drawScienceRoute();
   }
   function checkDetour() {
     const walk = state.walk;
     if (walk?.assessment?.verdict !== 'reroute' || state.navigationLoading || state.navigationError || !slopeValid()) return;
-    const route = C.planPath(missionStart, walk.station, undefined, {mode:'shortest'});
-    walk.detourUnavailable = !route.reachable;
-    walk.detour = route.reachable ? assessRouteSafety(route.path, scienceLimits()) : null;
-    drawScienceRoute(!!walk.detour);
+    const routes = [];
+    for (const [id, name, color] of [
+      ['shortest', '較短繞行', '#83e5d2'],
+      ['safer', '較低風險繞行', '#b9b1ef'],
+    ]) {
+      const route = C.planPath(missionStart, walk.station, undefined, {mode:id});
+      if (!route.reachable) continue;
+      const samePath = routes.some(existing => existing.path.length === route.path.length &&
+        existing.path.every((p, i) => p.x === route.path[i].x && p.y === route.path[i].y));
+      if (samePath) continue;
+      const result = assessRouteSafety(route.path, scienceLimits());
+      if (result.verdict === 'go') routes.push({id, name, color, path:route.path, result});
+    }
+    walk.alternatives = routes;
+    walk.detourUnavailable = !routes.length;
+    walk.selectedAlternative = routes[0]?.id ?? null;
+    drawScienceRoute();
+    if (routes.length) fitScienceRoutes();
+  }
+  function fitScienceRoutes() {
+    const walk = state.walk;
+    const points = [missionStart, walk.station, ...walk.alternatives.flatMap(option => option.path)];
+    const top = Math.min(185, Math.round(map.getSize().y * 0.24));
+    map.fitBounds(L.latLngBounds(points.map(ll)), {
+      paddingTopLeft:[45,top], paddingBottomRight:[45,55], maxZoom:14, animate:false,
+    });
+  }
+  function selectScienceAlternative(id) {
+    const walk = state.walk;
+    if (!walk?.alternatives.some(option => option.id === id)) return;
+    walk.selectedAlternative = id;
+    drawScienceRoute();
+    fitScienceRoutes();
   }
   function focusScienceEvidence(detour = false) {
     const evidence = detour ? state.walk?.detour : state.walk?.assessment;
@@ -2058,6 +2108,12 @@ export function useMission() {
     const current = state.route && { name: currentName, path: state.route.path };
     const selected = state.profileIndex === -1 ? current : state.expedition[state.profileIndex];
     const routes = [];
+    if (state.walk) {
+      const options = state.walk.alternatives;
+      const active = options.find(option => option.id === state.walk.selectedAlternative);
+      if (active) routes.push(active);
+      routes.push(...options.filter(option => option !== active));
+    }
     if (selected?.path.length > 1) routes.push(selected);
     if (state.compareProfiles) {
       for (const [key, route] of Object.entries(state.routeOptions || {})) {
@@ -2083,7 +2139,8 @@ export function useMission() {
     profileSeries = routes.map((route, i) => ({
       ...sampleProfile(route.path, i === 0),
       name: route.name, baseline: !!route.baseline,
-      color: route.baseline ? "#f2ed48" : colors[i % colors.length],
+      selected: !!route.id && route.id === state.walk?.selectedAlternative,
+      color: route.color ?? (route.baseline ? "#f2ed48" : colors[i % colors.length]),
     }));
     let lo = Infinity, hi = -Infinity;
     for (const series of profileSeries) {
@@ -2119,7 +2176,7 @@ export function useMission() {
     ctx.fillText(fmt(longest), cv.width - 70, cv.height - 4);
     for (const series of profileSeries) {
       ctx.strokeStyle = series.color;
-      ctx.lineWidth = 2;
+      ctx.lineWidth = series.selected ? 3 : 2;
       ctx.setLineDash(series.baseline ? [5, 4] : []);
       ctx.beginPath();
       let open = false;
@@ -2348,7 +2405,7 @@ export function useMission() {
           [
             "jezero-extended/dem.json",
             "geology.json",
-            "mission.json",
+            "mission.json?v=2",
             "jezero-extended/optical-source.json",
             "mars-names.json",
             "three-forks.geojson",
@@ -2481,7 +2538,8 @@ export function useMission() {
     cancel();
     if (enabled && state.running) scan(true);
   });
-  watch(() => [state.profileIndex, state.regional, state.compareProfiles, state.expedition, state.route, state.directRoute], drawProfile);
+  watch(() => [state.profileIndex, state.regional, state.compareProfiles, state.expedition, state.route,
+    state.directRoute, state.walk?.alternatives, state.walk?.selectedAlternative], drawProfile);
   watch(() => [JSON.stringify(state.planner), state.stopIds.join('|')], () => {
     stop(); clearRoute();
     state.routeStatus = '規劃假設或停靠順序已變更，請重新建立路線。';
@@ -2515,7 +2573,7 @@ export function useMission() {
   return {
     state,
     dem,
-    viewBearing, openLocalization, closeLocalization, startWalk, checkScienceRoute, focusScienceEvidence, checkDetour,
+    viewBearing, openLocalization, closeLocalization, startWalk, checkScienceRoute, focusScienceEvidence, checkDetour, selectScienceAlternative,
     geologyAt: point => unitLabel(unitAt(point)),
     scienceAt: (point) => {
       if (!state.ready || state.regionLoading || !dem.value || !point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) return null;
