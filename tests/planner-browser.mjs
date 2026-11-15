@@ -10,6 +10,7 @@ try {
   const page = await browser.newPage({viewport:{width:1440,height:1000}}), errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   await page.goto('http://127.0.0.1:5192');
+  await page.locator('#start-free').click();
   await page.waitForFunction(()=>window.__mission?.state.ready);
   await page.locator('#pick-start').click();
   const box = await page.locator('#map').boundingBox();

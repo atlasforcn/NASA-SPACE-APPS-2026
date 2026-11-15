@@ -24,6 +24,7 @@ try {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(`http://127.0.0.1:${server.address().port}/index.html`);
+  await page.locator('#start-free').click();
   await page.waitForFunction(() => window.__mission?.state.ready);
   const hover = fraction => page.locator('#panorama').evaluate((canvas, fraction) => {
     const rect = canvas.getBoundingClientRect();

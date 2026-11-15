@@ -1,5 +1,5 @@
 <script setup>
-import { computed, provide, watch, nextTick } from "vue";
+import { computed, ref, provide, watch, nextTick } from "vue";
 import { useMission, missionKey } from "./useMission";
 import regions from "../regions.mjs";
 import { asset } from "./asset";
@@ -15,6 +15,35 @@ const mola = {
   description: '火星軌道雷射高度計（MOLA）測量全球地勢。可在所選座標比較山地與盆地的高差；公里級格網無法判斷腳下的岩塊。',
 };
 const region = computed(() => regions.find(r => r.id === s.siteId) ?? mola);
+const choosing = ref(true);
+function enterFree() {
+  if (s.walk) mission.reset();
+  s.tab = 'explore';
+  s.panelOpen = true;
+  choosing.value = false;
+}
+async function enterWalk() {
+  if (!s.ready || s.regionLoading) return;
+  if (s.regional || s.siteId !== 'jezero') mission.restore();
+  if (!s.walk) await mission.startWalk();
+  s.tab = 'mission';
+  s.panelOpen = true;
+  choosing.value = false;
+}
+function chooseMode() {
+  s.localizationOpen = false;
+  choosing.value = true;
+  nextTick(() => document.getElementById('mode-title')?.focus());
+}
+function resetMode() {
+  const guided = !!s.walk;
+  mission.reset();
+  if (guided) chooseMode();
+}
+function showQuestionLayer() {
+  s.layer = s.globalView ? 'terrain' : s.siteId === 'jezero' && !s.regional ? 'geology' : 'slope';
+  s.tab = 'layers';
+}
 provide(missionKey, mission);
 watch(
   () => s.panelOpen,
@@ -26,7 +55,7 @@ watch(
 if (import.meta.env.MODE === "test") window.__mission = mission;
 </script>
 <template>
-  <header class="topbar">
+  <header class="topbar" :inert="choosing">
     <a class="brand" href="./"
       ><svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true">
         <circle cx="20" cy="20" r="14" fill="currentColor" />
@@ -40,12 +69,20 @@ if (import.meta.env.MODE === "test") window.__mission = mission;
       >{{ s.regional ? "MOLA 區域任務" : s.siteName.toUpperCase() + " · MARS"
       }}<span>真實地形 / 模擬觀測</span>
     </div>
-    <button id="open-localization" aria-controls="localization-tool" :aria-expanded="s.localizationOpen" @click="mission.openLocalization">山頂相儀</button>
-    <button id="reset" :disabled="!s.ready" @click="mission.reset()">
+    <button id="open-localization" aria-controls="localization-tool" :aria-expanded="s.localizationOpen" @click="mission.openLocalization">山頂相儀定位</button>
+    <button id="reset" :disabled="!s.ready" @click="resetMode">
       ↻ 重設任務
     </button>
   </header>
-  <main class="workspace" :class="{ 'panel-closed': !s.panelOpen, 'planning-view': !s.localizationOpen }">
+  <section v-if="choosing" class="mode-landing" :style="{'--landing-image': 'url(' + asset('data/jezero-extended/optical.png') + ')'}" aria-labelledby="mode-title">
+    <div class="mode-menu">
+      <p class="eyebrow">Journey to the Mars</p><h1 id="mode-title" tabindex="-1">這次想怎麼探索火星？</h1>
+      <button id="start-walk" :disabled="!s.ready || s.regionLoading" @click="enterWalk"><strong>Jezero 科學任務</strong><span>比較 A、B 的地質與往返時間，決定是否值得加訪 B。</span><b>{{ s.walk ? '繼續科學任務' : '從任務基地出發' }} →</b></button>
+      <button id="start-free" @click="enterFree"><strong>自由探索</strong><span>選一個區域，看地圖回答當地問題，或自己選起點規劃路線。</span><b>選擇探索區域 →</b></button>
+      <p v-if="s.error" role="alert">{{ s.error }} <button @click="mission.boot">重試載入</button></p>
+    </div>
+  </section>
+  <main :inert="choosing" class="workspace" :class="{ 'panel-closed': !s.panelOpen, 'planning-view': !s.localizationOpen }">
     <section class="map-workspace">
       <MissionMap />
       <div v-if="s.error" class="error-banner" role="alert">
@@ -68,20 +105,20 @@ if (import.meta.env.MODE === "test") window.__mission = mission;
       <div id="panel-content" v-show="s.panelOpen">
         <header class="panel-heading" :style="{ '--region-image': 'url(' + asset(region.image) + ')' }">
           <div aria-live="polite" aria-atomic="true">
-            <p class="region-name">探索區域 <span lang="en">{{ region.english }}</span></p>
+            <button class="mode-switch" @click="chooseMode">切換模式</button>
+            <p class="region-name">{{ s.walk ? "科學任務" : "自由探索" }} <span lang="en">{{ region.english }}</span></p>
             <h1>{{ region.title }}</h1>
             <p class="region-description">{{ region.description }}</p>
           </div>
           <p class="region-status" role="status">{{ s.warning }}</p>
         </header>
-        <button v-if="!s.walk" id="start-walk" class="primary" :disabled="!s.ready || s.regionLoading || s.regional || s.siteId !== 'jezero'" @click="mission.startWalk">開始 Jezero 科學任務</button>
         <nav class="tabs" aria-label="控制面板分頁">
           <button
             v-for="tab in [
               { id: 'explore', name: '探索' },
               { id: 'mission', name: '任務' },
               { id: 'layers', name: '圖層' },
-            ]"
+            ].filter(t => !s.walk || t.id !== 'explore')"
             :key="tab.id"
             :aria-pressed="s.tab === tab.id"
             @click="s.tab = tab.id"
@@ -90,6 +127,16 @@ if (import.meta.env.MODE === "test") window.__mission = mission;
           </button>
         </nav>
         <div class="panel-scroll">
+          <section v-if="!s.walk && s.tab !== 'layers'" class="region-actions">
+            <template v-if="s.tab === 'explore'">
+              <p>{{ region.question || '這個區域的高地與低地在哪裡？' }}</p>
+              <button :disabled="!s.ready || s.regionLoading" @click="showQuestionLayer">{{ s.globalView ? '查看全球高程' : s.siteId === 'jezero' && !s.regional ? '查看地質圖' : '查看坡度圖' }}</button>
+            </template>
+            <p role="status">{{ s.pickingStart || s.pickingTarget ? s.routeStatus : s.hasStart ? '起始點已設定' : '從哪裡出發？' }}</p>
+            <button id="pick-start" :disabled="!s.ready || s.regionLoading" :aria-pressed="s.pickingStart" @click="mission.beginStart">{{ s.pickingStart ? '取消選起點' : s.hasStart ? '重選起始點' : '在地圖上點選起始點' }}</button>
+            <button v-if="s.hasStart && s.tab === 'explore'" :aria-pressed="s.pickingTarget" @click="mission.beginTarget">{{ s.pickingTarget ? '取消選點' : '在地圖上選目的地' }}</button>
+            <button v-if="s.hasStart && s.destination && s.tab === 'explore'" :disabled="s.regionLoading || s.navigationLoading || !!s.navigationError" @click="s.tab='mission'; mission.plan()">規劃這條路線 →</button>
+          </section>
           <ExplorePanel v-show="s.tab === 'explore'" /><TaskPanel
             v-show="s.tab === 'mission'"
           /><LayersPanel v-show="s.tab === 'layers'" />

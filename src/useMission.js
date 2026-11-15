@@ -460,7 +460,7 @@ export function useMission() {
     if (!state.ready || state.regionLoading || state.siteId !== 'jezero' || state.regional || state.walk) return;
     reset();
     const stations = snapshot.mission.targets.map(t => ({...t, note: '', outcome: '待觀察', scans: []}));
-    state.walk = {stations, station: stations[0], at: 'base', includeB: true, elapsed: 0, completedLegs: [], comparison: null};
+    state.walk = {stations, station: stations[0], at: 'base', includeB: true, decisionNote: '', elapsed: 0, completedLegs: [], comparison: null};
     missionStart = {...snapshot.mission.start};
     state.hasStart = true;
     state.targets.push(...stations);
@@ -2502,7 +2502,7 @@ export function useMission() {
       const route = state.routeOptions?.[state.selectedRoute];
       if (!route?.reachable) return;
       const { path, ...metrics } = route;
-      const payload = { type: 'FeatureCollection', properties: { stationRecords: state.walk?.stations, elapsedHours: state.walk?.elapsed, body: 'Mars', coordinates: 'Planetocentric east-positive longitude/latitude; not Earth WGS84', assumptions: {...state.planner}, slopeLimit: Number(state.slope), roughnessLimit: Number(state.roughnessLimit), navigation: {...state.navigation}, noGoZones: state.noGoZones.map(z=>({...z})), navigationModel: "User-defined material hypotheses; max geology/thermal factor; no calibrated vehicle model", navigationSources: {geology: state.navigation.geologyEnabled ? {source:snapshot?.geology?.source,sha256:snapshot?.geology?.raw_sha256} : null,thermal: state.navigation.thermalEnabled && navigationThermal ? {source:navigationThermal.meta.source.url,sha256:navigationThermal.meta.source.sha256,unit:navigationThermal.meta.unit,pixelsPerDegree:navigationThermal.meta.display_ppd} : null}, dem: C.demInfo(), warning: 'Prototype terrain planning; not operational navigation' }, features: [{ type: 'Feature', properties: { mode: state.selectedRoute, ...metrics }, geometry: { type: 'LineString', coordinates: path.map(p => { const ll = C.localToLatLng(p.x,p.y); return [ll.lng,ll.lat,C.elevation(p.x,p.y)]; }) } }] };
+      const payload = { type: 'FeatureCollection', properties: { decisionNote: state.walk?.decisionNote, stationRecords: state.walk?.stations, elapsedHours: state.walk?.elapsed, body: 'Mars', coordinates: 'Planetocentric east-positive longitude/latitude; not Earth WGS84', assumptions: {...state.planner}, slopeLimit: Number(state.slope), roughnessLimit: Number(state.roughnessLimit), navigation: {...state.navigation}, noGoZones: state.noGoZones.map(z=>({...z})), navigationModel: "User-defined material hypotheses; max geology/thermal factor; no calibrated vehicle model", navigationSources: {geology: state.navigation.geologyEnabled ? {source:snapshot?.geology?.source,sha256:snapshot?.geology?.raw_sha256} : null,thermal: state.navigation.thermalEnabled && navigationThermal ? {source:navigationThermal.meta.source.url,sha256:navigationThermal.meta.source.sha256,unit:navigationThermal.meta.unit,pixelsPerDegree:navigationThermal.meta.display_ppd} : null}, dem: C.demInfo(), warning: 'Prototype terrain planning; not operational navigation' }, features: [{ type: 'Feature', properties: { mode: state.selectedRoute, ...metrics }, geometry: { type: 'LineString', coordinates: path.map(p => { const ll = C.localToLatLng(p.x,p.y); return [ll.lng,ll.lat,C.elevation(p.x,p.y)]; }) } }] };
       if (state.walk) {
         if (state.walk.at === 'home') payload.features = [];
         for (const {path:coordinates,...leg} of state.walk.completedLegs) {

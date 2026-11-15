@@ -3,7 +3,7 @@ import fs from 'node:fs';
 
 export async function verifyWalk(page, url) {
   await page.goto(url);
-  await page.locator('#start-walk').dblclick({force:true});
+  await page.locator('#start-walk').click();
   const panel = page.locator('.walk-panel');
   await panel.getByText('A、B 位於同一格', {exact:false}).waitFor();
   const state = fn => page.evaluate(fn);
@@ -23,7 +23,7 @@ export async function verifyWalk(page, url) {
   await panel.getByLabel('觀察筆記').fill('可見脊紋，記錄方向');
   await panel.getByLabel(/現場紀錄/).selectOption('已觀察');
   assert(await page.locator('#localization-tool').isHidden());
-  await panel.getByRole('button',{name:'開啟山頂相儀'}).click();
+  await panel.getByRole('button',{name:/用山頂相儀定位/}).click();
   await page.locator('#observe-mode').selectOption('poor');
   const prior = await state(()=>({...window.__mission.state.estimate}));
   await page.locator('#scan').click();
@@ -48,10 +48,12 @@ export async function verifyWalk(page, url) {
   assert.equal(await state(() => window.__mission.state.targets.length),2);
   await page.setViewportSize({width:1600,height:1000});
   await page.goto(url);
+  await page.locator('#start-free').click();
 }
 
 export async function verifyScienceOrder(page, url) {
   await page.goto(url);
+  await page.locator('#start-free').click();
   const pending = new Map();
   const pattern = /\/science\/(thermal|spectral|chemical)\.bin$/;
   await page.route(pattern, route => pending.set(route.request().url().match(pattern)[1],route));
