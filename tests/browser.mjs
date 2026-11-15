@@ -144,6 +144,13 @@ try {
     await page.setViewportSize({width: 390, height: 844});
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     await page.screenshot({path: 'test-results/overview-mobile.png'});
+    assert(await page.locator('#map-optical').isHidden());
+    const mobileMap = await page.locator('#map').boundingBox();
+    await page.locator('#map').click({position: {x: mobileMap.width / 2, y: mobileMap.height / 2}});
+    await page.getByRole('button', {name: '調整圖層'}).click();
+    assert(await page.locator('#layer-settings-title').evaluate(el => el === document.activeElement));
+    await setLayer('terrain');
+    assert.equal(await selectedLayer(), 'terrain');
     await page.setViewportSize({width: 1600, height: 1000});
     await page.goto(url);
     await page.locator('#start-free').click();
