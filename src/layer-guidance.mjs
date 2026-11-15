@@ -2,8 +2,10 @@ import {scienceCell} from './science-layers.mjs';
 
 export const layerNames = { terrain:'高程', slope:'坡度', hillshade:'地形陰影', roughness:'粗糙度', geology:'地質單元', thermal:'TES 熱慣量', spectral:'TES 橄欖石豐度', geophysical:'GMM-3 重力異常', atmospheric:'MEDA 氣壓', radiation:'RAD 輻射', chemical:'GRS 鐵濃度' };
 export const temperatureHistory = [
-  {lat:18.4446,lng:77.4509,text:'Jezero 著陸點，2021-02-19。MEDA 首次記錄時略低於 −20 °C，30 分鐘後降至 −25.6 °C。',url:'https://www.jpl.nasa.gov/news/nasas-first-weather-report-from-jezero-crater-on-mars/'},
-  {lat:-4.5895,lng:137.4417,text:'Gale 著陸區，2012 年 8 月著陸後首兩週。REMS 量得典型火星日氣溫約 −75 至 −2 °C。',url:'https://www.jpl.nasa.gov/news/nasas-curiosity-studies-mars-surroundings-nears-drive/'},
+  {lat:18.4446,lng:77.4509, station:'Jezero · MEDA', period:'2021-02-19', reading:'開機 30 分鐘後的氣溫', value:-25.6,
+    text:'Jezero 著陸點，2021-02-19。MEDA 首次記錄時略低於 −20 °C，30 分鐘後降至 −25.6 °C。',url:'https://www.jpl.nasa.gov/news/nasas-first-weather-report-from-jezero-crater-on-mars/'},
+  {lat:-4.5895,lng:137.4417, station:'Gale · REMS', period:'2012 年 8 月著陸後首兩週', reading:'典型火星日氣溫範圍的上端（約值）', value:-2,
+    text:'Gale 著陸區，2012 年 8 月著陸後首兩週。REMS 量得典型火星日氣溫約 −75 至 −2 °C。',url:'https://www.jpl.nasa.gov/news/nasas-curiosity-studies-mars-surroundings-nears-drive/'},
 ];
 const advice = {
   thermal:'熱慣量描述地表升降溫的快慢。本站無即時氣溫或熱曝露預報。',

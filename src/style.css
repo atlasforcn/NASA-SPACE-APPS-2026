@@ -210,7 +210,7 @@ input[type="checkbox"] {
 .map-badge h2 {
   font-size: 17px;
 }
-.map-badge p:last-child {
+.map-badge p {
   font-size: 10px;
   color: #adc0bc;
   margin-top: 7px;
@@ -619,6 +619,8 @@ details button {
 .leaflet-popup a {
   color: var(--mint);
 }
+.station-exceedance { color: #ff9d9d; font-weight: 700; }
+.station-exceedance b { display: inline-grid; place-items: center; width: 1.2em; height: 1.2em; border-radius: 50%; background: #ff9d9d; color: #301417; font: 800 .9em/1 sans-serif; }
 .leaflet-control-attribution {
   font-size: 8px !important;
   margin-bottom: 30px !important;

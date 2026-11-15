@@ -3,6 +3,7 @@ import { inject } from "vue";
 import { missionKey } from "../useMission";
 import LayerControls from './LayerControls.vue';
 import ScienceContext from './ScienceContext.vue';
+import EnvironmentReadings from './EnvironmentReadings.vue';
 const m = inject(missionKey),
   s = m.state;
 </script>
@@ -10,6 +11,7 @@ const m = inject(missionKey),
   <div>
     <section class="group">
       <h2 id="layer-settings-title" tabindex="-1">圖層設定</h2>
+      <EnvironmentReadings />
       <LayerControls />
       <div v-for="kind in s.layers.filter(id => ['terrain', 'slope', 'roughness', 'hillshade'].includes(id))" :key="kind" class="scale-legend">
         <strong>{{ { terrain: '高程', slope: '坡度', roughness: '粗糙度', hillshade: '地形陰影' }[kind] }}</strong>

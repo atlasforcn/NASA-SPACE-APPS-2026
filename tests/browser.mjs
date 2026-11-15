@@ -1,5 +1,6 @@
 import { verifyWalk, verifyScienceOrder } from './walk-browser.mjs';
 import { verifyCuriosityLanding } from './curiosity-browser.mjs';
+import { verifyEnvironmentAlerts } from './environment-alerts-browser.mjs';
 import { verifyRouteLocation } from './route-location-browser.mjs';
 import { chromium } from "@playwright/test";
 import fs from "node:fs";
@@ -129,6 +130,7 @@ try {
     await page.addInitScript(() => Object.defineProperty(crypto, "randomUUID", { value: undefined }));
   }
   await page.goto(url);
+  if (process.env.PRODUCTION_SMOKE === '1') await verifyEnvironmentAlerts(page, url);
   if (process.env.PRODUCTION_SMOKE === '1') await verifyCuriosityLanding(page, url);
   await page.locator('#start-free').click();
   if (process.env.PRODUCTION_SMOKE !== '1') { await verifyScienceOrder(page, url); await verifyWalk(page, url); }

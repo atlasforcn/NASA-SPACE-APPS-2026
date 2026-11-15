@@ -5,6 +5,14 @@ import LayerControls from './LayerControls.vue';
 const m = inject(missionKey),
   container = ref();
 const showMapHint = ref(true);
+const exceeded = computed(() => m.environment.checks.value.filter(check => check.overLimit.length));
+async function showReadings() {
+  await openLayers();
+  await nextTick();
+  const details = document.getElementById('environment-readings');
+  details.open = true;
+  details.querySelector('summary').focus();
+}
 function dismissMapHint() {
   if (!m.state.walk) showMapHint.value = false;
 }
@@ -62,6 +70,15 @@ onUnmounted(() => observer?.disconnect());
       橘色箭頭 · {{ m.state.externalHorizon ? '候選視線方位' : '視線方位' }} {{ Math.round(m.viewBearing.value) % 360 }}°
     </p>
     <p v-else-if="!m.state.walk && showMapHint">拖曳地圖，放大查看地形。</p>
+    <div class="station-hints" aria-live="polite" aria-atomic="true">
+      <template v-if="exceeded.length">
+        <small>歷史測站</small>
+        <button v-for="check in exceeded" :key="check.id" :data-check="check.id"
+          class="station-exceedance" type="button" aria-controls="environment-readings" @click="showReadings">
+          <b aria-hidden="true">!</b> {{ check.label }}超標
+        </button>
+      </template>
+    </div>
   </div>
   <details class="map-legend">
     <summary>地圖標示與顏色</summary>
@@ -106,6 +123,10 @@ onUnmounted(() => observer?.disconnect());
 </template>
 
 <style scoped>
+.station-hints:not(:empty) { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem .45rem; }
+.station-hints small { color: var(--muted); font-size: .7rem; }
+.station-hints button { pointer-events: auto; margin: 0; border: 0; padding: .25rem 0; background: transparent; font-size: .75rem; }
+.station-hints button:hover { text-decoration: underline; }
 .assessment-marker { width: 12px; height: 12px; flex-shrink: 0; border: 2px solid #17242a; border-radius: 50%; background: #d8ddd5; outline: 1px solid #a2b5b2; }
 .risk-area { width: 11px; height: 11px; flex-shrink: 0; background: currentColor; opacity: .8; }
 </style>

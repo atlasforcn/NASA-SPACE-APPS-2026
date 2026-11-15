@@ -19,6 +19,7 @@ import { makeRouteChallenge } from './route-location-challenge.mjs';
 import { asset, json } from "./asset";
 import { scienceLayerIds, createScienceLoader, scienceCell, sampleScienceGrid } from './science-layers.mjs';
 import { colorizeScienceGrid, rasterScales } from './science-style.mjs';
+import { useEnvironmentReadings } from './environment-readings.mjs';
 
 function createUiId(prefix = "") {
   const crypto = globalThis.crypto;
@@ -229,6 +230,7 @@ export function useMission() {
       lifetime: abort.signal });
   }
   const scienceLoader = createScienceLoader(asset);
+  const environment = useEnvironmentReadings(state, dem);
   let navigationThermal = null, geologyIndex = [], navigationLoadToken = 0;
   let scienceToken = 0;
   const position = computed(() => {
@@ -1257,6 +1259,12 @@ export function useMission() {
     pane.style.pointerEvents = 'none';
     return 'analysis-' + kind;
   }
+  function stationPopup(meta) {
+    const hints = environment.checks.value.flatMap(check => check.overLimit
+      .filter(station => station.lat === meta.lat && station.lng === meta.lng)
+      .map(station => `<p class="station-exceedance"><b aria-hidden="true">!</b> ${esc(check.label)}超標 · ${esc(station.station)}（${esc(station.period)}）<br>${esc(station.reading)} ${esc(station.value)} ${esc(check.unit)}，上限 ${esc(check.limit)} ${esc(check.unit)}</p>`));
+    return `<strong>${esc(meta.name)}</strong><p>測站平均 ${esc(meta.value.toFixed(2))} ${esc(meta.unit)}</p>${hints.join('')}<p>${esc(meta.note)}</p>`;
+  }
   async function setScienceLayer(kind, token) {
     const scienceOverlay = L.layerGroup().addTo(analysis);
     const record = reactive({ overlay: markRaw(scienceOverlay), meta: null, values: null, loading: true, status: '正在載入離線科學資料…', range: null });
@@ -1289,7 +1297,7 @@ export function useMission() {
         for (const offset of [-360,0,360]) {
           L.circleMarker([meta.lat, meta.lng+offset], { pane: layerPane, radius: 9, color: '#ffe09a', weight: 2, opacity: style.opacity / 100, fillColor: kind === 'radiation' ? '#d24132' : '#2ab4b4', fillOpacity: style.opacity / 100 })
             .bindTooltip(esc(`${meta.name} · ${meta.value.toFixed(2)} ${meta.unit}`))
-            .bindPopup(`<strong>${esc(meta.name)}</strong><p>${esc(meta.value.toFixed(2))} ${esc(meta.unit)}</p><p>${esc(meta.note)}</p>`)
+            .bindPopup(() => stationPopup(meta))
             .addTo(scienceOverlay);
         }
         if (state.layer === kind) state.legend = `${meta.name} · ${meta.value.toFixed(2)} ${meta.unit} · 歷史測站，非整區格網`;
@@ -2497,6 +2505,13 @@ export function useMission() {
     if (map) scope();
   });
   watch(() => state.layers, () => { setLayer(); if (map) scope(); });
+  watch(environment.checks, () => {
+    for (const record of Object.values(state.scienceLayers)) {
+      if (record.meta?.kind === 'station') record.overlay.eachLayer(marker => {
+        if (marker.isPopupOpen()) marker.getPopup().update();
+      });
+    }
+  });
   let styleTimer;
   watch(() => state.layerStyles, () => {
     clearTimeout(styleTimer);
@@ -2595,6 +2610,7 @@ export function useMission() {
   return {
     state,
     dem,
+    environment,
     challengeRoute, createRouteChallenge,
     viewBearing, openLocalization, closeLocalization, startWalk, checkScienceRoute, focusScienceEvidence, checkDetour, selectScienceAlternative,
     geologyAt: point => unitLabel(unitAt(point)),
