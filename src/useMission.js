@@ -120,6 +120,7 @@ export function useMission() {
     lat: 18.44,
     lng: 77.42,
     coordinateEditing: false,
+    guidanceView: null,
     regionLoading: false,
     regionStatus: "全球數值高程於首次進入總覽或建立任務時載入。",
     elevation: "",
@@ -2190,6 +2191,12 @@ export function useMission() {
       }
       else if (state.drawMode === "points") append(local(e));
     });
+    function updateGuidanceView() {
+      const b=map.getBounds(), center=map.getCenter();
+      state.guidanceView = {center:{lat:center.lat,lng:center.lng},north:b.getNorth(),south:b.getSouth(),east:b.getEast(),west:b.getWest()};
+    }
+    map.on("moveend resize", updateGuidanceView);
+    updateGuidanceView();
     map.on("moveend zoomend", scope);
     map.on("zoomend", filterNames);
     map.on("moveend", () => {
@@ -2430,6 +2437,7 @@ export function useMission() {
     state,
     dem,
     openLocalization, closeLocalization, startWalk, advanceWalk, focusWalkStation, planWalkFromStation,
+    geologyAt: point => unitLabel(unitAt(point)),
     scienceAt: (point) => {
       if (!state.ready || state.regionLoading || !dem.value || !point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) return null;
       const geo = C.localToLatLng(point.x, point.y);
