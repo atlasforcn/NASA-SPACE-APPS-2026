@@ -37,3 +37,16 @@ assert.equal(await loader.load('chemical'), first);
 assert.equal(requests, total, 'cached data does not refetch');
 await assert.rejects(loader.load('unknown'));
 console.log('Downloaded science grids: geographic registration, missing data, dose units, loader retry and cache passed.');
+
+const {scienceGuidance}=await import('../src/layer-guidance.mjs');
+const record={meta:{kind:'raster',width:4,height:1,unit:'wt % Fe',source:{url:'fixture'}},values:[10,13,NaN,19]};
+const wrapped={west:170,east:190,south:-5,north:5};
+const tips=scienceGuidance('chemical',record,[{lat:0,lng:-175},{lat:0,lng:175}],true,wrapped,{});
+assert(tips.text.includes('起點 10 → 終點 19'));
+assert(tips.text.includes('目前視窗鐵含量 10–19'));
+assert(!tips.warning);
+const missing=scienceGuidance('chemical',record,[{lat:0,lng:10}],false,null,{});
+assert(missing.warning.includes('缺值'));
+const thermal=scienceGuidance('thermal',record,[{lat:0,lng:175}],false,null,{thermalEnabled:true,thermalThreshold:20});
+assert(thermal.warning.includes('低於'));
+assert(thermal.history.every(h=>h.lng>=90));

@@ -1,10 +1,12 @@
 <script setup>
 import { inject, computed } from 'vue';
+import { layerNames } from '../layer-guidance.mjs';
+import LayerGuidance from './LayerGuidance.vue';
 import { missionKey } from '../useMission';
 defineProps({ compact: Boolean });
 const s = inject(missionKey).state;
 const rasterIds = ['thermal', 'spectral', 'geophysical', 'chemical'];
-const layerNames = { terrain: '高程', slope: '坡度', hillshade: '地形陰影', roughness: '粗糙度', geology: '地質單元', thermal: '熱慣量', spectral: '橄欖石', geophysical: '重力異常', atmospheric: '氣壓測站', radiation: '輻射測站', chemical: '鐵濃度' };
+
 const selectedLayers = computed(() => s.layers.filter(id => s.layerStyles[id]));
 function moveLayer(id, direction) {
   const layers = [...s.layers], index = layers.indexOf(id), next = index + direction;
@@ -46,6 +48,8 @@ function toggleLayer(event) {
           <input type="checkbox" :value="layer.id" :checked="s.layers.includes(layer.id)" :disabled="layer.disabled" @change="toggleLayer" />{{ layer.name }}
         </label>
       </fieldset>
+      <LayerGuidance v-if="!compact && selectedLayers.length" />
+      <button v-if="compact && selectedLayers.length" type="button" @click="s.tab='layers'; s.panelOpen=true">查看 {{ selectedLayers.length }} 項圖層判讀</button>
       <div v-if="selectedLayers.length" class="layer-customization">
         <strong>圖層設定</strong><small>由下至上繪製</small>
         <div v-for="(id, index) in selectedLayers" :key="id" class="layer-customization__item">

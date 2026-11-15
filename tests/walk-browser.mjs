@@ -74,7 +74,7 @@ export async function verifyScienceOrder(page, url) {
   await page.waitForFunction(()=>window.__mission.state.scienceLayers.thermal.meta);
   assert((await page.locator('#layer-legend').textContent()).includes('Fe Conc.'));
   assert.equal(await page.locator('.science-context a[download]').getAttribute('href').then(v=>v.endsWith('chemical.bin')),true);
-  await panel.getByRole('button',{name:'橄欖石 上移'}).click();
+  await panel.getByRole('button',{name:'橄欖石豐度 上移'}).click();
   // Reordering can start another request for a previously failed layer.
   await release('spectral',true);
   await page.getByRole('button',{name:'重試載入科學圖層'}).click();
@@ -88,5 +88,13 @@ export async function verifyScienceOrder(page, url) {
   await controls.getByLabel('上限').fill('0.2');
   await page.waitForFunction(()=>window.__mission.state.scienceLayers.spectral.range?.[1]===0.2);
   assert((await page.locator('.science-context').textContent()).includes('0 → 0.2'));
+  await toggle('geophysical').check();
+  await toggle('atmospheric').check();
+  const cards=page.locator('.layer-guidance:visible article');
+  assert.equal(await cards.count(),5);
+  await cards.filter({hasText:'同格歷史測站'}).waitFor();
+  assert((await cards.locator('..').first().innerText()).includes('wt % Fe'));
+  await toggle('chemical').uncheck();
+  assert.equal(await cards.count(),4);
   await page.unroute(pattern);
 }
