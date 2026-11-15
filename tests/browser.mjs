@@ -1,3 +1,4 @@
+import { verifyWalk, verifyScienceOrder } from './walk-browser.mjs';
 import { chromium } from "@playwright/test";
 import fs from "node:fs";
 import http from "node:http";
@@ -97,6 +98,7 @@ try {
     await page.addInitScript(() => Object.defineProperty(crypto, "randomUUID", { value: undefined }));
   }
   await page.goto(url);
+  if (process.env.PRODUCTION_SMOKE !== '1') { await verifyScienceOrder(page, url); await verifyWalk(page, url); }
   if (process.env.PRODUCTION_SMOKE === "1") {
     await page.waitForFunction(() => !document.getElementById("pick-start").disabled);
     await page.locator('#mars-overview').click();

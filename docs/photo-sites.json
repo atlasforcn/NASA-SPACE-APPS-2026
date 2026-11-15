@@ -1,0 +1,169 @@
+[
+  {
+    "product": "Mastcam-Z_360_Butler_Landing_1_Sols03-11_L0_natural.png",
+    "url": "https://mcz-images.sese.asu.edu/Mastcam-Z_360_Butler_Landing_1_Sols03-11_L0_natural.png",
+    "station": "Butler Landing",
+    "sols": [
+      3,
+      11
+    ],
+    "split": "development",
+    "kind": "panorama",
+    "projection": "cylindrical",
+    "cropFovDegrees": 360,
+    "placesSource": "https://pds-geosciences.wustl.edu/m2020/urn-nasa-pds-mars2020_rover_places/data_localizations/best_interp.csv",
+    "placesBracket": [
+      {
+        "sol": "0",
+        "site": "1",
+        "drive": "52",
+        "sclk": "666958220",
+        "planetocentric_latitude": "18.444627146",
+        "longitude": "77.450885729"
+      },
+      {
+        "sol": "13",
+        "site": "3",
+        "drive": "4",
+        "sclk": "668099171",
+        "planetocentric_latitude": "18.444627146",
+        "longitude": "77.450885729"
+      }
+    ],
+    "exactSiteDrive": null,
+    "positionUncertaintyMeters": null,
+    "cameraHeightMeters": null,
+    "cameraAttitude": null,
+    "reviewedSkyline": null,
+    "mask": null,
+    "status": "excluded",
+    "result": null,
+    "reason": "缺少經複核的相機幾何、輪廓、遮罩及逐方位 DEM 覆蓋。"
+  },
+  {
+    "product": "Mastcam-Z_360_Van_Zyl_Sols53-64_L0_natural.png",
+    "url": "https://mcz-images.sese.asu.edu/Mastcam-Z_360_Van_Zyl_Sols53-64_L0_natural.png",
+    "station": "Van Zyl",
+    "sols": [
+      53,
+      63
+    ],
+    "split": "development",
+    "kind": "panorama",
+    "projection": "cylindrical",
+    "cropFovDegrees": 360,
+    "placesSource": "https://pds-geosciences.wustl.edu/m2020/urn-nasa-pds-mars2020_rover_places/data_localizations/best_interp.csv",
+    "placesBracket": [
+      {
+        "sol": "52",
+        "site": "3",
+        "drive": "2046",
+        "sclk": "671562055",
+        "planetocentric_latitude": "18.444752410",
+        "longitude": "77.452139814"
+      },
+      {
+        "sol": "65",
+        "site": "3",
+        "drive": "2052",
+        "sclk": "672718709",
+        "planetocentric_latitude": "18.444752410",
+        "longitude": "77.452139814"
+      }
+    ],
+    "exactSiteDrive": null,
+    "positionUncertaintyMeters": null,
+    "cameraHeightMeters": null,
+    "cameraAttitude": null,
+    "reviewedSkyline": null,
+    "mask": null,
+    "status": "excluded",
+    "result": null,
+    "reason": "缺少經複核的相機幾何、輪廓、遮罩及逐方位 DEM 覆蓋。"
+  },
+  {
+    "product": "Mastcam-Z_360_Horizon_2_Sol114_L0_natural.png",
+    "url": "https://mcz-images.sese.asu.edu/Mastcam-Z_360_Horizon_2_Sol114_L0_natural.png",
+    "station": "Horizon 2",
+    "sols": [
+      114,
+      114
+    ],
+    "split": "holdout",
+    "kind": "panorama",
+    "projection": "cylindrical",
+    "cropFovDegrees": 360,
+    "placesSource": "https://pds-geosciences.wustl.edu/m2020/urn-nasa-pds-mars2020_rover_places/data_localizations/best_interp.csv",
+    "placesBracket": [
+      {
+        "sol": "113",
+        "site": "4",
+        "drive": "1062",
+        "sclk": "676977817",
+        "planetocentric_latitude": "18.439610857",
+        "longitude": "77.449537980"
+      },
+      {
+        "sol": "116",
+        "site": "4",
+        "drive": "1068",
+        "sclk": "677240458",
+        "planetocentric_latitude": "18.439610845",
+        "longitude": "77.449537982"
+      }
+    ],
+    "exactSiteDrive": null,
+    "positionUncertaintyMeters": null,
+    "cameraHeightMeters": null,
+    "cameraAttitude": null,
+    "reviewedSkyline": null,
+    "mask": null,
+    "status": "excluded",
+    "result": null,
+    "reason": "缺少經複核的相機幾何、輪廓、遮罩及逐方位 DEM 覆蓋。"
+  },
+  {
+    "product": "ZL0_0114_0677061671_832ECM_N0041062ZCAM08094_0630LMJ",
+    "url": "https://mars.nasa.gov/mars2020/multimedia/raw-images/ZL0_0114_0677061671_832ECM_N0041062ZCAM08094_0630LMJ",
+    "station": "Horizon 2",
+    "sols": [
+      114,
+      114
+    ],
+    "split": "holdout",
+    "kind": "single-frame",
+    "projection": null,
+    "cropFovDegrees": null,
+    "placesSource": "https://pds-geosciences.wustl.edu/m2020/urn-nasa-pds-mars2020_rover_places/data_localizations/best_interp.csv",
+    "placesBracket": [
+      {
+        "sol": "113",
+        "site": "4",
+        "drive": "1062",
+        "sclk": "676977817",
+        "planetocentric_latitude": "18.439610857",
+        "longitude": "77.449537980"
+      },
+      {
+        "sol": "116",
+        "site": "4",
+        "drive": "1068",
+        "sclk": "677240458",
+        "planetocentric_latitude": "18.439610845",
+        "longitude": "77.449537982"
+      }
+    ],
+    "exactSiteDrive": [
+      4,
+      1062
+    ],
+    "positionUncertaintyMeters": null,
+    "cameraHeightMeters": null,
+    "cameraAttitude": null,
+    "reviewedSkyline": null,
+    "mask": null,
+    "status": "excluded",
+    "result": null,
+    "reason": "缺少經複核的相機幾何、輪廓、遮罩及逐方位 DEM 覆蓋。"
+  }
+]

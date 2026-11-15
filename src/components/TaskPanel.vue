@@ -1,6 +1,7 @@
 <script setup>
 import { inject } from "vue";
 import { missionKey } from "../useMission";
+import WalkPanel from "./WalkPanel.vue";
 import RouteProfile from "./RouteProfile.vue";
 import RouteDrawing from "./RouteDrawing.vue";
 import ExpeditionPanel from "./ExpeditionPanel.vue";
@@ -13,6 +14,8 @@ const m = inject(missionKey),
 <template>
   <div>
     <section class="group">
+      <WalkPanel v-if="s.walk" />
+      <template v-if="!s.walk">
       <p class="eyebrow">MISSION PLAN / 路線規劃</p>
       <h2>先選端點，再決定怎麼走</h2>
       <ol class="plan-steps" aria-label="規劃進度">
@@ -52,8 +55,9 @@ const m = inject(missionKey),
         <label>粗糙度上限 {{ s.roughnessLimit }}<input id="roughness-limit" v-model.number="s.roughnessLimit" type="range" min="0" max="1" step="0.05" /></label>
         <p class="hint">調低上限可排除較粗糙地形；1 表示不額外排除粗糙度。人工禁行區也會阻擋通行；地質與選配熱慣量用於材質成本。遮罩為顯示取樣，路線會沿途細分檢查。</p>
       </section>
+      </template>
       <NavigationMaterials />
-      <PlannerControls />
+      <PlannerControls v-if="!s.walk" />
       <label
         >示範坡度上限（非車輛工程規格）<input
           id="slope-limit"
@@ -71,7 +75,7 @@ const m = inject(missionKey),
         >
           建立並評估三條路線</button
         ><button
-          id="simulate"
+          v-if="!s.walk" id="simulate"
           :disabled="!s.route?.reachable"
           @click="m.toggleMotion"
         >

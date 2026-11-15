@@ -27,6 +27,12 @@ export async function evaluate(input) {
   const count=(Math.floor((bounds.maxX-bounds.minX)/search.coarseStep)+1)*
     (Math.floor((bounds.maxY-bounds.minY)/search.coarseStep)+1);
   if(count>100000) throw Error('Search exceeds 100000 coarse positions');
+  const fovMask = obs.fovMask;
+  if (fovMask && (fovMask.length !== obs.valid.length || !fovMask.every((inside,i)=>typeof inside === 'boolean' && (inside || !obs.valid[i]))))
+    throw Error('Invalid field-of-view mask');
+  const validCount = obs.valid.filter(Boolean).length;
+  const inView = fovMask?.filter(Boolean).length;
+  const levels = obs.elevations.filter((v,i)=>obs.valid[i]);
   const grid=JSON.parse(await fs.readFile(input.demPath,'utf8'));
   C.setDEM(grid);
   const result=await S.search(obs,search.bounds,{coarseStep:search.coarseStep});
@@ -35,6 +41,16 @@ export async function evaluate(input) {
   const best=result.candidates[0];
   const before=C.distance(prior,reference), after=best?C.distance(best,reference):null;
   return {schema:'mars-photo-horizon-result-v1',provenance,demSource:grid.source,
+    stationGroup:input.stationGroup ?? null,
+    validDegrees:validCount*360/obs.angles.length,
+    validFractionWithinFov:inView ? validCount/inView : null,
+    reliefDegrees:levels.length ? Math.max(...levels)-Math.min(...levels) : null,
+    demOverlap:best?.overlap ?? null,
+    scoreGapDegrees:result.candidates.length>1 ? result.candidates[1].score-best.score : null,
+    angularErrorDegrees:best && Number.isFinite(reference.heading) && provenance.headingSource
+      ? Math.abs(C.modDeg(best.heading-reference.heading+180)-180) : null,
+    rejectionReason:result.status==='good' ? null : result.reason,
+    outcome:!best ? 'no-result' : after<before ? 'improved' : after>before ? 'worse' : 'unchanged',
     observationKind:obs.kind,priorErrorMeters:before,candidateErrorMeters:after,
     improvementMeters:after===null?null:before-after,
     candidateImproves:after!==null&&after<before,
