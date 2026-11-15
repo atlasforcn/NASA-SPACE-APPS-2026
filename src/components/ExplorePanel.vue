@@ -25,7 +25,7 @@ function selectRegion(event) {
       <h2>選擇探索區域</h2>
       <p class="hint">先載入地形，再到「任務」選擇起點與目的地；「圖層」可查看資料與色階。</p>
       <label>DEM 區域快捷選擇<select id="dem-region-preset" v-model="selectedRegion" :disabled="!s.ready || s.regionLoading" @change="selectRegion">
-        <option v-for="r in regions" :key="r.id" :value="r.id">{{ r.name }}</option>
+        <option v-for="r in regions" :key="r.id" :value="r.id">{{ r.title }} · {{ r.name }}</option>
       </select></label>
       <button id="load-region" class="primary wide" :disabled="!s.ready || s.regionLoading" @click="loadPreset">{{ s.regionLoading ? '正在載入地形…' : '載入所選區域 →' }}</button>
       <p class="hint">僅列出具有局部正射影像的區域。Jezero：CTX DEM 30×30 km、40 m／格。Gale：20 m／格。Valles CTX：20×20 km、40 m／格。</p>

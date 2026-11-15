@@ -284,7 +284,34 @@ input[type="checkbox"] {
   overflow: hidden;
 }
 .panel-heading {
-  padding: 24px 22px 16px;
+  padding: 18px 20px 14px;
+  border-inline-start: 4px solid #ffb477;
+  border-bottom: 1px solid #546061;
+  background: linear-gradient(100deg, #152228 26%, rgb(21 34 40 / 93%) 60%, rgb(21 34 40 / 78%)), var(--region-image) center / cover;
+}
+.region-name {
+  color: #ffc593;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .09em;
+}
+.region-name span { margin-inline-start: .55em; letter-spacing: .04em; }
+.panel-heading h1 {
+  margin: 5px 0 8px;
+  font-size: 29px;
+  line-height: 1.18;
+  color: #fff7ee;
+}
+.region-description {
+  font-size: 14px;
+  line-height: 1.65;
+  color: #f0f3ee;
+}
+.region-status {
+  margin-top: 10px;
+  color: #b6cac9;
+  font-size: 11px;
+  line-height: 1.5;
 }
 .eyebrow {
   font-size: 9px;
@@ -718,7 +745,7 @@ details button {
     padding: 14px 20px;
   }
   .panel-heading h1 {
-    font-size: 19px;
+    font-size: 25px;
   }
   .panel-scroll {
     height: auto;

@@ -1,6 +1,8 @@
 <script setup>
-import { provide, watch, nextTick } from "vue";
+import { computed, provide, watch, nextTick } from "vue";
 import { useMission, missionKey } from "./useMission";
+import regions from "../regions.mjs";
+import { asset } from "./asset";
 import MissionMap from "./components/MissionMap.vue";
 import ExplorePanel from "./components/ExplorePanel.vue";
 import TaskPanel from "./components/TaskPanel.vue";
@@ -8,6 +10,11 @@ import LayersPanel from "./components/LayersPanel.vue";
 import LocalizationPanel from "./components/LocalizationPanel.vue";
 const mission = useMission(),
   { state: s } = mission;
+const mola = {
+  title: '自訂火星區域', english: 'MOLA', image: 'data/mars-global-dem.jpg',
+  description: '火星軌道雷射高度計（MOLA）測量全球地勢。可在所選座標比較山地與盆地的高差；公里級格網無法判斷腳下的岩塊。',
+};
+const region = computed(() => regions.find(r => r.id === s.siteId) ?? mola);
 provide(missionKey, mission);
 watch(
   () => s.panelOpen,
@@ -58,16 +65,14 @@ if (import.meta.env.MODE === "test") window.__mission = mission;
         {{ s.panelOpen ? "收合面板 ↓" : "開啟任務面板 ↑" }}
       </button>
       <div id="panel-content" v-show="s.panelOpen">
-        <div class="panel-heading">
-          <p class="eyebrow">
-            MISSION CONTROL / {{ s.regional ? "GLOBAL" : s.siteName.toUpperCase() }}
-          </p>
-          <h1>
-            探索火星地形與導航
-          </h1>
-          <p class="hint">選擇區域 → 規劃路線 → 地平線定位</p>
-          <p class="hint" role="status">{{ s.warning }}</p>
-        </div>
+        <header class="panel-heading" :style="{ '--region-image': 'url(' + asset(region.image) + ')' }">
+          <div aria-live="polite" aria-atomic="true">
+            <p class="region-name">探索區域 <span lang="en">{{ region.english }}</span></p>
+            <h1>{{ region.title }}</h1>
+            <p class="region-description">{{ region.description }}</p>
+          </div>
+          <p class="region-status" role="status">{{ s.warning }}</p>
+        </header>
         <button v-if="!s.walk" id="start-walk" class="primary" :disabled="!s.ready || s.regionLoading || s.regional || s.siteId !== 'jezero'" @click="mission.startWalk">開始 Jezero 科學任務</button>
         <nav class="tabs" aria-label="控制面板分頁">
           <button
