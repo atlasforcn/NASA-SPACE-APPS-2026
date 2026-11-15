@@ -4,6 +4,8 @@
 
 The public demo uses Curiosity’s left navigation camera panorama west of Dingo Gap, sols 538–539. We marked the visible skyline every 3°, retaining 210° of observations. The search ranked positions and headings in a 9.5 × 9.5 km area by comparing the observed skyline with terrain predictions. After ranking, we compared the top candidate with NASA’s record for Site 26, Drive 708. [NASA panorama](https://science.nasa.gov/resource/sol-0539-left-navigation-camera-cylindrical-projection/) · [PDS PLACES position records](https://planetarydata.jpl.nasa.gov/img/data/msl/msl_places/data_localizations/)
 
+The photo matcher lets you run the three 6 km tests yourself. Select a panorama to load its camera settings and editable hand-traced skyline. Each search covers the same Gale grid. Reveal the NASA record after the search to measure the great-circle distance between the first-ranked candidate and the rover station. The three errors below apply to the supplied traces. Sol 535 and sols 538–539 were photographed about 37 m apart. [Try the photos](https://atlasforcn.github.io/NASA-SPACE-APPS-2026/#photo-matcher) · [NASA sol 38 panorama](https://science.nasa.gov/resource/sol-0038-left-navigation-camera-cylindrical-projection-3/) · [NASA sol 535 panorama](https://science.nasa.gov/resource/sol-0535-left-navigation-camera-cylindrical-projection/)
+
 | Panorama | Top candidate error, 6 km terrain range (website) | Top candidate error, 90 km terrain range (offline) |
 | --- | ---: | ---: |
 | Sol 38, method development | 4,016 m | 1,449 m |
