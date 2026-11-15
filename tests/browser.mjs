@@ -102,6 +102,7 @@ try {
     await page.addInitScript(() => Object.defineProperty(crypto, "randomUUID", { value: undefined }));
   }
   await page.goto(url);
+    await page.locator('#start-free').click();
   if (process.env.PRODUCTION_SMOKE !== '1') { await verifyScienceOrder(page, url); await verifyWalk(page, url); }
   if (process.env.PRODUCTION_SMOKE === "1") {
     await page.waitForFunction(() => !document.getElementById("pick-start").disabled);
@@ -118,6 +119,7 @@ try {
     await page.screenshot({path: 'test-results/overview-mobile.png'});
     await page.setViewportSize({width: 1600, height: 1000});
     await page.goto(url);
+    await page.locator('#start-free').click();
     await page.waitForFunction(() => !document.getElementById('pick-start').disabled);
     assert(await page.locator("#scan").isDisabled());
     await chooseStart();
@@ -590,6 +592,7 @@ try {
     // Fail first global binary request, then prove retry loads successfully.
     // Cross-region drawing above already loaded MOLA; use a fresh app instance.
     await page.reload();
+    await page.locator('#start-free').click();
     await page.waitForFunction(() => window.__mission?.state.ready);
     await page.getByRole("button", { name: "探索", exact: true }).click();
     await page.route("**/data/mola16.bin", (route) =>
@@ -734,6 +737,7 @@ try {
       assert.equal(canonical.length, entry.bytes, entry.path);
     }
     await page.goto(url);
+    await page.locator('#start-free').click();
     await page.waitForFunction(() => window.__mission?.state.ready);
     // Both controls share state; overview has optical imagery and numeric heights
     // before creating a regional mission.

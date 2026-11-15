@@ -25,7 +25,7 @@ const m = inject(missionKey),
       </ol>
       <p v-if="!s.hasStart" class="hint" role="status">尚未設定起點；選定後才會顯示導航位置並啟用規劃與定位。</p>
       <p class="hint">① 選起點、停靠點與終點 → ② 比較最低耗電、最短與較低風險路線 → ③ 選擇方案並行進。</p>
-      <button id="pick-start" :disabled="!s.ready" :aria-pressed="s.pickingStart" @click="m.beginStart">{{ s.pickingStart ? '取消選起點' : '在地圖選起點' }}</button>
+
         <label>目的地名稱<input id="target-name" v-model="s.targetName" maxlength="80" placeholder="輸入自訂名稱（可留空）" /></label>
         <div class="button-row">
           <button id="add-target" :disabled="!s.ready" @click="m.beginTarget">{{ s.pickingTarget ? "取消選點" : "在地圖新增目的地" }}</button>

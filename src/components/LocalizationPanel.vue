@@ -7,7 +7,7 @@ const m = inject(missionKey),
 </script>
 <template>
   <section id="localization-tool" class="localization" aria-label="地平線定位" @keydown.esc="m.closeLocalization">
-    <div class="localization-toolbar"><h2>山頂相儀 · 地平線定位</h2><button id="close-localization" @click="m.closeLocalization">關閉並返回規劃</button></div>
+    <div class="localization-toolbar"><h2>山頂相儀 · 找出自己的位置</h2><button id="close-localization" @click="m.closeLocalization">關閉並返回規劃</button></div>
     <div class="localization-controls">
 
       <div class="section-title">
@@ -16,6 +16,7 @@ const m = inject(missionKey),
           s.status
         }}</span>
       </div>
+      <p class="hint">比對眼前的山稜線與地形模型，找出自己可能所在的位置。山形不清楚時，可保留原估計並重掃。</p>
       <label
         >模擬觀測品質<select id="observe-mode" v-model="s.scenario">
           <option value="good">360° 完整觀測</option>

@@ -857,3 +857,16 @@ canvas.navigation-risk-tile {
   .workspace.planning-view { grid-template-rows: minmax(470px, calc(100dvh - 76px)); }
   .planning-view .control-panel { grid-row: 1; }
 }
+
+.mode-landing { position:fixed; inset:0; z-index:2000; overflow:auto; display:grid; place-items:center; padding:22px; background:linear-gradient(100deg,#101e24 18%,#101e24ee 55%,#101e2499),var(--landing-image) center/cover; }
+.mode-menu { width:min(100%,640px); }
+.mode-menu h1 { font-size:clamp(27px,5vw,46px); margin-bottom:24px; }
+.mode-menu > button { display:grid; gap:8px; width:100%; padding:20px; margin:12px 0; text-align:left; background:#182c31; border-inline-start:4px solid var(--mint); }
+.mode-menu > button:first-of-type { border-inline-start-color:var(--orange); }
+.mode-menu strong { font-size:22px; }
+.mode-menu span { color:#c3d4d1; }
+.mode-menu b { color:var(--mint); }
+.mode-switch { float:right; padding:3px 6px; font-size:11px; }
+.region-actions { padding:12px 20px; border-bottom:1px solid var(--border); }
+.region-actions p { font-size:13px; margin-bottom:6px; }
+.region-actions button { margin:0 5px 6px 0; }

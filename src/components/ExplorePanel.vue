@@ -23,7 +23,7 @@ function selectRegion(event) {
     <section class="group">
       <p class="eyebrow">01 / SELECT REGION</p>
       <h2>選擇探索區域</h2>
-      <p class="hint">先載入地形，再到「任務」選擇起點與目的地；「圖層」可查看資料與色階。</p>
+      <p class="hint">切換區域後，可直接點選起始點，或打開圖層探索地形。</p>
       <label>DEM 區域快捷選擇<select id="dem-region-preset" v-model="selectedRegion" :disabled="!s.ready || s.regionLoading" @change="selectRegion">
         <option v-for="r in regions" :key="r.id" :value="r.id">{{ r.title }} · {{ r.name }}</option>
       </select></label>
