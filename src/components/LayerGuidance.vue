@@ -22,7 +22,7 @@ function terrain(id) {
   const exceeded=limit!==null && high>limit;
   return {text:Number.isFinite(low)?'取樣範圍 '+low.toFixed(2)+'–'+high.toFixed(2)+unit+'。':'目前沒有有效讀值。',
     warning:[exceeded?'超出任務設定上限 '+limit+unit+'，請調整路線。':'',missing?'部分位置缺少足夠地形資料。':''].filter(Boolean).join(' '),
-    advice:limit===null?'比較沿線高差時，請一併檢查坡度及高程來源。':'目前任務上限 '+limit+unit+'。仍須對照其他避險條件。'};
+    advice:limit===null?'比較沿線高差時，請一併檢查坡度及高程來源。':'目前任務上限 '+limit+unit+'。'};
 }
 const cards=computed(()=>s.layers.map(id=>({id,...(!s.ready || s.regionLoading ? {text:'正在載入任務區域…'} : scienceLayerIds.includes(id)
   ? scienceGuidance(id,s.scienceLayers[id],points.value,!!route.value,s.guidanceView,s.navigation) : terrain(id))})));

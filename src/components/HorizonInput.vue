@@ -84,7 +84,7 @@ onBeforeUnmount(() => { loadToken++; image?.close(); });
 <template>
   <details class="horizon-input group" aria-label="手繪或照片定位">
     <summary>手繪／照片山稜線比對</summary>
-    <p class="hint">畫出山稜線，或上傳探測器照片轉成 2D 輪廓。照片只在本機處理。有起點時搜尋估計位置附近；沒有起點時搜尋目前載入的 DEM 區域，並非全火星辨識。</p>
+    <p class="hint">畫出山稜線，或上傳探測器照片轉成 2D 輪廓。照片只在本機處理。有起點時搜尋估計位置附近；沒有起點時搜尋目前載入的 DEM 區域。</p>
     <div class="button-row">
       <button id="horizon-blank" @click="blank">空白手繪</button>
       <label>上傳照片<input id="horizon-photo" type="file" accept="image/*" @change="upload" /></label>
