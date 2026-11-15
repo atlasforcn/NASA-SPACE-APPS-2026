@@ -2,6 +2,7 @@ import {
   reactive,
   markRaw,
   shallowRef,
+  toRefs,
   computed,
   watch,
   onScopeDispose,
@@ -157,8 +158,7 @@ export function useMission() {
     geology,
     missionStart,
     profileOptions,
-    worker,
-    job = 0,
+    cancelSkylineSearch,
     frame,
     disposed = false;
   let scienceRouteLayer, scienceEvidenceMarker;
@@ -317,14 +317,11 @@ export function useMission() {
     cancelAnimationFrame(frame);
   }
   let localizationTrigger;
-  async function openLocalization(event, focusId = 'close-localization') {
+  async function openLocalization(event) {
     localizationTrigger = event.currentTarget;
     state.localizationOpen = true;
     await nextTick();
-    const target = document.getElementById(focusId);
-    const details = target?.closest('details');
-    if (details) details.open = true;
-    target?.focus();
+    document.getElementById('close-localization')?.focus();
   }
   async function closeLocalization() {
     state.localizationOpen = false;
@@ -334,10 +331,9 @@ export function useMission() {
     if (trigger?.id === 'open-localization') window.scrollTo(0,0);
   }
   function cancel() {
-    const active = !!worker;
-    job++;
-    worker?.terminate();
-    worker = null;
+    const active = !!cancelSkylineSearch;
+    cancelSkylineSearch?.();
+    cancelSkylineSearch = null;
     state.searching = false;
     if (active) {
       state.status = "Search canceled";
@@ -808,6 +804,44 @@ export function useMission() {
     state.status = "Odometry drift added";
     render();
   }
+  function searchSkyline(obs, wholeRegion, { progress, complete, fail }) {
+    const centre = { ...state.estimate },
+      range = state.regional ? Math.max(16000, cellMeters() * 4) : 1600,
+      bounds = wholeRegion ? {
+        minX: C.LIMIT.minX + 250, maxX: C.LIMIT.maxX - 250,
+        minY: C.LIMIT.minY + 250, maxY: C.LIMIT.maxY - 250,
+      } : {
+        minX: Math.max(C.LIMIT.minX + 250, centre.x - range),
+        maxX: Math.min(C.LIMIT.maxX - 250, centre.x + range),
+        minY: Math.max(C.LIMIT.minY + 250, centre.y - range),
+        maxY: Math.min(C.LIMIT.maxY - 250, centre.y + range),
+      };
+    const options = wholeRegion
+      ? { coarseStep: Math.max(state.regional ? cellMeters() : 200,
+          (bounds.maxX - bounds.minX) / 24, (bounds.maxY - bounds.minY) / 24),
+          candidateSeparation: state.regional ? cellMeters() * 2 : 180 }
+      : state.regional ? { coarseStep: cellMeters(), candidateSeparation: cellMeters() * 2 } : {};
+    const worker = new Worker(new URL("./skyline-worker.js", import.meta.url), { type: "module" });
+    function dispose() {
+      worker.onmessage = null;
+      worker.onerror = null;
+      worker.terminate();
+    }
+    worker.onerror = event => { dispose(); fail(event.message); };
+    worker.onmessage = ({ data }) => {
+      if (data.type === 'progress') return progress(data.value);
+      dispose();
+      if (data.type === 'error') fail(data.message);
+      else complete(data.result);
+    };
+    try {
+      worker.postMessage({ dem: dem.value, observation: obs, bounds, options });
+    } catch (error) {
+      dispose();
+      throw error;
+    }
+    return dispose;
+  }
   function scan(continuous = false, suppliedObservation = null) {
     if (!state.hasStart && !suppliedObservation) return;
     if (!state.ready || state.regionLoading) return;
@@ -839,43 +873,18 @@ export function useMission() {
     });
     drawCurve();
     render();
-    const centre = { ...state.estimate },
-      range = state.regional ? Math.max(16000, cellMeters() * 4) : 1600,
-      searchBounds = suppliedObservation && !state.hasStart ? {
-        minX: C.LIMIT.minX + 250, maxX: C.LIMIT.maxX - 250,
-        minY: C.LIMIT.minY + 250, maxY: C.LIMIT.maxY - 250,
-      } : {
-        minX: Math.max(C.LIMIT.minX + 250, centre.x - range),
-        maxX: Math.min(C.LIMIT.maxX - 250, centre.x + range),
-        minY: Math.max(C.LIMIT.minY + 250, centre.y - range),
-        maxY: Math.min(C.LIMIT.maxY - 250, centre.y + range),
-      },
-      id = ++job,
-      start = performance.now();
-    worker = new Worker(new URL("./skyline-worker.js", import.meta.url), {
-      type: "module",
-    });
+    const start = performance.now();
     state.searching = true;
     state.status = continuous ? "Driving / searching the skyline" : "Searching";
     state.message =
       suppliedObservation ? "The tracker matches the drawn or photographed skyline to DEM candidates. Review candidates before correcting the position." : "The tracker receives the skyline and a search area around the estimated position. Simulation ground truth is withheld from the tracker.";
-    const fail = (message) => {
-      if (id !== job) return;
+    function fail(message) {
       cancel();
       state.status = "Position unresolved";
       state.message = "Search failed: " + message;
-    };
-    worker.onerror = (e) => fail(e.message);
-    worker.onmessage = ({ data }) => {
-      if (data.id !== job) return;
-      if (data.type === "progress") {
-        state.progress = `Search ${Math.round(data.value * 100)}%`;
-        return;
-      }
-      if (data.type === "error") return fail(data.message);
-      const result = data.result;
-      worker.terminate();
-      worker = null;
+    }
+    function complete(result) {
+      cancelSkylineSearch = null;
       state.searching = false;
       state.result = result;
       state.status = { good: "Good position fix", uncertain: "Uncertain", lost: "Position unresolved" }[
@@ -945,30 +954,88 @@ export function useMission() {
         state.evaluation = "Original position estimate retained.";
       }
       render();
-    };
-    worker.postMessage({
-      id,
-      dem: dem.value,
-      observation,
-      bounds: searchBounds,
-      options: suppliedObservation && !state.hasStart
-        ? { coarseStep: Math.max(state.regional ? cellMeters() : 200,
-            (searchBounds.maxX - searchBounds.minX) / 24, (searchBounds.maxY - searchBounds.minY) / 24),
-            candidateSeparation: state.regional ? cellMeters() * 2 : 180 }
-        : state.regional ? { coarseStep: cellMeters(), candidateSeparation: cellMeters() * 2 } : {},
+    }
+    try {
+      cancelSkylineSearch = searchSkyline(observation, !!suppliedObservation && !state.hasStart, {
+        progress: value => { state.progress = `Search ${Math.round(value * 100)}%`; },
+        complete, fail,
+      });
+    } catch (error) {
+      fail(error.message);
+    }
+  }
+  function createPhotoMatcher() {
+    const { ready, regionLoading, siteId, siteName, regional, error } = toRefs(state);
+    const photo = reactive({
+      ready, regionLoading, siteId, siteName, regional, error,
+      hasStart: computed(() => state.hasStart && !state.walk),
+      searching: false, status: '', progress: '', message: '', result: null,
     });
+    let stopSearch, photoObservation;
+    function cancelPhoto() {
+      if (!stopSearch) return;
+      stopSearch();
+      stopSearch = null;
+      photo.searching = false;
+      photo.status = 'Search canceled';
+      photo.progress = '';
+    }
+    function matchHorizon(obs) {
+      if (!photo.ready || photo.regionLoading) return;
+      cancelPhoto();
+      photoObservation = obs;
+      photo.result = null;
+      photo.searching = true;
+      photo.message = '';
+      photo.status = 'Searching';
+      photo.progress = '0%';
+      function fail(message) {
+        stopSearch = null;
+        photo.searching = false;
+        photo.status = 'Position unresolved';
+        photo.progress = '';
+        photo.message = message;
+      }
+      try {
+        stopSearch = searchSkyline(obs, !photo.hasStart, {
+          progress: value => { photo.progress = Math.round(value * 100) + '%'; },
+          complete(result) {
+            stopSearch = null;
+            photo.searching = false;
+            photo.status = 'Search complete';
+            photo.progress = '';
+            photo.result = result;
+          },
+          fail,
+        });
+      } catch (error) {
+        fail(error.message);
+      }
+    }
+    watch(dem, () => {
+      cancelPhoto();
+      photo.result = null;
+      photoObservation = null;
+    });
+    onScopeDispose(cancelPhoto);
+    return {
+      state: photo, boot, terrainImage, cancel: cancelPhoto, matchHorizon,
+      horizonOptions: () => ({ ...profileOptions }),
+      paintHorizonCurve: (canvas, candidate) => paintHorizonCurve(canvas, candidate, photoObservation, 0),
+    };
   }
   function drawCurve(candidate) {
     displayedCandidate.value = candidate;
-    const cv = curve.value;
+    paintHorizonCurve(curve.value, candidate);
+  }
+  function paintHorizonCurve(cv, candidate, obs = observation, viewYaw = state.viewYaw) {
     if (!cv) return;
     const ctx = cv.getContext("2d"),
       w = cv.width,
       h = cv.height;
     ctx.clearRect(0, 0, w, h);
-    if (!observation) return;
-    const obs = observation,
-      view = S.viewport(obs, state.viewYaw),
+    if (!obs) return;
+    const view = S.viewport(obs, viewYaw),
       p = candidate ? S.profile(candidate, obs.options) : null,
       vals = obs.elevations
         .filter((v, i) => obs.valid[i] && Number.isFinite(v));
@@ -980,7 +1047,7 @@ export function useMission() {
     ctx.fillStyle = "#c9d5d5";
     ctx.font = "12px system-ui";
     ctx.fillText(
-      `Observation (orange) / candidate (cyan) · same 120° view as above · elevation angle ${lo.toFixed(1)}–${hi.toFixed(1)}°`,
+      `Observation (orange) / candidate (cyan) · 120° viewing window · elevation angle ${lo.toFixed(1)}–${hi.toFixed(1)}°`,
       12,
       18,
     );
@@ -2663,6 +2730,7 @@ export function useMission() {
     matchHorizon: (obs) => scan(false, obs),
     horizonOptions: () => ({ ...profileOptions }),
     drawCurve,
+    createPhotoMatcher,
     turnView: (degrees) => { state.viewYaw = ((state.viewYaw + degrees + 540) % 360) - 180; },
     focusView: () => {
       const target = state.poi || state.targets.find((p) => p.id === state.destination);

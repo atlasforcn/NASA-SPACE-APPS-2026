@@ -895,14 +895,7 @@ canvas.navigation-risk-tile {
   text-underline-offset: .24em;
 }
 .mode-menu .demo-entry { padding-inline: 4px; }
-.landing-skyline-tools { display: grid; justify-items: start; }
-.landing-skyline-tools button.demo-entry {
-  padding-block: 0;
-  border: 0;
-  background: transparent;
-  text-align: start;
-  text-decoration: underline;
-}
+.skyline-links { display: grid; justify-items: start; }
 .demo-entry:hover { color: #fff; }
 .project-about { margin-top: 8px; border-top: 1px solid var(--border); }
 .project-about summary { padding: 12px 4px; min-height: 44px; cursor: pointer; }

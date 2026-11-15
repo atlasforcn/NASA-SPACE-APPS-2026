@@ -2,7 +2,8 @@
 import { inject } from "vue";
 import HorizonInput from "./HorizonInput.vue";
 import { missionKey } from "../useMission";
-defineEmits(['open-demo']);
+defineProps({ photoPageOpen: Boolean });
+defineEmits(['open-page']);
 const m = inject(missionKey),
   s = m.state;
 </script>
@@ -18,7 +19,10 @@ const m = inject(missionKey),
         }}</span>
       </div>
       <p class="hint">Compare the skyline with a digital elevation model (DEM) to find candidate positions. If the skyline is indistinct, keep the original estimate and scan again.</p>
-      <a id="open-curiosity-demo" class="demo-entry" href="#dingo-gap" aria-haspopup="dialog" @click="$emit('open-demo', $event)">Try Curiosity’s Dingo Gap panorama <span aria-hidden="true">→</span></a>
+      <div class="skyline-links">
+        <a id="open-curiosity-demo" class="demo-entry" href="#dingo-gap" aria-haspopup="dialog" @click="$emit('open-page', $event)">Try Curiosity’s Dingo Gap panorama <span aria-hidden="true">→</span></a>
+        <a id="open-photo-matcher" class="demo-entry" href="#photo-matcher" aria-haspopup="dialog" @click="$emit('open-page', $event)">Open the photo matcher <span aria-hidden="true">→</span></a>
+      </div>
       <label
         >Simulated observation quality<select id="observe-mode" v-model="s.scenario">
           <option value="good">Full 360° observation</option>
@@ -68,7 +72,7 @@ const m = inject(missionKey),
       </div>
     </div>
     <div class="horizon-charts">
-      <HorizonInput />
+      <KeepAlive><HorizonInput v-if="!photoPageOpen" /></KeepAlive>
       <div class="chart-head">
         <span>{{ s.externalHorizon ? "Input skyline and candidate horizon" : "Simulated DEM skyline" }}</span><span>Viewing window / 120°</span>
       </div>
