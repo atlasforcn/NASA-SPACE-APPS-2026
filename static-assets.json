@@ -317,5 +317,15 @@
     "disposition": "publish",
     "bytes": 4947,
     "sha256": "7c542b82b0f110bd246eb9d41e0d3c095f9f1945f7f20b39e7b18b418152bc6f"
+  },
+  {
+    "source": "docs/jezero-walk-stations.jpg",
+    "disposition": "repository",
+    "reason": "Screenshot from the public Jezero walk for the README"
+  },
+  {
+    "source": "docs/jezero-walk-return.jpg",
+    "disposition": "repository",
+    "reason": "Screenshot from the public Jezero walk for the README"
   }
 ]
