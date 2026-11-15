@@ -1,6 +1,6 @@
 import { segmentEnergy, minimumEnergyRatio, validateEnergyOptions } from './energy-model.mjs';
 /* 山頂相儀 — simulation math core. Units: metres in a local Mars tangent plane, radians for solvers. */
-const api = (() => {
+export function createTerrainCore() {
 'use strict';
 const R=3396190, DEG=Math.PI/180;
 let LAT0=18.44,LON0=77.42,regionalProjection=false;
@@ -231,5 +231,5 @@ function refinePose(pairs,init){if(pairs.length<3)return {ok:false,reason:'need_
  return {ok:rms<2.5,x:q[0]*1000,y:q[1]*1000,heading:modDeg(q[2]/DEG),rmsDeg:rms,count:pairs.length,initialRmsDeg:Math.sqrt(initialLoss/pairs.length)/DEG};
 }
 return {R,get LAT0(){return LAT0;},get LON0(){return LON0;},DEG,FEATURES,LIMIT,setDEM,clearDEM,setMolaFallback,clearMolaFallback,heightSource,terrainProduct,sameHeightGrid,demAt,demInfo,validDEMPoint,findDEMFeatures,clamp,localToLatLng,latLngToLocal,wrapRad,modDeg,bearingDeg,distance,elevation,slopeDeg,roughness,risk,navigationAt,navigationSegmentBlocked,routeSampleSpacing,setNavigationContext,setSlopeLimit,setRoughnessLimit,segmentSafe,fieldValue,planPath,apparentSizeDeg,featureGeometry,captureObservations,associate,refinePose};
-})();
-export default api;
+}
+export default createTerrainCore();

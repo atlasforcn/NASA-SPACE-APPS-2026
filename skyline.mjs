@@ -3,9 +3,9 @@ import C from './core.mjs';
 const api = (() => {
 'use strict';
 const defaults={angleStep:3,rayStep:80,maxRange:6000,cameraHeight:1.7};
-function profile(position,options={}){
+function profile(position,options={},terrain=C){
  const o={...defaults,...options},angles=[],elevations=[],valid=[];
- const sample=o.gridOnly?C.demAt:C.elevation;
+ const sample=o.gridOnly?terrain.demAt:terrain.elevation;
  const base=sample(position.x,position.y)+o.cameraHeight;
  for(let a=0;a<360;a+=o.angleStep){let top=-90,samples=0,reached=0;const t=a*C.DEG;
   for(let r=o.rayStep;r<=o.maxRange;r+=o.rayStep){const z=sample(position.x+r*Math.sin(t),position.y+r*Math.cos(t));if(!Number.isFinite(z))break;top=Math.max(top,Math.atan2(z-base-(o.curvature?r*r/(2*C.R):0),r)/C.DEG);samples++;reached=r;}
