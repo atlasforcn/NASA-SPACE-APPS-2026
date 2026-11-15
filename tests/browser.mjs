@@ -76,6 +76,10 @@ try {
     }
     return route.continue();
   });
+  async function scan() {
+    if (await page.locator("#localization-tool").isHidden()) await page.locator("#open-localization").click();
+    await page.locator("#scan").click();
+  }
   async function chooseStart() {
     await page.getByRole('button', { name: '任務', exact: true }).click();
     await page.locator('#pick-start').click();
@@ -121,7 +125,7 @@ try {
       await page.evaluate(() => typeof window.__mission),
       "undefined",
     );
-    await page.locator("#scan").click();
+    await scan();
     await page.waitForFunction(
       () =>
         document.getElementById("localization-status").textContent ===
@@ -286,6 +290,8 @@ try {
     assert.equal(await page.locator('#map path[stroke="#9af0e0"]').count(), 0);
     assert.equal(await page.getByText("E -750 m", {exact: false}).count(), 0);
     assert(await page.locator("#horizon-editor").isHidden());
+    assert(await page.locator("#localization-tool").isHidden());
+    await page.locator("#open-localization").click();
     await page.locator(".horizon-input summary").click();
     // Drawing and uploads must also work before any mission start is chosen.
     assert(await page.locator("#horizon-match").isEnabled());
@@ -429,7 +435,7 @@ try {
     await page.waitForFunction(() => window.__mission.state.travelled > 30);
     await page.locator("#simulate").click();
     await page.locator("#scenario-good").click();
-    await page.locator("#scan").click();
+    await scan();
     await page.waitForFunction(() => window.__mission.state.result !== null, {
       timeout: 120000,
     });
@@ -481,7 +487,7 @@ try {
     const before = await inspect(() => ({
       ...window.__mission.state.estimate,
     }));
-    await page.locator("#scan").click();
+    await scan();
     await page.waitForFunction(() => window.__mission.state.result !== null, {
       timeout: 120000,
     });
@@ -493,11 +499,11 @@ try {
       await inspect(() => ({ ...window.__mission.state.estimate })),
       before,
     );
-    await page.locator("#scan").click();
+    await scan();
     await page.locator("#cancel").click();
     await page.waitForTimeout(200);
     assert.equal(await inspect(() => window.__mission.state.result), null);
-    await page.locator("#scan").click();
+    await scan();
     await page.locator("#reset").click();
     await page.waitForTimeout(200);
     assert.equal(await inspect(() => window.__mission.state.result), null);
@@ -667,7 +673,7 @@ try {
     assert.equal(await inspect(() => window.__mission.state.route), null);
     assert.equal(await page.locator("#plan").isEnabled(), false);
     await page.getByRole("button", { name: "探索", exact: true }).click();
-    await page.locator("#scan").click();
+    await scan();
     await page.waitForFunction(() => window.__mission.state.result !== null, {
       timeout: 120000,
     });
@@ -766,7 +772,7 @@ try {
     assert.equal(await inspect(() => window.__mission.state.tab), "mission");
     await page.locator("#map").click({ position: { x: reloadedMap.width / 2 + 20, y: reloadedMap.height / 2 + 20 } });
     assert.equal(await inspect(() => window.__mission.state.tab), "mission");
-    await page.locator("#scan").click();
+    await scan();
     await page.waitForFunction(() => window.__mission.state.result !== null, {
       timeout: 120000,
     });

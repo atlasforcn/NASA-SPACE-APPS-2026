@@ -40,11 +40,12 @@ if (import.meta.env.MODE === "test") window.__mission = mission;
       >{{ s.regional ? "MOLA 區域任務" : s.siteName.toUpperCase() + " · MARS"
       }}<span>真實地形 / 模擬觀測</span>
     </div>
+    <button id="open-localization" aria-controls="localization-tool" :aria-expanded="s.localizationOpen" @click="mission.openLocalization">山頂相儀</button>
     <button id="reset" :disabled="!s.ready" @click="mission.reset()">
       ↻ 重設任務
     </button>
   </header>
-  <main class="workspace" :class="{ 'panel-closed': !s.panelOpen }">
+  <main class="workspace" :class="{ 'panel-closed': !s.panelOpen, 'planning-view': !s.localizationOpen }">
     <section class="map-workspace">
       <MissionMap />
       <div v-if="s.error" class="error-banner" role="alert">
@@ -95,6 +96,6 @@ if (import.meta.env.MODE === "test") window.__mission = mission;
         </div>
       </div>
     </aside>
-    <LocalizationPanel />
+    <LocalizationPanel v-show="s.localizationOpen" />
   </main>
 </template>

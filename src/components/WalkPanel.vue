@@ -33,7 +33,7 @@ function chooseB(include) {
     <template v-if="here">
       <label>{{ here.name }} 現場紀錄<select v-model="here.outcome"><option>待觀察</option><option>已觀察</option><option>略過</option></select></label>
       <label>觀察筆記<textarea v-model="here.note" /></label>
-      <button :disabled="s.searching" @click="m.scan()">山頂相儀掃描／重掃</button>
+      <button aria-controls="localization-tool" @click="m.openLocalization">開啟山頂相儀</button>
       <p v-for="(scan,i) in here.scans" :key="i">{{ scan.source }}{{ scan.scenario === 'poor' ? '（60°、55% 遮擋）' : scan.scenario === 'good' ? '（360°）' : '' }} · 有效 {{ scan.coverageDegrees.toFixed(0) }}° · {{ scan.reason }} · {{ scan.updated ? '已更新位置' : '保留里程推估' }}</p>
       <button @click="m.planWalkFromStation">從當下估計重新規劃</button>
     </template>

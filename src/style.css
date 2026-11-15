@@ -843,3 +843,17 @@ canvas.navigation-risk-tile {
 .no-go-list { padding-left: 18px; }
 .no-go-list li { margin: 8px 0; }
 .no-go-list button { margin-left: 8px; padding: 4px 8px; }
+
+.localization-toolbar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+}
+@media (min-width: 701px) {
+  .workspace.planning-view { grid-template-rows: minmax(470px, calc(100dvh - 76px)); }
+  .planning-view .control-panel { grid-row: 1; }
+}

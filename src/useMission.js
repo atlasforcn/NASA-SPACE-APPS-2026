@@ -58,6 +58,7 @@ export function useMission() {
     error: "",
     tab: "mission",
     panelOpen: true,
+    localizationOpen: false,
     regional: false,
     globalView: false,
     siteId: "jezero",
@@ -274,6 +275,20 @@ export function useMission() {
   function stop() {
     state.running = false;
     cancelAnimationFrame(frame);
+  }
+  let localizationTrigger;
+  async function openLocalization(event) {
+    localizationTrigger = event.currentTarget;
+    state.localizationOpen = true;
+    await nextTick();
+    document.getElementById('close-localization')?.focus();
+  }
+  async function closeLocalization() {
+    state.localizationOpen = false;
+    await nextTick();
+    const trigger = localizationTrigger?.getClientRects().length ? localizationTrigger : document.getElementById('open-localization');
+    trigger?.focus();
+    if (trigger?.id === 'open-localization') window.scrollTo(0,0);
   }
   function cancel() {
     const active = !!worker;
@@ -2414,7 +2429,7 @@ export function useMission() {
   return {
     state,
     dem,
-    startWalk, advanceWalk, focusWalkStation, planWalkFromStation,
+    openLocalization, closeLocalization, startWalk, advanceWalk, focusWalkStation, planWalkFromStation,
     scienceAt: (point) => {
       if (!state.ready || state.regionLoading || !dem.value || !point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) return null;
       const geo = C.localToLatLng(point.x, point.y);
