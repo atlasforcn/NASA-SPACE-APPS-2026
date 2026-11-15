@@ -93,6 +93,9 @@ try {
     return await selected.count()?selected.first().getAttribute('value'):'none';
   }
   const layerDisabled=kind=>layerInput(kind).isDisabled();
+  if (process.env.PRODUCTION_SMOKE === "1") {
+    await page.addInitScript(() => Object.defineProperty(crypto, "randomUUID", { value: undefined }));
+  }
   await page.goto(url);
   if (process.env.PRODUCTION_SMOKE === "1") {
     await page.waitForFunction(() => !document.getElementById("pick-start").disabled);
@@ -129,6 +132,16 @@ try {
     await page.locator("#add-target").click();
     const smokeMap = await page.locator("#map").boundingBox();
     await page.locator("#map").click({ position: { x: smokeMap.width / 2 + 35, y: smokeMap.height / 2 + 35 } });
+    const destination = page.locator("#destination");
+    const originalId = await destination.inputValue();
+    await page.locator("#target-name").fill("第二個自訂點");
+    await page.locator("#add-target").click();
+    await page.locator("#map").click({ position: { x: smokeMap.width / 2 + 60, y: smokeMap.height / 2 + 35 } });
+    const secondId = await destination.inputValue();
+    assert(secondId.startsWith("custom-") && secondId !== originalId);
+    await page.locator("#remove-target").click();
+    assert.equal(await destination.locator("option").evaluateAll(options => options.some(o => o.text.includes("第二個自訂點"))), false);
+    await destination.selectOption(originalId);
     await page.locator("#plan").click();
     assert.equal(await page.locator("#simulate").isEnabled(), true);
     await page.waitForFunction(() => document.querySelectorAll('canvas.navigation-risk-tile').length > 0);
@@ -184,6 +197,11 @@ try {
     const exclusionMap=await page.locator('#map').boundingBox();
     await page.locator('#map').click({position:{x:exclusionMap.width/2,y:exclusionMap.height/2}});
     await page.waitForFunction(() => document.querySelector('.no-go-list')?.textContent.includes('人工影像禁行測試'));
+    await page.locator('#no-go-name').fill('第二個禁行區');
+    await page.locator('#pick-no-go').click();
+    await page.locator('#map').click({position:{x:exclusionMap.width/2+65,y:exclusionMap.height/2}});
+    await page.getByRole('button',{name:'移除禁行區 第二個禁行區',exact:true}).click();
+    assert.equal(await page.locator('.no-go-list li').count(), 1);
     assert(await page.locator('#simulate').isDisabled());
     await page.locator('#plan').click();
     assert((await page.locator('#route-status').textContent()).includes('無法抵達'));
