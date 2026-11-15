@@ -45,7 +45,7 @@ const rows = [
       <p v-if="!s.routeOptions[s.selectedRoute].navigationReasons?.length" class="hint">此路線未增加材質成本；仍套用坡度耗電與禁行檢查。</p>
       <h3>所選方案行程</h3>
       <ol class="itinerary"><li v-for="(leg,i) in s.routeOptions[s.selectedRoute].legs" :key="i"><strong>{{ leg.name }}</strong><span>{{ m.fmt(leg.surface) }} · 耗電 {{ (leg.energy/1000).toFixed(2) }} 單位 · 步行 {{ hours(leg.hours) }} · 停留 {{ leg.stopMinutes }} min</span></li></ol>
-      <div class="button-row"><button id="fit-plan" @click="m.fitRoute">顯示完整路線</button><button id="export-plan" @click="m.exportPlan">匯出任務 GeoJSON</button></div>
+      <div class="button-row"><button aria-controls="localization-tool" @click="m.openLocalization">開啟山頂相儀</button><button id="fit-plan" @click="m.fitRoute">顯示完整路線</button><button id="export-plan" @click="m.exportPlan">匯出任務 GeoJSON</button></div>
       <p class="hint">切換方案會回到規劃起點；高程剖面可勾選比較三個方案。</p>
     </template>
   </section>

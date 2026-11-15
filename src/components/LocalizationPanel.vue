@@ -6,11 +6,12 @@ const m = inject(missionKey),
   s = m.state;
 </script>
 <template>
-  <section class="localization" aria-label="地平線定位">
-    <details class="localization-controls" :open="!s.walk || s.walk.at !== 'base'"><summary>掃描與候選位置</summary>
-      <p class="eyebrow">03 / HORIZON LOCALIZATION</p>
+  <section id="localization-tool" class="localization" aria-label="地平線定位" @keydown.esc="m.closeLocalization">
+    <div class="localization-toolbar"><h2>山頂相儀 · 地平線定位</h2><button id="close-localization" @click="m.closeLocalization">關閉並返回規劃</button></div>
+    <div class="localization-controls">
+
       <div class="section-title">
-        <h2>山頂相儀 · 地平線定位</h2>
+        <h3>掃描與候選位置</h3>
         <span id="localization-status" class="status-pill" role="status">{{
           s.status
         }}</span>
@@ -65,8 +66,8 @@ const m = inject(missionKey),
         </p>
         <p class="hint">{{ s.evaluation }}</p>
       </div>
-    </details>
-    <div v-show="!s.walk || s.walk.at !== 'base'" class="horizon-charts">
+    </div>
+    <div class="horizon-charts">
       <HorizonInput />
       <div class="chart-head">
         <span>{{ s.externalHorizon ? "手繪／照片輪廓與 DEM 候選" : "DEM 模擬掃描視角" }}</span><span>輪廓視窗 / 120°</span>
@@ -103,7 +104,7 @@ const m = inject(missionKey),
       ></canvas>
       <p class="hint" id="horizon-hover" role="status">{{ s.horizonHover || "掃描後，移動滑鼠至快照可在地圖查看對應輪廓點；標示的是該方向仰角最高的地形點。" }}</p>
     </div>
-    <div v-show="!s.walk || s.walk.at !== 'base'" class="localization-results">
+    <div class="localization-results">
       <p id="match-msg" class="hint" role="status">{{ s.message }}</p>
       <ol id="candidates" aria-label="Top 3 定位候選">
         <li v-for="(v, i) in s.result?.candidates || []" :key="i">

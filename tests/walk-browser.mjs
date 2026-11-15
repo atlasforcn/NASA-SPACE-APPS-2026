@@ -22,10 +22,14 @@ export async function verifyWalk(page, url) {
   await panel.getByRole('button',{name:/示範快轉到科學觀測站 A/}).click();
   await panel.getByLabel('觀察筆記').fill('可見脊紋，記錄方向');
   await panel.getByLabel(/現場紀錄/).selectOption('已觀察');
+  assert(await page.locator('#localization-tool').isHidden());
+  await panel.getByRole('button',{name:'開啟山頂相儀'}).click();
   await page.locator('#observe-mode').selectOption('poor');
   const prior = await state(()=>({...window.__mission.state.estimate}));
-  await panel.getByRole('button',{name:'山頂相儀掃描／重掃'}).click();
+  await page.locator('#scan').click();
   await panel.getByText(/同 DEM 模擬.*保留里程推估/).waitFor({timeout:120000});
+  await page.locator('#close-localization').click();
+  assert(await page.locator('#localization-tool').isHidden());
   assert.deepEqual(await state(()=>({...window.__mission.state.estimate})),prior);
   assert.equal(await panel.getByLabel('觀察筆記').inputValue(),'可見脊紋，記錄方向');
   await panel.getByRole('button',{name:'略過 B 返程'}).click();
