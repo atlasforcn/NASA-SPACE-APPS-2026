@@ -641,6 +641,25 @@ details button {
 #route-profile {
   margin-top: 12px;
 }
+@media (min-width: 701px) {
+  .control-panel {
+    grid-row: 1 / 3;
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: calc(100dvh - 76px);
+  }
+  .localization {
+    grid-column: 2;
+    grid-row: 2;
+    grid-template-columns: minmax(180px, .75fr) minmax(0, 1.5fr);
+    align-content: start;
+  }
+  .localization-results {
+    grid-column: 1 / -1;
+    border-top: 1px solid var(--border);
+  }
+}
 @media (min-width: 1100px) {
   .map-badge {
     max-width: calc(100% - 320px);
@@ -658,7 +677,7 @@ details button {
   }
   .map-layer-status { width: min(270px, 34vw); }
   .localization {
-    grid-template-columns: 310px minmax(0, 1fr);
+    grid-template-columns: minmax(145px, .8fr) minmax(0, 1.2fr);
   }
   .localization-results {
     grid-column: 1/-1;
@@ -749,7 +768,8 @@ details button {
   }
   .panel-scroll {
     height: auto;
-    max-height: 48vh;
+    max-height: none;
+    overflow: visible;
   }
   .control-panel > #panel-content { height: auto; }
   .map-legend { left: 14px; bottom: 45px; padding: 10px; }
