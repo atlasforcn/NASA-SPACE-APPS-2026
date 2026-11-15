@@ -1,34 +1,119 @@
 <script setup>
-import { inject } from "vue";
-import { missionKey } from "../useMission";
+import { computed, inject, nextTick, ref, watch } from 'vue';
+import { missionKey } from '../useMission';
+
 const m = inject(missionKey), s = m.state;
+const panel = ref(null);
+const expanded = ref(true);
+const hasRoute = computed(() => s.route?.path?.length > 1);
+const hasExpedition = computed(() => !s.regional && s.expedition.some(leg => leg.path.length > 1));
+const canCompare = computed(() => hasExpedition.value || Object.values(s.routeOptions || {}).filter(route => route.reachable).length > 1);
+
+watch(() => s.profileRevision, async () => {
+  if (!hasRoute.value && !hasExpedition.value) return;
+  expanded.value = true;
+  await nextTick();
+  if (window.matchMedia('(max-width: 700px)').matches) {
+    panel.value?.scrollIntoView({ block: 'nearest' });
+  }
+});
+
+function toggleProfile() {
+  expanded.value = !expanded.value;
+  if (!expanded.value) m.leaveProfile();
+}
 </script>
+
 <template>
-  <section class="group">
-    <h2>路線高程剖面</h2>
-    <label
-      >路段剖面<select id="expedition-leg" v-model="s.profileIndex">
-        <option v-if="s.route" :value="-1">目前路線</option>
-        <option v-if="!s.route && (s.regional || !s.expedition.length)" :value="s.profileIndex" disabled>尚未建立路線</option>
-        <option v-for="(leg, i) in (s.regional ? [] : s.expedition)" :key="i" :value="i">
-          {{ leg.name }}{{ leg.reachable ? "" : "（不可達）" }}
-        </option>
-      </select></label
-    >
-    <label><input type="checkbox" v-model="s.compareProfiles" /> 比較不同路線（相同距離與高程尺度）</label>
-    <canvas
-      id="route-profile"
-      @pointermove="m.hoverProfile"
-      @pointerleave="m.leaveProfile"
-      :ref="(el) => (m.profileCanvas.value = el)"
-      width="360"
-      height="150"
-      role="img"
-      aria-label="數值 DEM 路線高程剖面"
-    ></canvas>
-    <p v-for="item in s.profileLegend" :key="item.name" class="hint" :style="{ color: item.color }">{{ item.name }} · {{ item.length }}</p>
-    <p class="hint" role="status">{{ s.profileHover || "在剖面上移動滑鼠，查看距離、高程與地圖位置。" }}</p>
-    <p class="hint">{{ s.profileInfo }}</p>
-    <p class="hint">{{ s.regional ? "MOLA 公里級地形；格距隨覆蓋範圍調整。" : s.siteId === 'gale' ? "Gale 原生格距 1 m，本站 DEM 取樣 20 m；並非全域 1 m 精度。" : "CTX 原生約 20 m、本站取樣 40 m DEM。" }} 無法判斷岩塊與腳下路況。</p>
+  <section v-if="hasRoute || hasExpedition" ref="panel" class="map-profile" :class="{ 'is-open': expanded }" aria-label="路線高程剖面">
+    <h2>
+      <button id="profile-toggle" type="button" :aria-expanded="expanded" aria-controls="profile-body" @click="toggleProfile">
+        路線高程剖面 <span>{{ expanded ? '收合 ▴' : '展開 ▾' }}</span>
+      </button>
+    </h2>
+    <div id="profile-body" v-show="expanded">
+      <label v-if="hasExpedition" class="profile-leg">路段
+        <select id="expedition-leg" v-model="s.profileIndex">
+          <option v-if="hasRoute" :value="-1">目前路線</option>
+          <option v-for="(leg, i) in s.expedition" :key="i" :value="i">
+            {{ leg.name }}{{ leg.reachable ? '' : '（不可達）' }}
+          </option>
+        </select>
+      </label>
+      <div class="profile-plot">
+        <canvas
+          id="route-profile"
+          :ref="el => (m.profileCanvas.value = el)"
+          width="360" height="120" role="img" aria-label="數值 DEM 路線高程剖面"
+          @pointermove="m.hoverProfile" @pointerdown="m.hoverProfile"
+          @pointerleave="m.leaveProfile" @pointercancel="m.leaveProfile"
+        ></canvas>
+        <p v-if="s.profileHover" class="profile-reading profile-tooltip" role="status">{{ s.profileHover }}</p>
+      </div>
+      <ul v-if="s.profileLegend.length" class="profile-legend" aria-label="剖面曲線">
+        <li v-for="item in s.profileLegend" :key="item.name"><i :style="{background: item.color}"></i>{{ item.name }} · {{ item.length }}</li>
+      </ul>
+      <p v-if="!s.profileLegend.length" class="profile-reading" role="status">{{ s.profileInfo }}</p>
+      <div class="profile-options">
+        <label v-if="canCompare" class="checkbox"><input type="checkbox" v-model="s.compareProfiles" />比較不同路線</label>
+        <details id="profile-source">
+          <summary>剖面資料</summary>
+          <p>{{ s.profileInfo }}</p>
+          <p>{{ s.regional ? 'MOLA 公里級地形，格距隨覆蓋範圍調整。' : s.siteId === 'gale' ? 'Gale 原生格距 1 m，本站 DEM 取樣 20 m。' : 'CTX 原生約 20 m，本站 DEM 取樣 40 m。' }}格距以下的岩塊仍需現地判讀。</p>
+          <p>移動游標或輕觸曲線，可在地圖查看對應位置。多條曲線共用距離與高程尺度。</p>
+        </details>
+      </div>
+    </div>
   </section>
 </template>
+
+<style scoped>
+.map-profile {
+  position: absolute;
+  display: flex; flex-direction: column;
+  max-height: 42%;
+  right: 56px;
+  bottom: 48px;
+  width: min(330px, calc(100% - 82px));
+  border: 1px solid #516a69;
+  border-radius: 10px;
+  background: #13242a;
+  color: #e0e9e5;
+  box-shadow: 0 5px 24px #07101455;
+  overflow: hidden;
+}
+.map-profile h2 { flex-shrink: 0; }
+.map-profile:not(.is-open) { width: auto; }
+#profile-toggle {
+  display: flex; align-items: center; justify-content: space-between; gap: 18px;
+  width: 100%; padding: 8px 13px; background: #1a3036; color: #e0e9e5;
+  border: 0; border-radius: 0; font-size: 14px; font-weight: 700; text-align: left;
+}
+#profile-toggle span { color: var(--mint); font-size: 11px; font-weight: 500; }
+#profile-toggle:focus-visible { outline-offset: -3px; }
+#profile-body { min-height: 0; overflow-y: auto; padding: 5px 13px 9px; }
+.profile-plot { position: relative; }
+.profile-tooltip { position: absolute; inset: auto 5px 3px; background: #13242aee; padding: 3px 7px; border-radius: 4px; pointer-events: none; }
+#route-profile { background: transparent; cursor: crosshair; }
+.profile-leg { display: flex; align-items: center; gap: 8px; margin: 2px 0 5px; }
+.profile-leg select { flex: 1; margin: 0; padding: 4px; font-size: 12px; }
+.profile-legend { display: flex; flex-wrap: wrap; gap: 3px 13px; list-style: none; padding: 0; margin: 4px 0; }
+.profile-legend li, .profile-options, .profile-reading { font-size: 11px; line-height: 1.5; }
+.profile-legend li { display: inline-flex; align-items: center; gap: 5px; }
+.profile-legend i { width: 14px; height: 2px; }
+.profile-reading { margin: 5px 0; color: var(--mint); }
+.profile-options { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 15px; border-top: 1px solid var(--border); margin-top: 7px; padding-top: 6px; }
+.profile-options .checkbox { margin: 0; gap: 5px; font-size: inherit; }
+.profile-options details { margin: 0; color: var(--muted); }
+.profile-options details[open] { flex-basis: 100%; }
+.profile-options details p { margin-top: 5px; }
+@media (min-width: 701px) and (max-width: 940px) {
+  .map-profile { right: 56px; bottom: 96px; width: min(290px, calc(100% - 72px)); }
+}
+@media (max-width: 700px) {
+  .map-profile { position: static; width: 100%; max-height: none; border-radius: 0; border-width: 1px 0; box-shadow: none; }
+  #profile-toggle { padding-inline: 16px; }
+  #profile-body { padding-inline: 16px; max-height: none; }
+  #route-profile { max-height: 120px; }
+}
+</style>

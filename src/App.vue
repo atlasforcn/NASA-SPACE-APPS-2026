@@ -4,6 +4,7 @@ import { useMission, missionKey } from "./useMission";
 import regions from "../regions.mjs";
 import { asset } from "./asset";
 import MissionMap from "./components/MissionMap.vue";
+import RouteProfile from "./components/RouteProfile.vue";
 import ExplorePanel from "./components/ExplorePanel.vue";
 import TaskPanel from "./components/TaskPanel.vue";
 import LayersPanel from "./components/LayersPanel.vue";
@@ -88,14 +89,16 @@ if (import.meta.env.MODE === "test") window.__mission = mission;
   </section>
   <main :inert="choosing" class="workspace" :class="{ 'panel-closed': !s.panelOpen, 'planning-view': !s.localizationOpen }">
     <section class="map-workspace">
-      <MissionMap />
-      <div v-if="s.error" class="error-banner" role="alert">
-        {{ s.error }}<button @click="mission.boot">重試載入</button>
+      <div class="map-frame">
+        <MissionMap />
+        <div v-if="s.error" class="error-banner" role="alert">
+          {{ s.error }}<button @click="mission.boot">重試載入</button>
+        </div>
+        <div class="map-caption">
+          <span>{{ s.mapContext }}</span><span>{{ s.coords }}</span>
+        </div>
       </div>
-      <div class="map-caption">
-        <span>{{ s.mapContext }}</span
-        ><span>{{ s.coords }}</span>
-      </div>
+      <RouteProfile v-if="!choosing && !s.walk" />
     </section>
     <aside class="control-panel" aria-label="任務操作">
       <button

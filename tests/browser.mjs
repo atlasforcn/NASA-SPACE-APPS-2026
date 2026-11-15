@@ -87,6 +87,14 @@ try {
     await page.locator('#map').click({position: {x: box.width / 2, y: box.height / 2}});
     await page.waitForFunction(() => document.getElementById('scan').disabled === false);
   }
+  async function openDetails(...ids) {
+    for (const id of ids) {
+      const disclosure = page.locator('#' + id);
+      if (!(await disclosure.evaluate(element => element.open))) {
+        await disclosure.locator(':scope > summary').click();
+      }
+    }
+  }
   const bearingMarker = page.locator('#map .horizon-view-bearing');
   const leftTurn = page.getByRole('button', {name: /左轉 30°/});
   const rightTurn = page.getByRole('button', {name: /右轉 30°/});
@@ -194,7 +202,39 @@ try {
     await page.locator("#remove-target").click();
     assert.equal(await destination.locator("option").evaluateAll(options => options.some(o => o.text.includes("第二個自訂點"))), false);
     await destination.selectOption(originalId);
+    const profile = page.locator('.map-workspace .map-profile');
+    const chart = profile.locator('#route-profile');
+    const profileToggle = profile.locator('#profile-toggle');
+    assert(await profile.isHidden());
+    assert(await page.locator('#slope-limit').isHidden());
+    assert.equal(await page.locator('#mission-settings').getAttribute('open'), null);
     await page.locator("#plan").click();
+    await chart.waitFor();
+    const mapBounds = await page.locator('#map').boundingBox();
+    const chartBounds = await chart.boundingBox();
+    assert(chartBounds.x + chartBounds.width / 2 > mapBounds.x + mapBounds.width / 2);
+    assert(chartBounds.y + chartBounds.height / 2 > mapBounds.y + mapBounds.height / 2);
+    assert(chartBounds.x + chartBounds.width <= mapBounds.x + mapBounds.width + 1);
+    assert(chartBounds.y + chartBounds.height <= mapBounds.y + mapBounds.height + 1);
+    assert.equal(await profileToggle.getAttribute('aria-expanded'), 'true');
+    await page.screenshot({path:'test-results/map-profile-desktop.png'});
+    await profileToggle.click();
+    assert(await chart.isHidden());
+    await profileToggle.click();
+    assert(await chart.isVisible());
+    await profileToggle.click();
+    await page.setViewportSize({width:390,height:844});
+    await page.locator('#plan').click();
+    await chart.waitFor();
+    assert.equal(await profileToggle.getAttribute('aria-expanded'), 'true');
+    await page.waitForFunction(() => {
+      const box = document.querySelector('#route-profile').getBoundingClientRect();
+      return box.top >= 0 && box.bottom <= innerHeight + 1 && box.width > 150 &&
+        box.left >= 0 && box.right <= innerWidth + 1;
+    });
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    await page.screenshot({path:'test-results/map-profile-mobile.png'});
+    await page.setViewportSize({width:1600,height:1000});
     assert.equal(await page.locator("#simulate").isEnabled(), true);
     await page.waitForFunction(() => document.querySelectorAll('canvas.navigation-risk-tile').length > 0);
     assert.equal(await page.locator('canvas.navigation-risk-tile').first().evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)');
@@ -204,6 +244,7 @@ try {
     await page.locator('#choose-shortest').click();
     await page.locator('#choose-energy').click();
     const plannedDistance = await page.locator('#path-distance').textContent();
+    await openDetails('mission-settings', 'settings-terrain');
     await page.locator('#task-navigation-risk').uncheck();
     assert.equal(await page.locator('canvas.navigation-risk-tile').count(), 0);
     assert.equal(await page.locator('#simulate').isEnabled(), true);
@@ -216,13 +257,16 @@ try {
     assert.equal(await page.locator('#simulate').isDisabled(), true);
     await page.locator('#roughness-limit').fill('1');
     await page.locator('#plan').click();
+    await openDetails('settings-energy');
     await page.locator('#uphill-penalty').fill('12');
     assert.equal(await page.locator('#simulate').isDisabled(), true);
     await page.locator('#plan').click();
+    await openDetails('route-comparison-details');
     await page.locator('.route-comparison').scrollIntoViewIfNeeded();
     await page.screenshot({path:'test-results/navigation-energy.png'});
     // Navigation data is independent of the currently displayed science layer.
     await page.route('**/data/science/thermal.bin', route => route.fulfill({status:503,body:'temporary navigation data failure'}));
+    await openDetails('settings-material');
     await page.locator('#nav-thermal').check();
     await page.waitForFunction(() => document.querySelector('#navigation-data-status')?.textContent.includes('載入失敗'));
     assert(await page.locator('#plan').isDisabled());
@@ -243,6 +287,7 @@ try {
     assert(await page.locator('#simulate').isEnabled());
     assert.equal(await page.locator('#path-distance').textContent(),materialDistance);
     await setLayer('none');
+    await openDetails('settings-no-go');
     await page.locator('#no-go-name').fill('人工影像禁行測試');
     await page.locator('#no-go-radius').fill('50');
     await page.locator('#pick-no-go').click();
@@ -297,6 +342,7 @@ try {
     await page.getByRole('button', {name:'任務',exact:true}).click();
     const previousDestination = await page.locator('#destination').inputValue();
     await page.locator('#slope-limit').fill('20');
+    await openDetails('settings-stops');
     await page.locator('#stop-named-search').fill('Olympus Mons');
     await page.locator('#stop-named-place').selectOption('Olympus Mons');
     await page.locator('#stop-add-named').click();
@@ -410,6 +456,7 @@ try {
     assert.equal(await inspect(()=>window.__mission.state.pois.some(p=>p.id==='butler')),false);
     assert.equal(await inspect(()=>window.__mission.state.geologyAvailable),false);
     await page.getByRole('button',{name:'任務',exact:true}).click();
+    await openDetails('mission-tools');
     assert.equal(await page.locator('#expedition-plan').isVisible(),true);
     assert.equal(await page.locator('#expedition-plan').isDisabled(),true);
     assert.equal(await page.locator('.map-legend').isVisible(),true);
@@ -491,6 +538,7 @@ try {
     assert(await inspect(() => window.__mission.state.running && window.__mission.state.searching));
     await page.waitForFunction(() => window.__mission.state.travelled > 30);
     await page.locator("#simulate").click();
+    await openDetails('mission-tools');
     await page.locator("#scenario-good").click();
     await scan();
     await page.waitForFunction(() => window.__mission.state.result !== null, {
@@ -603,6 +651,7 @@ try {
       m.finishDrawing();
     });
     assert(await inspect(() => window.__mission.state.route.custom));
+    assert(await page.locator('.map-profile #route-profile').isVisible());
     await page.waitForFunction(() => {
       const canvas = document.getElementById("route-profile");
       return window.__mission.state.profileInfo.includes("目前路線") &&
@@ -631,6 +680,7 @@ try {
     assert(await inspect(() => window.__mission.state.points.length > 1));
     await page.locator("#route-clear").click();
     await page.locator("#expedition-plan").click();
+    await page.locator('.map-profile #route-profile').waitFor();
     assert.equal(
       await inspect(() => window.__mission.state.expedition.length),
       2,
@@ -655,6 +705,7 @@ try {
     await inspect(() => window.__mission.reset());
     await page.waitForFunction(() => window.__mission.state.expedition.length === 0 &&
       !window.__mission.state.profileHover && window.__mission.state.profileLegend.length === 0);
+    assert(await page.locator('.map-profile').isHidden());
     await page.locator("#malay-card").click();
     assert(
       await page
@@ -736,6 +787,7 @@ try {
     await page.locator("#plan").click();
     assert(await inspect(() => window.__mission.state.route !== null));
     assert(await inspect(() => !window.__mission.state.straightStatus.includes(" 0 m")));
+    await openDetails('mission-tools');
     assert.equal(await page.locator("#expedition-plan").isVisible(), true);
     assert.equal(await page.locator("#expedition-plan").isDisabled(), true);
     await inspect(() => { window.__mission.planExpedition(); window.__mission.showStation(); });

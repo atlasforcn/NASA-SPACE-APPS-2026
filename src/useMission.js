@@ -139,7 +139,8 @@ export function useMission() {
     stations: [],
     expedition: [],
     expeditionStatus: "",
-    profileIndex: 0,
+    profileIndex: -1,
+    profileRevision: 0,
     profileInfo: "",
     profileHover: "",
     compareProfiles: false,
@@ -325,6 +326,7 @@ export function useMission() {
     remove(idealLayer);
     state.straightStatus = "請重新評估直線。";
     state.route = null;
+    if (state.profileIndex === -1) state.profileIndex = state.expedition.findIndex(leg => leg.path.length > 1);
     remove(routeLayer);
     routeLayer = null;
   }
@@ -414,7 +416,7 @@ export function useMission() {
   function installRoute(result) {
     clearRoute();
     state.route = result;
-    state.profileIndex = -1;
+    if (result.path.length > 1) state.profileIndex = -1;
     waypoint = 0;
     segmentProgress = 0;
     lastTime = null;
@@ -598,6 +600,7 @@ export function useMission() {
     }
     const result = alternatives[state.selectedRoute];
     installRoute(result);
+    if (result.path.length > 1) state.profileRevision++;
     state.routeOptions = alternatives;
     const n = Math.max(1, Math.ceil(C.distance(missionStart, goal) / checkStep()));
     const points = Array.from({ length: n + 1 }, (_, i) => ({
@@ -1399,7 +1402,7 @@ export function useMission() {
       custom: true,
     };
   }
-  async function finishDrawing() {
+  async function finishDrawing(revealProfile = true) {
     if (state.regionLoading || state.points.length < 2 || !slopeValid()) return;
     const outside = state.points.find(p => !C.validDEMPoint(p.x, p.y) || C.risk(p.x, p.y).unknown);
     if (outside && !(await coverTarget(C.localToLatLng(outside.x, outside.y)))) return;
@@ -1407,6 +1410,7 @@ export function useMission() {
     remove(preview);
     const route = routeCheck(state.points);
     installRoute(route);
+    if (revealProfile !== false) state.profileRevision++;
     state.routeStatus = route.reachable
       ? `自訂路線可通行 · 最大坡度 ${route.maxSlope.toFixed(1)}°`
       : `自訂路線含 ${route.invalidSegments.length} 段超坡、缺測或越界區段（紅色），禁止行進。`;
@@ -2016,14 +2020,17 @@ export function useMission() {
     state.expeditionStatus = state.expedition.every((l) => l.reachable)
       ? `往返路線 ${fmt(state.expedition.reduce((sum, l) => sum + l.length, 0))} · 非真實毅力號軌跡`
       : "部分路段不可達，勿視為可通行。";
-    state.profileIndex = 0;
+    state.profileIndex = state.expedition.findIndex(leg => leg.path.length > 1);
+    if (state.profileIndex !== -1) state.profileRevision++;
     nextTick(drawProfile);
     map.fitBounds(bounds, { animate: false });
   }
   function drawProfile() {
     leaveProfile();
     profileSeries = [];
+    profileScale = null;
     state.profileLegend = [];
+    state.profileInfo = "";
     const leg = state.profileIndex === -1
         ? state.route && { ...state.route, name: "目前路線" }
         : !state.regional && state.expedition[state.profileIndex],
@@ -2092,6 +2099,16 @@ export function useMission() {
     const lo = Math.min(...heights), hi = Math.max(...heights);
     const longest = Math.max(...profileSeries.map(v => v.length), 1);
     profileScale = { longest, lo, hi };
+    state.profileLegend = profileSeries.map(v => ({ name: v.name, color: v.color, length: fmt(v.length) }));
+    state.profileInfo = `${leg.name} · ${state.regional ? "MOLA" : state.siteName} DEM · ${fmt(d)} · 最大格網坡度 ${maxSlope.toFixed(1)}° · 缺值 ${missing}；每 ≤${Math.ceil(sampleStep)} m 取樣數值 DEM，非影像高程。`;
+    paintProfile();
+  }
+  function paintProfile() {
+    const cv = profileCanvas.value;
+    if (!cv || !profileScale) return;
+    const ctx = cv.getContext("2d");
+    const {lo, hi, longest} = profileScale;
+    ctx.clearRect(0, 0, cv.width, cv.height);
     ctx.fillStyle = "#aebfc8";
     ctx.font = "10px sans-serif";
     ctx.fillText(`${hi.toFixed(0)} m`, 12, 12);
@@ -2111,8 +2128,6 @@ export function useMission() {
       }
       ctx.stroke();
     }
-    state.profileLegend = profileSeries.map(v => ({ name: v.name, color: v.color, length: fmt(v.length) }));
-    state.profileInfo = `${leg.name} · ${state.regional ? "MOLA" : state.siteName} DEM · ${fmt(d)} · 最大格網坡度 ${maxSlope.toFixed(1)}° · 缺值 ${missing}；每 ≤${Math.ceil(sampleStep)} m 取樣數值 DEM，非影像高程。`;
   }
   function leaveProfile() {
     remove(profileMarker);
@@ -2122,7 +2137,8 @@ export function useMission() {
   function hoverProfile(event) {
     const cv = profileCanvas.value;
     if (!cv || !profileSeries.length) return;
-    drawProfile();
+    leaveProfile();
+    paintProfile();
     const rect = cv.getBoundingClientRect(), px = (event.clientX - rect.left) / rect.width * cv.width;
     const distance = Math.max(0, Math.min(1, (px - 12) / (cv.width - 24))) * profileScale.longest;
     const hits = profileSeries.filter(v => distance <= v.length).map(v => ({ ...v,
@@ -2423,9 +2439,10 @@ export function useMission() {
       stop();
       cancel();
       clearRoute();
+      if (state.expedition.length) clearExpedition();
       syncNavigationRisk(true);
       state.routeStatus = "避險門檻已變更；請重新規劃。";
-      if (state.points.length >= 2 && !state.drawMode) finishDrawing();
+      if (state.points.length >= 2 && !state.drawMode) finishDrawing(false);
     },
   );
   watch(
@@ -2449,6 +2466,7 @@ export function useMission() {
   );
   watch(() => [JSON.stringify(state.navigation),JSON.stringify(state.noGoZones)], () => {
     stop();cancel();clearRoute();
+    if (state.expedition.length) clearExpedition();
     rebuildNavigation();
     if(state.navigation.thermalEnabled && !navigationThermal) loadNavigationThermal();
     else {navigationLoadToken++;state.navigationLoading=false;}
@@ -2523,7 +2541,7 @@ export function useMission() {
     curve,
     profileCanvas,
     hoverProfile,
-    leaveProfile: () => drawProfile(),
+    leaveProfile: () => { leaveProfile(); paintProfile(); },
     locateDrawing,
     asset,
     fmt,

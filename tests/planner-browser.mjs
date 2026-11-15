@@ -21,6 +21,9 @@ try {
     s.targets=[{id:'stop-a',name:'科學站 A',x:-1900,y:-800,unit:'測試'},{id:'stop-b',name:'科學站 B',x:-2200,y:-800,unit:'測試'},{id:'goal',name:'終點',x:-2400,y:-800,unit:'測試'}];
     s.destination='stop-a';
   });
+  await page.getByRole('button', {name:'任務', exact:true}).click();
+  await page.locator('#mission-settings > summary').click();
+  await page.locator('#settings-stops > summary').click();
   await page.locator('#add-stop').click();
   await page.locator('#destination').selectOption('stop-b');
   await page.locator('#add-stop').click();
@@ -28,10 +31,12 @@ try {
   assert.deepEqual(await page.evaluate(()=>[...window.__mission.state.stopIds]),['stop-b','stop-a']);
   await page.getByRole('button',{name:'移除第 1 站',exact:true}).click();
   await page.locator('#destination').selectOption('goal');
+  await page.locator('#settings-assumptions > summary').click();
   await page.locator('#round-trip').check();
   await page.locator('#time-budget').fill('0.01');
   await page.locator('#plan').click();
   await page.waitForFunction(()=>window.__mission.state.routeOptions?.safer.reachable);
+  await page.locator('#route-comparison-details > summary').click();
   assert.equal(await page.locator('.itinerary li').count(),3);
   assert((await page.locator('.route-comparison').innerText()).includes('超出'));
   await page.locator('#choose-shortest').click();
@@ -56,6 +61,13 @@ try {
   await page.locator('#risk-weight').fill('3');
   await page.waitForFunction(()=>window.__mission.state.route===null && window.__mission.state.routeOptions===null);
   assert(await page.locator('#simulate').isDisabled());
+  assert(await page.locator('.map-profile').isHidden());
+  await page.locator('#plan').click();
+  await page.locator('.map-profile #route-profile').waitFor();
+  await page.getByRole('button', {name:'切換模式'}).click();
+  await page.locator('#start-walk').click();
+  await page.locator('#check-science-route').waitFor();
+  assert(await page.locator('.map-profile').isHidden());
   assert.deepEqual(errors,[]);
   console.log('Planner UI: ordered stops, removal, return, dual routes, switching, budgets, profiles, GeoJSON, mobile and invalidation passed');
 } finally {
