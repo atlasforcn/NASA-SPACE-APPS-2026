@@ -1,6 +1,6 @@
 <template>
-  <span><i class="risk-swatch"></i>紅色：人工禁行或地形超限</span>
-  <span><i class="risk-swatch missing"></i>黃色：資料缺失</span>
+  <span><i class="risk-swatch"></i>Red: exclusion zone or terrain limit exceeded</span>
+  <span><i class="risk-swatch missing"></i>Yellow: missing data</span>
 </template>
 
 <style scoped>

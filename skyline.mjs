@@ -49,11 +49,11 @@ function score(p,obs,yaw){const n=p.angles.length,shift=yaw/(360/n);let sum=0,co
 function distinct(sorted,limit=3,separation=180){const out=[];for(const c of sorted){if(out.some(v=>C.distance(v,c)<separation&&Math.abs(C.wrapRad((v.heading-c.heading)*C.DEG))/C.DEG<12))continue;out.push(c);if(out.length===limit)break;}return out;}
 function validate(obs,bounds){if(!obs||!Array.isArray(obs.angles)||obs.angles.length<12||obs.angles.length!==obs.elevations.length||obs.angles.length!==obs.valid.length)throw Error('Invalid horizon observation');const step=360/obs.angles.length;if(obs.angles.some((v,i)=>Math.abs(v-i*step)>1e-6))throw Error('Expected uniform full-circle angle grid');if(!bounds||!['minX','maxX','minY','maxY'].every(k=>Number.isFinite(bounds[k]))||bounds.maxX<bounds.minX||bounds.maxY<bounds.minY)throw Error('Invalid search bounds');}
 const frozenThresholds={version:'v1',maxRms:.20,minCoverage:.50,minOverlap:.95,minGap:.04,minRelief:.20};
-function classify(candidates,obs,thresholds=frozenThresholds){const c=candidates[0];if(!c||!Number.isFinite(c.score))return {status:'lost',reason:'沒有有效候選'};const vals=obs.elevations.filter((v,i)=>obs.valid[i]&&Number.isFinite(v)),relief=vals.length?Math.max(...vals)-Math.min(...vals):0,gap=candidates.length>1?candidates[1].score-c.score:0;
- if(c.coverage<thresholds.minCoverage||c.overlap<thresholds.minOverlap)return {status:'lost',reason:'有效觀測視角或共同覆蓋不足'};
- if(c.score>thresholds.maxRms)return {status:'lost',reason:'觀測與候選地形不相符'};
- if(relief<thresholds.minRelief||gap<thresholds.minGap)return {status:'uncertain',reason:'地形特徵不足或存在相似候選'};
- return {status:'good',reason:'殘差、覆蓋與候選差距通過門檻'};
+function classify(candidates,obs,thresholds=frozenThresholds){const c=candidates[0];if(!c||!Number.isFinite(c.score))return {status:'lost',reason:'No valid candidate'};const vals=obs.elevations.filter((v,i)=>obs.valid[i]&&Number.isFinite(v)),relief=vals.length?Math.max(...vals)-Math.min(...vals):0,gap=candidates.length>1?candidates[1].score-c.score:0;
+ if(c.coverage<thresholds.minCoverage||c.overlap<thresholds.minOverlap)return {status:'lost',reason:'Too little visible skyline or overlapping terrain coverage'};
+ if(c.score>thresholds.maxRms)return {status:'lost',reason:'The observed skyline does not match the candidate terrain'};
+ if(relief<thresholds.minRelief||gap<thresholds.minGap)return {status:'uncertain',reason:'The terrain has too few distinctive features, or several candidates look alike'};
+ return {status:'good',reason:'The fit, coverage and separation from the next candidate meet the thresholds'};
 }
 async function search(obs,bounds,options={}){
  validate(obs,bounds);const {coarseStep=200,onProgress=()=>{},cancelled=()=>false,cache=new Map(),candidateSeparation=180,thresholds=frozenThresholds}=options;

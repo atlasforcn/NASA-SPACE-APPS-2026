@@ -6,9 +6,9 @@ const m = inject(missionKey),
 </script>
 <template>
   <section class="group">
-    <h2>繪製自己的探索路線</h2>
+    <h2>Draw an exploration route</h2>
     <p class="hint">
-      從導航估計位置開始，逐點設定或拖曳手繪。局部 DEM 有效處優先，越界或缺測處使用 MOLA；MOLA 區段僅供粗略規劃。紅色為缺測或超坡。
+      Start at the estimated position. Click to add points or drag to draw. Local DEM coverage takes priority, with MOLA used for a coarse estimate beyond it. Red marks missing data or a slope above the limit.
     </p>
     <div class="button-row">
       <button
@@ -17,14 +17,14 @@ const m = inject(missionKey),
         :aria-pressed="s.drawMode === 'points'"
         @click="m.beginDrawing('points')"
       >
-        逐點繪製</button
+        Add points</button
       ><button
         id="draw-freehand"
         :disabled="!s.ready || !s.hasStart"
         :aria-pressed="s.drawMode === 'freehand'"
         @click="m.beginDrawing('freehand')"
       >
-        手繪路線
+        Draw freehand
       </button>
     </div>
     <div class="button-row">
@@ -34,14 +34,14 @@ const m = inject(missionKey),
         :disabled="s.regionLoading || s.points.length < 2"
         @click="m.finishDrawing"
       >
-        完成並檢查</button
+        Finish and check</button
       ><button id="route-undo" :disabled="s.regionLoading || s.points.length < 2" @click="m.undo">
-        撤銷</button
-      ><button id="route-clear" @click="m.clearDrawing">清除</button>
+        Undo</button
+      ><button id="route-clear" @click="m.clearDrawing">Clear</button>
     </div>
     <div class="button-row">
-      <button id="draw-locate" :disabled="!s.hasStart" @click="m.locateDrawing()">找回目前位置</button>
-      <button id="draw-fit" :disabled="s.points.length < 2 && !s.route" @click="m.locateDrawing(true)">顯示完整路線</button>
+      <button id="draw-locate" :disabled="!s.hasStart" @click="m.locateDrawing()">Recenter on current position</button>
+      <button id="draw-fit" :disabled="s.points.length < 2 && !s.route" @click="m.locateDrawing(true)">Show entire route</button>
     </div>
     <p id="draw-status" class="hint" role="status">{{ s.drawStatus }}</p>
   </section>

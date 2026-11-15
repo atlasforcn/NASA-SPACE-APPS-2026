@@ -20,7 +20,7 @@ test('Slope and local roughness use sampled numerical elevations',()=>{
 });
 test('Topography peaks become DEM-derived candidate features',()=>{
  assert(c.FEATURES.length>=3, c.FEATURES.length);
- assert(c.FEATURES.every(x=>x.name.includes('DEM 候選峰')));
+ assert(c.FEATURES.every(x=>x.name.includes('DEM peak candidate')));
 });
 test('DEM-aware line-of-sight geometry uses sampled heights',()=>{
  const g=c.featureGeometry({x:-1400,y:-820},c.FEATURES[0]);assert(Number.isFinite(g.elevation));

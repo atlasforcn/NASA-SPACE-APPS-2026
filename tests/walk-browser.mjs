@@ -21,7 +21,7 @@ export async function verifyWalk(page, url) {
   const focus = panel.locator('#focus-science-evidence');
   const findDetours = panel.locator('#check-science-detour');
   const choices = panel.locator('#walk-alternatives').getByRole('radio');
-  const profile = page.getByRole('region', { name: '路線高程剖面' });
+  const profile = page.getByRole('region', { name: 'Route elevation profile' });
   async function showEvidence(section) {
     const details = section.locator('details.route-evidence');
     if (!(await details.evaluate(el => el.open))) await details.locator('summary').click();
@@ -42,7 +42,7 @@ export async function verifyWalk(page, url) {
   await check.click();
   await verdict.waitFor();
   assert.equal(await verdict.getAttribute('data-verdict'), 'reroute');
-  assert.match(await verdict.innerText(), /建議改道/);
+  assert.match(await verdict.innerText(), /Detour recommended/);
   const direct = await page.evaluate(() => {
     const { assessment } = window.__mission.state.walk;
     return { length: assessment.length, slope: assessment.maxSlope };
@@ -51,11 +51,11 @@ export async function verifyWalk(page, url) {
   const directSection = panel.locator('section.assessment:has(#science-route-verdict)');
   const directEvidence = await showEvidence(directSection);
   assert(directEvidence.includes(direct.slope.toFixed(1) + '°'));
-  assert.match(directEvidence, /穿越人工禁行區\s+否/);
-  await profile.locator('.profile-legend').getByText(/直線/).waitFor();
+  assert.match(directEvidence, /Crosses a marked exclusion zone\s+No/);
+  await profile.locator('.profile-legend').getByText(/Straight line between endpoints/).waitFor();
   await focus.click();
   await page.locator('#map .preflight-evidence').first().waitFor();
-  await page.locator('#map .leaflet-popup').getByText('基地到 A 的判定位置').waitFor();
+  await page.locator('#map .leaflet-popup').getByText('Assessed segment on the route from the base to A').waitFor();
   await page.waitForFunction(() => getComputedStyle(document.querySelector('#map .leaflet-popup')).opacity === '1');
   assert.deepEqual(await vehicle(), atBase);
 
@@ -83,11 +83,11 @@ export async function verifyWalk(page, url) {
     assert.equal(await page.evaluate(() => window.__mission.state.walk.selectedAlternative), route.id);
     await page.locator('#map path.science-route-' + route.id + '.selected').waitFor();
     assert(await panel.locator('#science-detour-verdict[data-verdict="go"]').isVisible());
-    assert.match(await profile.locator('.profile-legend').innerText(), /直線/);
+    assert.match(await profile.locator('.profile-legend').innerText(), /Straight line between endpoints/);
     assert.deepEqual(await vehicle(), atBase);
   }
   await panel.locator('#focus-science-detour').click();
-  await page.locator('#map .leaflet-popup').getByText('替代路線判定位置', {exact:true}).waitFor();
+  await page.locator('#map .leaflet-popup').getByText('Assessed location on the alternative route', {exact:true}).waitFor();
   fs.mkdirSync('test-results', {recursive: true});
   await page.screenshot({path: 'test-results/jezero-preflight-desktop.png'});
   await page.setViewportSize({width: 390, height: 844});
@@ -106,8 +106,8 @@ export async function verifyWalk(page, url) {
   await slopeLimit.fill('1');
   await check.click();
   await panel.locator('#science-route-verdict[data-verdict="hold"]').waitFor();
-  assert.match(await verdict.innerText(), /暫緩出發/);
-  assert.match(await panel.locator('.reason').first().innerText(), /基地坡度.+超過上限 1°。請另選出發點/);
+  assert.match(await verdict.innerText(), /Hold departure/);
+  assert.match(await panel.locator('.reason').first().innerText(), /Base slope.+above the limit of 1°. Choose a different starting point/);
   assert(await panel.locator('#check-science-detour').isHidden());
   assert.deepEqual(await vehicle(), atBase);
   await panel.locator('.limits summary').click();
@@ -122,7 +122,7 @@ export async function verifyWalk(page, url) {
   await check.waitFor();
   if (await slopeLimit.isHidden()) await panel.locator('.limits summary').click();
   await slopeLimit.fill('15');
-  await panel.locator('#science-no-go-name').fill('中央禁行區');
+  await panel.locator('#science-no-go-name').fill('Central exclusion zone');
   await panel.locator('#science-no-go-radius').fill('60');
   await panel.locator('#science-pick-no-go').click();
   const map = page.locator('#map');
@@ -134,14 +134,14 @@ export async function verifyWalk(page, url) {
   }});
   await check.click();
   await panel.locator('#science-route-verdict[data-verdict="reroute"]').waitFor();
-  assert.match(await showEvidence(directSection), /穿越人工禁行區\s+是/);
+  assert.match(await showEvidence(directSection), /Crosses a marked exclusion zone\s+Yes/);
   await findDetours.click();
   if (await choices.count()) await choices.first().check();
   await panel.locator('#science-detour-verdict[data-verdict="go"]').waitFor();
   const detourSection = panel.locator('section.assessment:has(#science-detour-verdict)');
-  assert.match(await showEvidence(detourSection), /穿越人工禁行區\s+否/);
+  assert.match(await showEvidence(detourSection), /Crosses a marked exclusion zone\s+No/);
   assert.deepEqual(await vehicle(), atBase);
-  await panel.getByRole('button', {name: /移除.*中央禁行區/}).click();
+  await panel.getByRole('button', {name: /Remove.*Central exclusion zone/}).click();
 
   await page.locator('#reset').click();
   await page.locator('#start-walk').click();
@@ -149,7 +149,7 @@ export async function verifyWalk(page, url) {
   assert.deepEqual(await targets(), ['s1']);
   assert(await verdict.isHidden());
   assert.equal(await page.locator('#map .preflight-evidence').count(), 0);
-  await page.getByRole('button', {name: '切換模式'}).click();
+  await page.getByRole('button', {name: 'Switch modes'}).click();
   await page.locator('#start-free').click();
   await page.locator('#pick-start').waitFor();
   assert(await check.isHidden());
@@ -163,7 +163,7 @@ export async function verifyScienceOrder(page, url) {
   const pending = new Map();
   const pattern = /\/science\/(thermal|spectral|chemical)\.bin$/;
   await page.route(pattern, route => pending.set(route.request().url().match(pattern)[1],route));
-  await page.getByRole('button',{name:'圖層',exact:true}).click();
+  await page.getByRole('button',{name:'Layers',exact:true}).click();
   const panel = page.locator('.layer-controls:visible');
   const toggle = id => panel.locator('input[value="'+id+'"]');
   for (const id of ['thermal','spectral','chemical']) await toggle(id).check();
@@ -182,10 +182,10 @@ export async function verifyScienceOrder(page, url) {
   await page.waitForFunction(()=>window.__mission.state.scienceLayers.thermal.meta);
   assert((await page.locator('#layer-legend').textContent()).includes('Fe Conc.'));
   assert.equal(await page.locator('.science-context a[download]').getAttribute('href').then(v=>v.endsWith('chemical.bin')),true);
-  await panel.getByRole('button',{name:'橄欖石豐度 上移'}).click();
+  await panel.getByRole('button',{name:'TES olivine abundance up'}).click();
   // Reordering can start another request for a previously failed layer.
   await release('spectral',true);
-  await page.getByRole('button',{name:'重試載入科學圖層'}).click();
+  await page.getByRole('button',{name:'Retry science layers'}).click();
   await toggle('spectral').uncheck();
   await release('spectral');
   await page.waitForFunction(()=>!window.__mission.state.scienceLayers.spectral);
@@ -193,14 +193,14 @@ export async function verifyScienceOrder(page, url) {
   await page.waitForFunction(()=>window.__mission.state.scienceLayers.spectral.meta);
   const controls = panel.locator('.layer-customization__item').last();
   await controls.locator('select').selectOption('gray');
-  await controls.getByLabel('上限').fill('0.2');
+  await controls.getByLabel('Maximum').fill('0.2');
   await page.waitForFunction(()=>window.__mission.state.scienceLayers.spectral.range?.[1]===0.2);
   assert((await page.locator('.science-context').textContent()).includes('0 → 0.2'));
   await toggle('geophysical').check();
   await toggle('atmospheric').check();
   const cards=page.locator('.layer-guidance:visible article');
   assert.equal(await cards.count(),5);
-  await cards.filter({hasText:'同格歷史測站'}).waitFor();
+  await cards.filter({hasText:'Historical station'}).waitFor();
   assert((await cards.locator('..').first().innerText()).includes('wt % Fe'));
   await toggle('chemical').uncheck();
   assert.equal(await cards.count(),4);

@@ -36,9 +36,9 @@ try {
   await hover(0.5);
   assert.equal(await page.locator('.horizon-hover-point').count(), 1);
   const first = await page.locator('#horizon-hover').textContent();
-  assert(first.includes('方位 45°'));
+  assert(first.includes('bearing 45°'));
   await hover(0.75);
-  assert((await page.locator('#horizon-hover').textContent()).includes('方位 75°'));
+  assert((await page.locator('#horizon-hover').textContent()).includes('bearing 75°'));
   await page.evaluate(() => { window.__mission.state.truth.x += 200; });
   await hover(0.5);
   assert.equal(await page.locator('#horizon-hover').textContent(), first);
@@ -48,7 +48,7 @@ try {
   await page.evaluate(() => { window.__mission.scan(); window.__mission.cancel(); });
   await hover(0);
   assert.equal(await page.locator('.horizon-hover-point').count(), 0);
-  assert((await page.locator('#horizon-hover').textContent()).includes('無有效觀測'));
+  assert((await page.locator('#horizon-hover').textContent()).includes('No valid observation'));
   await page.evaluate(() => window.__mission.reset('good'));
   assert.equal(await page.locator('.horizon-hover-point').count(), 0);
   assert.deepEqual(errors, []);

@@ -38,7 +38,7 @@
     "mask": null,
     "status": "excluded",
     "result": null,
-    "reason": "缺少經複核的相機幾何、輪廓、遮罩及逐方位 DEM 覆蓋。"
+    "reason": "Camera geometry, skyline traces, masks and DEM coverage by bearing still need review."
   },
   {
     "product": "Mastcam-Z_360_Van_Zyl_Sols53-64_L0_natural.png",
@@ -79,7 +79,7 @@
     "mask": null,
     "status": "excluded",
     "result": null,
-    "reason": "缺少經複核的相機幾何、輪廓、遮罩及逐方位 DEM 覆蓋。"
+    "reason": "Camera geometry, skyline traces, masks and DEM coverage by bearing still need review."
   },
   {
     "product": "Mastcam-Z_360_Horizon_2_Sol114_L0_natural.png",
@@ -120,7 +120,7 @@
     "mask": null,
     "status": "excluded",
     "result": null,
-    "reason": "缺少經複核的相機幾何、輪廓、遮罩及逐方位 DEM 覆蓋。"
+    "reason": "Camera geometry, skyline traces, masks and DEM coverage by bearing still need review."
   },
   {
     "product": "ZL0_0114_0677061671_832ECM_N0041062ZCAM08094_0630LMJ",
@@ -164,6 +164,6 @@
     "mask": null,
     "status": "excluded",
     "result": null,
-    "reason": "缺少經複核的相機幾何、輪廓、遮罩及逐方位 DEM 覆蓋。"
+    "reason": "Camera geometry, skyline traces, masks and DEM coverage by bearing still need review."
   }
 ]

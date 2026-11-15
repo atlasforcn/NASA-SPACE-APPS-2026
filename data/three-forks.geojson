@@ -22,7 +22,7 @@
         "Rover Elevation": "-2545.263",
         "Sample Tube Azimuth": "325",
         "LMST": "SOL-0653M13:38:22.157",
-        "name": "Malay 投放時的車體位置",
+        "name": "Rover position at the Malay sample drop",
         "positionMeaning": "Rover position at dropoff; not either endpoint of the sample tube.",
         "sources": {
           "locations": "https://pds-geosciences.wustl.edu/m2020/urn-nasa-pds-mars2020_sample_depot_three_forks/miscellaneous/sample_metadata/sample_tube_locations.csv",
@@ -54,7 +54,7 @@
         "Rover Elevation": "-2545.479",
         "Sample Tube Azimuth": "144",
         "LMST": "SOL-0655M13:25:56.560",
-        "name": "Mageik 投放時的車體位置",
+        "name": "Rover position at the Mageik sample drop",
         "positionMeaning": "Rover position at dropoff; not either endpoint of the sample tube.",
         "sources": {
           "locations": "https://pds-geosciences.wustl.edu/m2020/urn-nasa-pds-mars2020_sample_depot_three_forks/miscellaneous/sample_metadata/sample_tube_locations.csv",
@@ -86,7 +86,7 @@
         "Rover Elevation": "-2545.309",
         "Sample Tube Azimuth": "117",
         "LMST": "SOL-0661M12:48:35.876",
-        "name": "Crosswind Lake 投放時的車體位置",
+        "name": "Rover position at the Crosswind Lake sample drop",
         "positionMeaning": "Rover position at dropoff; not either endpoint of the sample tube.",
         "sources": {
           "locations": "https://pds-geosciences.wustl.edu/m2020/urn-nasa-pds-mars2020_sample_depot_three_forks/miscellaneous/sample_metadata/sample_tube_locations.csv",
@@ -118,7 +118,7 @@
         "Rover Elevation": "-2545.18",
         "Sample Tube Azimuth": "221",
         "LMST": "SOL-0666M13:32:55.072",
-        "name": "Roubion 投放時的車體位置",
+        "name": "Rover position at the Roubion sample drop",
         "positionMeaning": "Rover position at dropoff; not either endpoint of the sample tube.",
         "sources": {
           "locations": "https://pds-geosciences.wustl.edu/m2020/urn-nasa-pds-mars2020_sample_depot_three_forks/miscellaneous/sample_metadata/sample_tube_locations.csv",
@@ -150,7 +150,7 @@
         "Rover Elevation": "-2545.27",
         "Sample Tube Azimuth": "82",
         "LMST": "SOL-0668M13:23:55.805",
-        "name": "Coulettes 投放時的車體位置",
+        "name": "Rover position at the Coulettes sample drop",
         "positionMeaning": "Rover position at dropoff; not either endpoint of the sample tube.",
         "sources": {
           "locations": "https://pds-geosciences.wustl.edu/m2020/urn-nasa-pds-mars2020_sample_depot_three_forks/miscellaneous/sample_metadata/sample_tube_locations.csv",
@@ -182,7 +182,7 @@
         "Rover Elevation": "-2545.101",
         "Sample Tube Azimuth": "173",
         "LMST": "SOL-0672M14:09:04.193",
-        "name": "Montdenier 投放時的車體位置",
+        "name": "Rover position at the Montdenier sample drop",
         "positionMeaning": "Rover position at dropoff; not either endpoint of the sample tube.",
         "sources": {
           "locations": "https://pds-geosciences.wustl.edu/m2020/urn-nasa-pds-mars2020_sample_depot_three_forks/miscellaneous/sample_metadata/sample_tube_locations.csv",
@@ -214,7 +214,7 @@
         "Rover Elevation": "-2545.443",
         "Sample Tube Azimuth": "146",
         "LMST": "SOL-0675M13:07:52.470",
-        "name": "Bearwallow 投放時的車體位置",
+        "name": "Rover position at the Bearwallow sample drop",
         "positionMeaning": "Rover position at dropoff; not either endpoint of the sample tube.",
         "sources": {
           "locations": "https://pds-geosciences.wustl.edu/m2020/urn-nasa-pds-mars2020_sample_depot_three_forks/miscellaneous/sample_metadata/sample_tube_locations.csv",
@@ -246,7 +246,7 @@
         "Rover Elevation": "-2545.093",
         "Sample Tube Azimuth": "233",
         "LMST": "SOL-0680M12:52:41.778",
-        "name": "Skyland 投放時的車體位置",
+        "name": "Rover position at the Skyland sample drop",
         "positionMeaning": "Rover position at dropoff; not either endpoint of the sample tube.",
         "sources": {
           "locations": "https://pds-geosciences.wustl.edu/m2020/urn-nasa-pds-mars2020_sample_depot_three_forks/miscellaneous/sample_metadata/sample_tube_locations.csv",
@@ -278,7 +278,7 @@
         "Rover Elevation": "-2545.282",
         "Sample Tube Azimuth": "46",
         "LMST": "SOL-0682M14:04:26.386",
-        "name": "Atsah 投放時的車體位置",
+        "name": "Rover position at the Atsah sample drop",
         "positionMeaning": "Rover position at dropoff; not either endpoint of the sample tube.",
         "sources": {
           "locations": "https://pds-geosciences.wustl.edu/m2020/urn-nasa-pds-mars2020_sample_depot_three_forks/miscellaneous/sample_metadata/sample_tube_locations.csv",
@@ -310,7 +310,7 @@
         "Rover Elevation": "-2545.203",
         "Sample Tube Azimuth": "206",
         "LMST": "SOL-0690M14:36:26.755",
-        "name": "Amalik Witness 投放時的車體位置",
+        "name": "Rover position at the Amalik Witness sample drop",
         "positionMeaning": "Rover position at dropoff; not either endpoint of the sample tube.",
         "sources": {
           "locations": "https://pds-geosciences.wustl.edu/m2020/urn-nasa-pds-mars2020_sample_depot_three_forks/miscellaneous/sample_metadata/sample_tube_locations.csv",

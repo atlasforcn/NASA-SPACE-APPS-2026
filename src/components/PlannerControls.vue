@@ -12,51 +12,51 @@ const chosenName = computed(() => s.entries.find(p => p.name === namedChoice.val
 <template>
   <div class="planner-controls">
     <details id="settings-stops" class="planning-assumptions">
-      <summary>中途停靠與地名搜尋</summary>
-      <p class="hint">先加中途停靠點，最後選終點。</p>
-      <label>搜尋地名與著陸點<input id="stop-named-search" v-model="namedQuery" type="search" placeholder="Olympus Mons、Jezero、Octavia E. Butler Landing…" @input="namedChoice = ''" /></label>
-      <label>選擇地點<select id="stop-named-place" v-model="namedChoice" :disabled="s.regionLoading">
-        <option value="">{{ namedMatches.length ? '請選擇地點' : '找不到地名，請調整搜尋文字' }}</option>
-        <option v-for="p in namedMatches" :key="p.name" :value="p.name">{{ p.zh ? `${p.zh} · ${p.name}` : p.name }}</option>
+      <summary>Intermediate stops and place search</summary>
+      <p class="hint">Add intermediate stops, then choose the final destination.</p>
+      <label>Search places and landing sites<input id="stop-named-search" v-model="namedQuery" type="search" placeholder="Olympus Mons, Jezero, Octavia E. Butler Landing…" @input="namedChoice = ''" /></label>
+      <label>Select a place<select id="stop-named-place" v-model="namedChoice" :disabled="s.regionLoading">
+        <option value="">{{ namedMatches.length ? 'Choose a place' : 'No place found. Try another search.' }}</option>
+        <option v-for="p in namedMatches" :key="p.name" :value="p.name">{{ p.zh && p.zh !== p.name ? `${p.zh} · ${p.name}` : p.name }}</option>
       </select></label>
       <div class="button-row">
-        <button id="stop-add-named" :disabled="!s.ready || s.regionLoading || !chosenName" @click="m.addNamedTarget(chosenName, 'stop')">加入停靠順序</button>
-        <button id="stop-destination-named" :disabled="!s.ready || s.regionLoading || !chosenName" @click="m.addNamedTarget(chosenName, 'destination')">設為終點</button>
+        <button id="stop-add-named" :disabled="!s.ready || s.regionLoading || !chosenName" @click="m.addNamedTarget(chosenName, 'stop')">Add to stop sequence</button>
+        <button id="stop-destination-named" :disabled="!s.ready || s.regionLoading || !chosenName" @click="m.addNamedTarget(chosenName, 'destination')">Set as destination</button>
       </div>
-      <p class="hint">未搜尋時顯示精選地點；搜尋結果最多 100 筆。加入位置採地名目錄中心或歷史著陸座標，跨區會自動擴大地形覆蓋並保留現有任務。</p>
+      <p class="hint">Featured places appear before you search. Results are limited to 100. Stops use catalog centers or historical landing coordinates. Terrain coverage expands as needed.</p>
       <p class="hint" role="status">{{ s.namedTargetStatus }}</p>
-      <button id="add-stop" :disabled="!s.destination || s.stopIds.includes(s.destination)" @click="m.addStop">將所選目的地加入中途停靠</button>
+      <button id="add-stop" :disabled="!s.destination || s.stopIds.includes(s.destination)" @click="m.addStop">Add selected destination as a stop</button>
       <ol class="planner-stops">
         <li v-for="(id, i) in s.stopIds" :key="id">
           <span>{{ s.targets.find(t => t.id === id)?.name }}</span>
-          <button :disabled="i === 0" :aria-label="`上移第 ${i+1} 站`" @click="m.moveStop(i,-1)">↑</button>
-          <button :disabled="i === s.stopIds.length-1" :aria-label="`下移第 ${i+1} 站`" @click="m.moveStop(i,1)">↓</button>
-          <button :aria-label="`移除第 ${i+1} 站`" @click="m.removeStop(i)">移除</button>
+          <button :disabled="i === 0" :aria-label="`Move up stop ${i+1}`" @click="m.moveStop(i,-1)">↑</button>
+          <button :disabled="i === s.stopIds.length-1" :aria-label="`Move down stop ${i+1}`" @click="m.moveStop(i,1)">↓</button>
+          <button :aria-label="`Remove stop ${i+1}`" @click="m.removeStop(i)">Remove</button>
         </li>
       </ol>
-      <p class="hint">終點：{{ s.targets.find(t => t.id === s.destination)?.name || '請選擇終點' }}</p>
+      <p class="hint">Destination: {{ s.targets.find(t => t.id === s.destination)?.name || 'Choose a destination' }}</p>
     </details>
     <details id="settings-energy" class="planning-assumptions">
-      <summary>坡度耗電模型</summary>
+      <summary>Slope and travel energy</summary>
       <div class="field-pair">
-        <label>每 1% 上坡增耗（%）<input id="uphill-penalty" v-model.number="s.planner.uphillPenalty" type="number" min="0" max="100" /></label>
-        <label>每 1% 下坡省電（%）<input id="downhill-saving" v-model.number="s.planner.downhillSaving" type="number" min="0" max="100" /></label>
+        <label>Extra energy per 1% uphill grade (%)<input id="uphill-penalty" v-model.number="s.planner.uphillPenalty" type="number" min="0" max="100" /></label>
+        <label>Energy saved per 1% downhill grade (%)<input id="downhill-saving" v-model.number="s.planner.downhillSaving" type="number" min="0" max="100" /></label>
       </div>
-      <p class="hint">預設 10% 上坡每公尺耗電約為平地的 2 倍，10% 下坡約為 0.5 倍；最低保留 25% 行進耗電。逐段讀取 DEM，返程依反方向重算。係數為可調示範假設，尚未依車輛校準。</p>
+      <p class="hint">At the default settings, a 10% uphill grade uses about twice the flat-ground energy per meter. A 10% descent uses about half. Energy use has a 25% floor. Return legs are recalculated in the travel direction. These coefficients are adjustable scenario assumptions.</p>
     </details>
     <details id="settings-assumptions" class="planning-assumptions">
-      <summary>行程與風險參數</summary>
+      <summary>Travel time and risk settings</summary>
       <div class="field-pair">
-        <label>平地步速（km/h）<input id="walk-speed" v-model.number="s.planner.speedKmh" type="number" min="0.1" max="10" step="0.1" /></label>
-        <label>時間預算（小時）<input id="time-budget" v-model.number="s.planner.budgetHours" type="number" min="0.1" step="0.5" /></label>
+        <label>Level-ground walking speed (km/h)<input id="walk-speed" v-model.number="s.planner.speedKmh" type="number" min="0.1" max="10" step="0.1" /></label>
+        <label>Time budget (hours)<input id="time-budget" v-model.number="s.planner.budgetHours" type="number" min="0.1" step="0.5" /></label>
       </div>
-      <p class="hint">步行時間依地球步速和沿途坡度估算，總時間另加每站停留。</p>
+      <p class="hint">Walking time uses an Earth-based speed adjusted for slope. Total time includes stops.</p>
       <div class="field-pair">
-        <label>每站停留（分鐘）<input id="stop-minutes" v-model.number="s.planner.stopMinutes" type="number" min="0" step="5" /></label>
-        <label>高坡度門檻（°）<input id="high-slope" v-model.number="s.planner.highSlope" type="number" min="0" max="45" /></label>
+        <label>Time at each stop (minutes)<input id="stop-minutes" v-model.number="s.planner.stopMinutes" type="number" min="0" step="5" /></label>
+        <label>Steep slope threshold (°)<input id="high-slope" v-model.number="s.planner.highSlope" type="number" min="0" max="45" /></label>
       </div>
-      <label>地形風險權重 {{ s.planner.riskWeight }}<input id="risk-weight" v-model.number="s.planner.riskWeight" type="range" min="0" max="5" step="0.25" /></label>
-      <label><input id="round-trip" v-model="s.planner.roundTrip" type="checkbox" /> 終點後規劃返回起點</label>
+      <label>Terrain risk weight {{ s.planner.riskWeight }}<input id="risk-weight" v-model.number="s.planner.riskWeight" type="range" min="0" max="5" step="0.25" /></label>
+      <label><input id="round-trip" v-model="s.planner.roundTrip" type="checkbox" /> Plan a return to the starting point</label>
     </details>
   </div>
 </template>

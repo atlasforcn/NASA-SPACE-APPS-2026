@@ -3,7 +3,7 @@
 export const minimumEnergyRatio = 0.25;
 export function validateEnergyOptions({ uphillPenalty = 10, downhillSaving = 5 } = {}) {
   if (![uphillPenalty, downhillSaving].every(v => Number.isFinite(v) && v >= 0 && v <= 100))
-    throw Error('上坡增耗與下坡節省係數須介於 0–100');
+    throw Error('Uphill and downhill energy coefficients must be between 0 and 100');
 }
 export function energyStep(distance, rise, { uphillPenalty = 10, downhillSaving = 5 } = {}) {
   if (!Number.isFinite(distance) || !Number.isFinite(rise) || distance < 0) return Infinity;

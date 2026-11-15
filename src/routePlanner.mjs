@@ -48,10 +48,10 @@ export function measureRoute(path, options = {}) {
 
 export function buildItinerary(start, stops, options = {}) {
   const { speedKmh = 3, riskWeight = 1, highSlope = 15, roundTrip = false, stopMinutes = 15, budgetHours = 8 } = options;
-  if (!stops.length || ![speedKmh,riskWeight,highSlope,stopMinutes,budgetHours].every(Number.isFinite) || speedKmh <= 0 || speedKmh > 10 || riskWeight < 0 || riskWeight > 5 || highSlope < 0 || highSlope > 45 || stopMinutes < 0 || budgetHours <= 0) throw Error('請輸入有效的速度（大於 0 且不超過 10 km/h）、風險權重（0–5）與時間預算。');
-  for (const station of stops) if (station.stopMinutes != null && (!Number.isFinite(station.stopMinutes) || station.stopMinutes < 0)) throw Error('站點工作時間須為非負分鐘數');
+  if (!stops.length || ![speedKmh,riskWeight,highSlope,stopMinutes,budgetHours].every(Number.isFinite) || speedKmh <= 0 || speedKmh > 10 || riskWeight < 0 || riskWeight > 5 || highSlope < 0 || highSlope > 45 || stopMinutes < 0 || budgetHours <= 0) throw Error('Enter a speed above 0 and up to 10 km/h, a risk weight of 0–5 and a valid time budget.');
+  for (const station of stops) if (station.stopMinutes != null && (!Number.isFinite(station.stopMinutes) || station.stopMinutes < 0)) throw Error('Time at each site must be zero or more minutes');
   validateEnergyOptions(options);
-  const destinations = [...stops, ...(roundTrip ? [{ ...start, name: '返回起點', returnLeg: true }] : [])];
+  const destinations = [...stops, ...(roundTrip ? [{ ...start, name: 'Return to start', returnLeg: true }] : [])];
   function build(mode) {
     let from = start;
     const path = [{...start}], legs = [], stopIndices = [];

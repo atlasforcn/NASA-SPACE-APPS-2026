@@ -10,16 +10,16 @@ const meta = computed(() => s.scienceMeta);
 const cell = computed(() => m.scienceCellAt(point.value));
 const range = computed(() => s.scienceLayers[s.layer]?.range || meta.value?.scale);
 const sampled = computed(() => m.scienceValueAt(point.value));
-const value = (n, digits = 0) => Number.isFinite(n) ? n.toFixed(digits) : '無有效資料';
+const value = (n, digits = 0) => Number.isFinite(n) ? n.toFixed(digits) : 'No valid data';
 const examples = [
-  { id: 'optical', name: '光學', example: '地表影像、岩塊與可辨識地標', use: '與地形對照，協助辨識目的地周邊的地表特徵。' },
-  { id: 'thermal', name: '熱' },
-  { id: 'spectral', name: '光譜' },
-  { id: 'terrain', name: '地形', example: '高程、坡度、地形陰影與粗糙度', use: '檢視地勢、視線遮蔽與路線坡度條件。' },
-  { id: 'geophysical', name: '地球物理' },
-  { id: 'atmospheric', name: '大氣', use: '顯示毅力號 MEDA 測站記錄的氣壓。' },
-  { id: 'radiation', name: '輻射', use: '顯示好奇號 RAD 矽偵測器的歷史吸收劑量率。' },
-  { id: 'chemical', name: '化學' },
+  { id: 'optical', name: 'Optical', example: 'Surface imagery, rocks and recognizable landmarks', use: 'Compare imagery with the terrain to identify features near the destination.' },
+  { id: 'thermal', name: 'Thermal' },
+  { id: 'spectral', name: 'Spectral' },
+  { id: 'terrain', name: 'Terrain', example: 'Elevation, slope, hillshade and roughness', use: 'Inspect terrain, line of sight and slopes along the route.' },
+  { id: 'geophysical', name: 'Geophysics' },
+  { id: 'atmospheric', name: 'Atmosphere', use: 'Shows atmospheric pressure recorded by Perseverance’s MEDA station.' },
+  { id: 'radiation', name: 'Radiation', use: 'Shows historical absorbed dose rates in Curiosity’s RAD silicon detector.' },
+  { id: 'chemical', name: 'Chemistry' },
 ];
 const active = computed(() => examples.filter(e => e.id === (
   s.layer === 'none' ? 'optical' : ['slope', 'hillshade', 'roughness', 'geology'].includes(s.layer) ? 'terrain' : s.layer
@@ -28,59 +28,59 @@ const active = computed(() => examples.filter(e => e.id === (
 
 <template>
   <div class="science-context">
-    <p class="hint" role="status">{{ location ? `所選位置：${location.name}` : '尚未選擇位置；請在「任務」新增目的地，或在「探索」選擇景點。' }}</p>
-    <p v-if="point" class="hint">{{ value(point.lat, 5) }}°N / {{ value(point.lng, 5) }}°E · 火星行星中心座標</p>
+    <p class="hint" role="status">{{ location ? `Selected location: ${location.name}` : 'Add a destination under Mission or select a site under Explore.' }}</p>
+    <p v-if="point" class="hint">{{ value(point.lat, 5) }}°N / {{ value(point.lng, 5) }}°E · Mars planetocentric coordinates</p>
     <article v-for="item in active" :key="item.id" class="detail-card">
       <h3>{{ item.name }}</h3>
       <template v-if="item.id === 'terrain'">
         <template v-if="point">
-          <p>DEM 高程：{{ value(point.height) }} m<br />DEM 衍生坡度：{{ value(point.slope, 1) }}°<br />格距：約 {{ value(point.cellMeters) }} m</p>
-          <p v-if="point.unit">USGS 地質單元：{{ point.unit }}</p>
-          <a v-if="point.source" :href="point.source" target="_blank" rel="noopener noreferrer">數值 DEM 原始產品 ↗</a>
-          <p class="hint">高程為 DEM 內插值；坡度依格距估算。缺值與邊界不外推，格網無法判定車輪尺度障礙。<span v-if="s.geologyAvailable">地質為 1:75,000 解釋圖。</span></p>
+          <p>DEM elevation: {{ value(point.height) }} m<br />DEM slope: {{ value(point.slope, 1) }}°<br />Grid spacing: about {{ value(point.cellMeters) }} m</p>
+          <p v-if="point.unit">USGS geological unit: {{ point.unit }}</p>
+          <a v-if="point.source" :href="point.source" target="_blank" rel="noopener noreferrer">Source DEM ↗</a>
+          <p class="hint">Elevation is interpolated from the DEM. Slope uses the grid spacing. Samples stop at gaps and boundaries. The grid cannot resolve wheel-scale obstacles.<span v-if="s.geologyAvailable">Geology is mapped at 1:75,000.</span></p>
         </template>
-        <p v-else class="hint">請先選擇位置，並等待 DEM 載入完成。</p>
+        <p v-else class="hint">Select a location and wait for the DEM to load.</p>
       </template>
       <template v-else-if="item.id === 'optical'">
         <template v-if="!s.regional && !s.globalView">
-          <p>{{ s.siteId === 'gale' ? 'USGS HiRISE 正射影像：原生 0.25 m/pixel，本站約 6.67 m/pixel；彩色覆蓋約 51.5%，其他區域以灰階補足。' : s.siteId === 'valles-ctx' ? 'USGS CTX 正射影像：原生約 20 m/pixel，本站 40 m/pixel；缺值保持透明。' : 'USGS CTX 正射影像：顯示原始完整影像範圍；原生約 5 m/pixel，本站約 20 m/pixel。DEM 涵蓋中央 30×30 km。' }}</p>
-          <button :disabled="!s.ready || s.regionLoading" @click="s.optical = true; s.layer = 'none'">在地圖查看光學影像</button>
-          <a :href="m.asset(s.siteId === 'gale' ? 'data/gale/optical-source.json' : s.siteId === 'valles-ctx' ? 'data/valles/optical-source.json' : 'data/jezero-extended/optical-source.json')" target="_blank" rel="noopener noreferrer">影像來源與處理紀錄 ↗</a>
-          <p class="hint">影像拼圖僅涵蓋裁切範圍內的地點。</p>
+          <p>{{ s.siteId === 'gale' ? 'USGS HiRISE orthoimage. Native resolution is 0.25 m/pixel, displayed at about 6.67 m/pixel. Color covers about 51.5% of the image. The rest is grayscale.' : s.siteId === 'valles-ctx' ? 'USGS CTX orthoimage. Native resolution is about 20 m/pixel, displayed at 40 m/pixel. Missing pixels are transparent.' : 'Full USGS CTX orthoimage footprint. Native resolution is about 5 m/pixel, displayed at about 20 m/pixel. The DEM covers the central 30 × 30 km.' }}</p>
+          <button :disabled="!s.ready || s.regionLoading" @click="s.optical = true; s.layer = 'none'">Show optical imagery on the map</button>
+          <a :href="m.asset(s.siteId === 'gale' ? 'data/gale/optical-source.json' : s.siteId === 'valles-ctx' ? 'data/valles/optical-source.json' : 'data/jezero-extended/optical-source.json')" target="_blank" rel="noopener noreferrer">Imagery sources and processing ↗</a>
+          <p class="hint">The mosaic covers only locations within the image footprint.</p>
         </template>
         <template v-else>
-          <p class="hint">USGS Viking 歷史影像拼圖，每像素約 10.4 公里。</p>
-          <button :disabled="!s.ready" @click="s.optical = true; s.layer = 'none'">在地圖查看光學影像</button>
-          <a href="https://astrogeology.usgs.gov/search/map/mars_viking_colorized_global_mosaic_232m" target="_blank" rel="noopener noreferrer">Viking 影像來源 ↗</a>
+          <p class="hint">USGS Viking historical image mosaic, about 10.4 km/pixel.</p>
+          <button :disabled="!s.ready" @click="s.optical = true; s.layer = 'none'">Show optical imagery on the map</button>
+          <a href="https://astrogeology.usgs.gov/search/map/mars_viking_colorized_global_mosaic_232m" target="_blank" rel="noopener noreferrer">Viking imagery source ↗</a>
         </template>
       </template>
       <template v-else>
         <p class="hint" role="status">{{ s.scienceStatus }}</p>
-        <button v-if="!s.scienceLoading && (!meta || s.scienceStatus.includes('失敗'))" @click="m.retryScience">重試載入科學圖層</button>
+        <button v-if="!s.scienceLoading && (!meta || s.scienceStatus.includes('failed'))" @click="m.retryScience">Retry science layers</button>
         <template v-if="meta">
           <template v-if="meta.kind === 'raster'">
             <p>{{ meta.title }}</p>
             <div class="science-scale" :style="{ background: 'linear-gradient(to right,' + palettes[s.layerStyles[s.layer].palette].map(c => 'rgb(' + c.join(',') + ')').join(',') + ')' }" aria-hidden="true"></div>
-            <p class="hint">{{ range[0] }} → {{ range[1] }} {{ meta.unit }} · 缺值透明</p>
-            <p v-if="cell" class="hint">列 {{ cell.row }}、欄 {{ cell.col }} · 東經 {{ cell.west }}°–{{ cell.east }}°、北緯 {{ cell.south }}°–{{ cell.north }}°</p>
-            <p v-if="point" class="science-sample">所選位置：{{ sampled === null ? '此格無有效資料' : value(sampled, 3) + ' ' + meta.unit }}</p>
-            <p class="hint">原生產品最高 {{ meta.native_ppd }} pixels/degree；下載展示 {{ meta.display_ppd }} pixels/degree。游標及所選位置讀取下載格網，不跨缺值內插。</p>
-            <p v-if="item.id === 'geophysical'" class="hint">GMM-3 截至球諧階數 100 的重力異常模型；顯示格距不代表模型能解析同尺度地形。</p>
-            <p v-if="item.id === 'chemical'" class="hint">GRS 鐵濃度是 5° 格網的區域質量百分比，不能解析局部岩樣或小尺度導航障礙。</p>
-            <p v-if="item.id === 'spectral'" class="hint">這張圖用 TES 熱紅外光譜估算橄欖石豐度。</p>
-            <button @click="m.focusScience">查看全球疊圖</button>
-            <a :href="m.asset(`data/science/${item.id}.bin`)" download>下載數值格網</a>
+            <p class="hint">{{ range[0] }} → {{ range[1] }} {{ meta.unit }} · Transparent where data are missing</p>
+            <p v-if="cell" class="hint">Row {{ cell.row }}, column {{ cell.col }} · Longitude {{ cell.west }}°–{{ cell.east }}° E, latitude {{ cell.south }}°–{{ cell.north }}°</p>
+            <p v-if="point" class="science-sample">Selected location: {{ sampled === null ? 'No valid data in this cell' : value(sampled, 3) + ' ' + meta.unit }}</p>
+            <p class="hint">Native product up to {{ meta.native_ppd }} pixels/degree. Display grid: {{ meta.display_ppd }} pixels/degree. Cursor and location readings use this grid without interpolating across missing values.</p>
+            <p v-if="item.id === 'geophysical'" class="hint">GMM-3 gravity anomaly through spherical harmonic degree 100. Grid spacing is finer than the model’s effective resolution.</p>
+            <p v-if="item.id === 'chemical'" class="hint">GRS regional iron content is a mass percentage on a 5° grid. Individual rock samples and local navigation hazards are below its resolution.</p>
+            <p v-if="item.id === 'spectral'" class="hint">TES thermal infrared spectra provide the estimated olivine abundance.</p>
+            <button @click="m.focusScience">Show global overlay</button>
+            <a :href="m.asset(`data/science/${item.id}.bin`)" download>Download numerical grid</a>
           </template>
           <template v-else>
-            <p>{{ meta.name }}：{{ value(meta.value, 3) }} {{ meta.unit }}</p>
-            <p class="hint">{{ meta.start }}{{ meta.stop ? ' 至 ' + meta.stop : ' 起' }} · {{ meta.count }} 筆有效樣本</p>
-            <p class="hint">範圍 {{ value(meta.min, 3) }}–{{ value(meta.max, 3) }} {{ meta.unit }}</p>
+            <p>{{ meta.name }}: {{ value(meta.value, 3) }} {{ meta.unit }}</p>
+            <p class="hint">{{ meta.start }}{{ meta.stop ? ' to ' + meta.stop : ' onward' }} · {{ meta.count }} valid samples</p>
+            <p class="hint">Range {{ value(meta.min, 3) }}–{{ value(meta.max, 3) }} {{ meta.unit }}</p>
             <p class="hint">{{ meta.note }}</p>
-            <button @click="m.focusScience">查看測站位置</button>
-            <a :href="m.asset(meta.source.local)" download>下載觀測原表</a>
-            <a :href="meta.coordinate_source" target="_blank" rel="noopener noreferrer">測站座標來源 ↗</a>
+            <button @click="m.focusScience">Show station location</button>
+            <a :href="m.asset(meta.source.local)" download>Download original observations</a>
+            <a :href="meta.coordinate_source" target="_blank" rel="noopener noreferrer">Station coordinates ↗</a>
           </template>
-          <p><a :href="meta.source.url" target="_blank" rel="noopener noreferrer">原始資料來源 ↗</a> · <a :href="m.asset('data/science/manifest.json')" target="_blank" rel="noopener noreferrer">座標、處理與 SHA-256 紀錄 ↗</a></p>
+          <p><a :href="meta.source.url" target="_blank" rel="noopener noreferrer">Original data source ↗</a> · <a :href="m.asset('data/science/manifest.json')" target="_blank" rel="noopener noreferrer">Coordinates, processing and SHA-256 ↗</a></p>
         </template>
       </template>
       <p v-if="item.use" class="hint">{{ item.use }}</p>

@@ -20,15 +20,15 @@ watch(() => s.station, station => {
   <WalkPanel v-if="s.walk" @open-route-challenge="$emit('open-route-challenge', $event)" />
   <div v-else>
     <section class="group">
-      <h2>規劃探索路線</h2>
-      <label>目的地名稱<input id="target-name" v-model="s.targetName" maxlength="80" placeholder="選填" /></label>
+      <h2>Plan an exploration route</h2>
+      <label>Destination name<input id="target-name" v-model="s.targetName" maxlength="80" placeholder="Optional" /></label>
       <div class="button-row">
-        <button id="add-target" :disabled="!s.ready" :aria-pressed="s.pickingTarget" @click="m.beginTarget">{{ s.pickingTarget ? "取消選點" : "在地圖新增目的地" }}</button>
-        <button id="remove-target" :disabled="!s.destination" @click="m.removeTarget">刪除目的地</button>
+        <button id="add-target" :disabled="!s.ready" :aria-pressed="s.pickingTarget" @click="m.beginTarget">{{ s.pickingTarget ? "Cancel selection" : "Add destination on the map" }}</button>
+        <button id="remove-target" :disabled="!s.destination" @click="m.removeTarget">Remove destination</button>
       </div>
-      <label>任務目的地
+      <label>Mission destination
         <select id="destination" v-model="s.destination">
-          <option value="">{{ s.targets.length ? '請選擇終點或中途停靠點' : '請先在地圖新增目的地' }}</option>
+          <option value="">{{ s.targets.length ? 'Select an endpoint or stop' : 'Add a destination on the map first' }}</option>
           <option v-for="t in s.targets" :key="t.id" :value="t.id">
             {{ t.name }} · {{ t.unit }}
           </option>
@@ -41,37 +41,37 @@ watch(() => s.station, station => {
           :disabled="!s.ready || !s.hasStart || !s.destination || s.regionLoading || s.navigationLoading || !!s.navigationError"
           @click="m.plan"
         >
-          建立並評估三條路線</button
+          Build and evaluate three routes</button
         ><button
           id="simulate"
           :disabled="!s.route?.reachable"
           @click="m.toggleMotion"
         >
-          {{ s.running ? "Ⅱ 暫停" : "▶ 開始行進" }}
+          {{ s.running ? "Ⅱ Pause" : "▶ Start traverse" }}
         </button>
       </div>
       <p id="route-status" class="hint" role="status">{{ s.routeStatus }}</p>
       <button v-if="m.challengeRoute.value" id="free-route-challenge" class="route-challenge-entry" type="button" aria-haspopup="dialog" @click="$emit('open-route-challenge', $event)">
-        看山稜，判斷我在路線上的哪裡 <span aria-hidden="true">↗</span>
+        Find my position with the Mountain Tracker <span aria-hidden="true">↗</span>
       </button>
-      <p v-else-if="!s.route" class="hint">建立路線後，可從地圖的高程剖面開啟「沿途自我定位」。</p>
-      <p v-show="s.navigationLoading || s.navigationError || s.navigation.thermalEnabled" id="navigation-data-status" class="hint" role="status">{{ s.navigationLoading ? '正在載入導航用熱慣量資料…' : s.navigationError || s.navigationStatus }}</p>
-      <button v-if="s.navigationError" :disabled="s.navigationLoading" @click="m.retryNavigation">重試導航資料</button>
+      <p v-else-if="!s.route" class="hint">After building a route, open route localization from the map’s elevation profile.</p>
+      <p v-show="s.navigationLoading || s.navigationError || s.navigation.thermalEnabled" id="navigation-data-status" class="hint" role="status">{{ s.navigationLoading ? 'Loading thermal inertia data for navigation…' : s.navigationError || s.navigationStatus }}</p>
+      <button v-if="s.navigationError" :disabled="s.navigationLoading" @click="m.retryNavigation">Retry navigation data</button>
       <details id="mission-settings" class="task-disclosure">
-        <summary>進階路線設定</summary>
+        <summary>Advanced route settings</summary>
         <details id="settings-terrain" class="navigation-safety planning-assumptions">
-          <summary>坡度與粗糙度門檻</summary>
-          <label>示範坡度上限（°）<input id="slope-limit" v-model="s.slope" type="number" min="1" max="45" /></label>
-          <label class="checkbox"><input id="task-navigation-risk" v-model="s.showNavigationRisk" type="checkbox" />在地圖標示避開區域</label>
+          <summary>Slope and roughness limits</summary>
+          <label>Demo slope limit (°)<input id="slope-limit" v-model="s.slope" type="number" min="1" max="45" /></label>
+          <label class="checkbox"><input id="task-navigation-risk" v-model="s.showNavigationRisk" type="checkbox" />Show avoidance areas on the map</label>
           <div class="button-row">
-            <button type="button" @click="s.layer = 'slope'" :disabled="s.globalView">查看坡度</button>
-            <button type="button" @click="s.layer = 'roughness'" :disabled="s.regional || s.globalView">查看粗糙度</button>
-            <button type="button" @click="s.tab = 'layers'; s.panelOpen = true">對照其他圖層 ↗</button>
+            <button type="button" @click="s.layer = 'slope'" :disabled="s.globalView">Show slope</button>
+            <button type="button" @click="s.layer = 'roughness'" :disabled="s.regional || s.globalView">Show roughness</button>
+            <button type="button" @click="s.tab = 'layers'; s.panelOpen = true">Compare other layers ↗</button>
           </div>
           <div class="navigation-risk-key"><NavigationRiskKey /></div>
-          <p class="hint">地形超限指坡度超過 {{ s.slope }}° 或粗糙度超過 {{ s.roughnessLimit }}。隱藏標記後，三種路線仍會避開這些區域。</p>
-          <label>粗糙度上限 {{ s.roughnessLimit }}<input id="roughness-limit" v-model.number="s.roughnessLimit" type="range" min="0" max="1" step="0.05" /></label>
-          <p class="hint">上限越低，排除的路段越多。設為 1 時，不因粗糙度排除路段。</p>
+          <p class="hint">Terrain exceeds the limits above a slope of {{ s.slope }}° or roughness of {{ s.roughnessLimit }}. All three routes avoid these areas even when the markers are hidden.</p>
+          <label>Roughness limit {{ s.roughnessLimit }}<input id="roughness-limit" v-model.number="s.roughnessLimit" type="range" min="0" max="1" step="0.05" /></label>
+          <p class="hint">Lower limits exclude more segments. At 1, roughness alone excludes none.</p>
         </details>
         <NavigationMaterials />
         <PlannerControls />
@@ -79,66 +79,66 @@ watch(() => s.station, station => {
       <p v-if="s.directRoute" id="straight-status" class="hint" role="status">
         {{ s.straightStatus }}
         <template v-if="!s.directRoute.reachable">
-          <template v-if="s.route?.reachable">紅色路段未通過檢查，可沿{{ s.route.molaDistance ? '建議路線' : '青色路線' }}繞行。</template>
-          <template v-else>直線受阻，請調整目的地或停靠點。</template>
+          <template v-if="s.route?.reachable">Red segments failed the assessment. Follow the {{ s.route.molaDistance ? 'suggested route' : 'cyan route' }} to detour.</template>
+          <template v-else>The direct route is blocked. Adjust the destination or stops.</template>
         </template>
       </p>
       <RouteAlternatives />
       <div v-if="s.directRoute && s.route && !s.routeOptions" class="route-comparison">
-        <h3>同端點路線比較</h3>
+        <h3>Compare routes between the same endpoints</h3>
         <table>
-          <caption>依目前 DEM 與 {{ s.slope }}° 坡度門檻評估</caption>
-          <thead><tr><th scope="col">指標</th><th scope="col">理想直線</th><th scope="col">地形繞行</th></tr></thead>
+          <caption>Assessment uses the current DEM and a {{ s.slope }}° slope limit</caption>
+          <thead><tr><th scope="col">Metric</th><th scope="col">Direct line</th><th scope="col">Terrain detour</th></tr></thead>
           <tbody>
-            <tr><th scope="row">距離</th><td>{{ m.fmt(s.directRoute.length) }}</td><td>{{ m.fmt(s.route.length) }}</td></tr>
-            <tr><th scope="row">最大坡度</th><td>{{ s.directRoute.maxSlope.toFixed(1) }}°</td><td>{{ s.route.reachable ? s.route.maxSlope.toFixed(1) + '°' : '—' }}</td></tr>
-            <tr><th scope="row">DEM 檢查</th><td :class="s.directRoute.reachable ? 'mint' : 'red'">{{ s.directRoute.reachable ? '通過' : '未通過' }}</td><td :class="s.route.reachable ? 'mint' : 'red'">{{ s.route.reachable ? '通過' : '無可達路線' }}</td></tr>
+            <tr><th scope="row">Distance</th><td>{{ m.fmt(s.directRoute.length) }}</td><td>{{ m.fmt(s.route.length) }}</td></tr>
+            <tr><th scope="row">Maximum slope</th><td>{{ s.directRoute.maxSlope.toFixed(1) }}°</td><td>{{ s.route.reachable ? s.route.maxSlope.toFixed(1) + '°' : '—' }}</td></tr>
+            <tr><th scope="row">DEM assessment</th><td :class="s.directRoute.reachable ? 'mint' : 'red'">{{ s.directRoute.reachable ? 'Passed' : 'Failed' }}</td><td :class="s.route.reachable ? 'mint' : 'red'">{{ s.route.reachable ? 'Passed' : 'No reachable route' }}</td></tr>
           </tbody>
         </table>
-        <p v-if="s.route.reachable && s.directRoute.length > 0" class="hint">繞行比直線增加 {{ m.fmt(Math.max(0, s.route.length - s.directRoute.length)) }}；通過檢查僅代表符合目前地形模型與門檻。</p>
+        <p v-if="s.route.reachable && s.directRoute.length > 0" class="hint">Extra distance on the detour: {{ m.fmt(Math.max(0, s.route.length - s.directRoute.length)) }}. A pass applies to the current terrain model and limits.</p>
       </div>
       <div v-if="s.route" class="stats">
         <div>
-          <small>路線長度</small
+          <small>Route length</small
           ><strong id="path-distance">{{
             m.fmt(s.route.length)
           }}</strong>
         </div>
         <div>
-          <small>加速模擬</small
+          <small>Simulation speed</small
           ><strong>{{ s.regional ? "10,000" : "220" }} m/s</strong>
         </div>
       </div>
       <details class="planning-assumptions">
-        <summary>規劃假設與資料限制</summary>
-        <p class="hint">三條路線都用 A* 尋路。最短路線看距離，較低風險看坡度、起伏與材質，最低耗電則估算沿途用電。</p>
-        <p class="hint">{{ s.regional ? '全球 MOLA 為公里尺度高程，遠距結果僅供粗略模擬。' : '優先使用當地的數值高程模型（DEM），越界或缺測時使用公里尺度 MOLA。MOLA 路段的粗糙度無法估計，只能作粗略規劃。' }}路線會避開缺測與越界區段。格網無法辨識車輪尺度的障礙。耗電估算只計算行進用電，行程時間依模擬任務設定估算。</p>
-        <p class="hint">建立路線會將車放回所選起點。{{ s.regional ? '行進中更新地平線實驗候選。' : '行進中用地平線校正位置並重新規劃剩餘路線。' }}</p>
-        <a href="https://www.momar.si/planner/" target="_blank" rel="noopener noreferrer">路線規劃介面參考：MOMAR ↗</a>
+        <summary>Planning assumptions and data limits</summary>
+        <p class="hint">All three routes use A*. The shortest route minimizes distance, the lower-risk route accounts for slope, relief and surface material, and the lowest-energy route estimates power use along the way.</p>
+        <p class="hint">{{ s.regional ? 'Global MOLA elevations support coarse, kilometer-scale simulations of long routes.' : 'Local DEM data take priority. Outside their coverage or where data are missing, the planner uses kilometer-scale MOLA elevations. MOLA segments support coarse planning and lack roughness estimates.' }} Routes avoid missing data and areas outside the grid. Wheel-scale obstacles fall below the grid resolution. Energy estimates cover driving only. Duration uses the simulated mission settings.</p>
+        <p class="hint">Building a route returns the rover to the selected start. {{ s.regional ? 'Update candidate positions from the skyline while driving.' : 'Use the skyline to correct the position and replan the remaining route while driving.' }}</p>
+        <a href="https://www.momar.si/planner/" target="_blank" rel="noopener noreferrer">Route planner interface reference: MOMAR ↗</a>
       </details>
     </section>
     <details ref="toolsPanel" id="mission-tools" class="task-disclosure mission-tools">
-      <summary>其他任務工具</summary>
+      <summary>More mission tools</summary>
       <RouteDrawing />
       <ExpeditionPanel />
       <section class="group">
-        <h2>可重現情境</h2>
+        <h2>Repeatable scenarios</h2>
         <div class="button-row">
           <button
             id="scenario-good"
             :disabled="!s.ready || !s.hasStart"
             @click="m.reset('good')"
           >
-            完整觀測</button
+            Full observation</button
           ><button
             id="scenario-poor"
             :disabled="!s.ready || !s.hasStart"
             @click="m.reset('poor')"
           >
-            遮擋觀測
+            Obstructed observation
           </button>
         </div>
-        <p class="hint">遮擋案例只有 60° 視角且缺失 55%，系統應保留原估計。</p>
+        <p class="hint">This scenario has a 60° field of view with 55% missing. The system should retain the original position estimate.</p>
       </section>
     </details>
   </div>

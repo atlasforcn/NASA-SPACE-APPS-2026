@@ -20,16 +20,16 @@
     "disposition": "publish",
     "reason": "Website runtime, reference, source record or presentation",
     "path": "data/mars-names.json",
-    "bytes": 773705,
-    "sha256": "463c1e1ce706216d19b60ed2691d5ffbb044a00eab00880812b58ef14e4122de"
+    "bytes": 773710,
+    "sha256": "cf432d650c6b950ac3d1590fb048eb8c816d152a7c7278923c57fff40d6799aa"
   },
   {
     "source": "data/mission.json",
     "disposition": "publish",
     "reason": "Website runtime, reference, source record or presentation",
     "path": "data/mission.json",
-    "bytes": 2784,
-    "sha256": "6a61906b52c6eb4aa0fcca8a8a1037671c6346a0b02b7ea563ce90a5974b54a9"
+    "bytes": 2827,
+    "sha256": "5d41a88e73714155a1f43e9eca6ef4d927b1ce0f263dc4ecbfdf4772ac8cc4c5"
   },
   {
     "source": "data/mola16.bin",
@@ -92,16 +92,16 @@
     "disposition": "publish",
     "reason": "Website runtime, reference, source record or presentation",
     "path": "data/three-forks.geojson",
-    "bytes": 11801,
-    "sha256": "5f3ec9539d2e90c4ddc31f91f61e28833fd6ce0693bf9c6513bf5d43bfb8d088"
+    "bytes": 11891,
+    "sha256": "d042488f14c1c88d5d78cf5711e472c21c9feedfd9d88d0cbb3da995836e0c7c"
   },
   {
     "source": "docs/SOURCES.md",
     "disposition": "publish",
     "reason": "Website runtime, reference, source record or presentation",
     "path": "docs/SOURCES.md",
-    "bytes": 16693,
-    "sha256": "6ed35a80f09549631f2024adb6bae06c51841f11a9d29722f563b45ef12fea01"
+    "bytes": 16099,
+    "sha256": "18175441e31e98123fec5ecd487cd7e3ba8bd5ca29337840c916d21d8bee6781"
   },
   {
     "source": "docs/Leaflet-LICENSE.txt",
@@ -116,8 +116,8 @@
     "disposition": "publish",
     "reason": "Real photo validation sources, protocol and current evidence limitations",
     "path": "docs/PHOTO-VALIDATION.md",
-    "bytes": 8220,
-    "sha256": "2216c943378df889867cd8ef6f3b51635a324b834d6e783cce9b3d8be311a6eb"
+    "bytes": 8837,
+    "sha256": "e526f607bdbeaa41d0ef1aaeddec93775c0f1357fd0b4c45ca74b1863567c352"
   },
   {
     "source": "data/gale/dem.json",
@@ -188,8 +188,8 @@
     "disposition": "publish",
     "reason": "Downloaded Mars science raster, station observation or provenance record",
     "path": "data/science/manifest.json",
-    "bytes": 31520,
-    "sha256": "71d970898bc85b95ffe158fae97f4e8e2d7aa4bb4dafc385e67d6e6a9d7c33dc"
+    "bytes": 31435,
+    "sha256": "4cb5ca15fadb688d88c14f91ce5ff2e6972fac6fde2430a72c919a2f355340be"
   },
   {
     "source": "data/science/raw/RAD_RDR_2012_220_02_25_0001_V00.lbl",
@@ -315,8 +315,8 @@
     "source": "docs/photo-sites.json",
     "path": "docs/photo-sites.json",
     "disposition": "publish",
-    "bytes": 4947,
-    "sha256": "7c542b82b0f110bd246eb9d41e0d3c095f9f1945f7f20b39e7b18b418152bc6f"
+    "bytes": 4991,
+    "sha256": "9cca956379b7158bedf2025437d898f9962838eb4cdf34adf102799358976222"
   },
   {
     "source": "docs/jezero-walk-stations.jpg",
@@ -351,5 +351,29 @@
     "path": "data/gale/dingo-gap/panorama.webp",
     "bytes": 497342,
     "sha256": "23a20ed57343b66ee9092f266412281f9ad857890deded357e83806041a02084"
+  },
+  {
+    "source": "docs/demo-screenshots/02-jezero-spectral-route.png",
+    "disposition": "publish",
+    "reason": "English demo walkthrough screenshot",
+    "path": "docs/demo-screenshots/02-jezero-spectral-route.png",
+    "bytes": 1282422,
+    "sha256": "2280f53367c9121028125d8eb57d7c47c9ca6c5d79745938b16cc74f3bf13dcf"
+  },
+  {
+    "source": "docs/demo-screenshots/04-mountain-tracker-skylines.png",
+    "disposition": "publish",
+    "reason": "English demo walkthrough screenshot",
+    "path": "docs/demo-screenshots/04-mountain-tracker-skylines.png",
+    "bytes": 135265,
+    "sha256": "11d12757468d79f491f1442f1660ff815a9c0a3cc93a88dc029d231a3436ca7e"
+  },
+  {
+    "source": "docs/demo-screenshots/05-dingo-gap-camera-position.png",
+    "disposition": "publish",
+    "reason": "English demo walkthrough screenshot",
+    "path": "docs/demo-screenshots/05-dingo-gap-camera-position.png",
+    "bytes": 573085,
+    "sha256": "66b7b84a3c29f31edbb26e5a32ed2503771ebf608ec707cac7f6a6e6cb7d37e9"
   }
 ]

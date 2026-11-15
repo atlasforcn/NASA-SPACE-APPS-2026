@@ -2,7 +2,7 @@
 export function observationFromTrace(trace, width, height, { fov = 60, pitch = 0, angleStep = 3, projection = "perspective", ...options } = {}) {
   const maximum = projection === "equirectangular" ? 360 : 150;
   if (!["perspective", "equirectangular"].includes(projection) || !(fov >= 10 && fov <= maximum) || !Number.isFinite(pitch) || Math.abs(pitch) > 60)
-    throw Error(`水平視角須為 10–${maximum}°，俯仰角須為 −60–60°。`);
+    throw Error(`Horizontal field of view must be 10–${maximum}°. Pitch must be between −60° and 60°.`);
   const focal = width / (2 * Math.tan(fov * Math.PI / 360));
   const tilt = pitch * Math.PI / 180, rays = [];
   for (let x = 0; x < trace.length; x++) {
@@ -29,7 +29,7 @@ export function observationFromTrace(trace, width, height, { fov = 60, pitch = 0
     const t = usable && right.bearing !== left.bearing ? (bearing - left.bearing) / (right.bearing - left.bearing) : 0;
     elevations.push(usable ? left.elevation + (right.elevation - left.elevation) * t : null);
   }
-  if (valid.filter(Boolean).length < 6) throw Error("輪廓太短：請繪製更寬的山稜線，至少涵蓋六個取樣方向。");
+  if (valid.filter(Boolean).length < 6) throw Error("The trace is too short. Draw a wider skyline spanning at least six sample directions.");
   return { angles, elevations, valid, cameraHeight: 1.7,
     kind: "user-horizon", options: { ...options, angleStep } };
 }

@@ -36,7 +36,7 @@ assert(routes.energy.reachable&&routes.safer.reachable&&routes.shortest.reachabl
 assert(routes.energy.energy<routes.shortest.energy);
 assert(routes.energy.surface>routes.shortest.surface);
 assert(routes.shortest.materialEnergy>0);
-assert(routes.shortest.navigationReasons.some(c=>c.reason.includes('地質')));
+assert(routes.shortest.navigationReasons.some(c=>c.reason.includes('Geology')));
 assert(Math.abs(routes.energy.energy-measureRoute(routes.energy.path).energy)<1e-6);
 C.setNavigationContext(blocked);
 assert(!C.segmentSafe({x:-100,y:0},{x:100,y:0}));

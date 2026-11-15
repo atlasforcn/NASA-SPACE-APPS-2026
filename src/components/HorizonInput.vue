@@ -3,7 +3,7 @@ import { inject, ref, onMounted, onBeforeUnmount } from "vue";
 import { missionKey } from "../useMission";
 import { observationFromTrace, extractHorizon } from "../horizon-input.mjs";
 const m = inject(missionKey), s = m.state;
-const canvas = ref(null), fov = ref(60), pitch = ref(0), projection = ref("perspective"), message = ref("直接在畫布畫出天空與山體交界，或上傳照片。"), filename = ref("");
+const canvas = ref(null), fov = ref(60), pitch = ref(0), projection = ref("perspective"), message = ref("Trace the boundary between sky and terrain, or upload a photograph."), filename = ref("");
 let trace = Array(700).fill(null), image = null, previous = null, activePointer = null, loadToken = 0;
 function paint() {
   const cv = canvas.value;
@@ -33,7 +33,7 @@ function draw(event) {
     const t = count ? k / count : 0;
     trace[Math.round(a.x + (p.x - a.x) * t)] = a.y + (p.y - a.y) * t;
   }
-  previous = p; paint(); message.value = "橘線為輸入輪廓；可重新描畫局部修正，再開始比對。";
+  previous = p; paint(); message.value = "The orange line is your input. Redraw any section before matching.";
 }
 function start(event) {
   if (event.button !== 0) return;
@@ -41,25 +41,25 @@ function start(event) {
   canvas.value.setPointerCapture(event.pointerId); draw(event);
 }
 function end() { activePointer = null; previous = null; }
-function clear() { trace.fill(null); paint(); message.value = "輪廓已清除，請重新描畫。"; }
+function clear() { trace.fill(null); paint(); message.value = "Trace cleared. Draw a new skyline."; }
 function blank() {
   loadToken++; image?.close(); image = null; filename.value = "";
   canvas.value.height = 260; trace = Array(700).fill(null); paint();
-  message.value = "手繪模式：虛線是畫面中心；依水平視角與俯仰角換算仰角。";
+  message.value = "Drawing mode: the dashed line marks the center. Field of view and camera pitch determine elevation angle.";
 }
 async function upload(event) {
   const file = event.target.files?.[0]; event.target.value = "";
   if (!file) return;
   const token = ++loadToken;
   try {
-    if (!file.type.startsWith("image/") || file.size > 25 * 1024 * 1024) throw Error("請選擇 25 MB 以下的圖片。");
+    if (!file.type.startsWith("image/") || file.size > 25 * 1024 * 1024) throw Error("Choose an image no larger than 25 MB.");
     const bitmap = await createImageBitmap(file);
     if (token !== loadToken) { bitmap.close(); return; }
     const ratio = bitmap.height / bitmap.width;
 
     image?.close(); image = bitmap; filename.value = file.name;
     canvas.value.height = Math.max(8, Math.min(1400, Math.round(700 * ratio))); trace = Array(700).fill(null); paint(); extract();
-  } catch (error) { message.value = "圖片讀取失敗：" + error.message; }
+  } catch (error) { message.value = "Image failed to load: " + error.message; }
 }
 function extract() {
   if (!image) return;
@@ -67,42 +67,42 @@ function extract() {
   const ctx = cv.getContext("2d"); ctx.drawImage(image, 0, 0, cv.width, cv.height);
   const small = extractHorizon(ctx.getImageData(0, 0, cv.width, cv.height));
   trace = Array.from({ length: 700 }, (_, x) => Number.isFinite(small[Math.min(349, Math.floor(x / 2))]) ? small[Math.min(349, Math.floor(x / 2))] * canvas.value.height / cv.height : null);
-  paint(); message.value = "橘線是擷取的山稜。若偏離天空與山體的交界，可直接重畫。看不到天空的部分留白。";
+  paint(); message.value = "The orange line traces the skyline. Redraw any section that misses the sky–terrain boundary. Leave gaps where the sky is hidden.";
 }
 function match() {
   try {
     const obs = observationFromTrace(trace, 700, canvas.value.height,
       { ...m.horizonOptions(), fov: Number(fov.value), pitch: Number(pitch.value), projection: projection.value });
     m.matchHorizon(obs);
-    message.value = "已送出輪廓，可在下方查看比對結果。";
+    message.value = "Trace submitted. See the match results below.";
   } catch (error) { message.value = error.message; }
 }
 onMounted(paint);
 onBeforeUnmount(() => { loadToken++; image?.close(); });
 </script>
 <template>
-  <details class="horizon-input group" aria-label="手繪或照片定位">
-    <summary>手繪／照片山稜線比對</summary>
-    <p class="hint">畫出山稜線，或上傳照片擷取輪廓。照片只在本機處理。</p>
+  <details class="horizon-input group" aria-label="Positioning from a drawing or photograph">
+    <summary>Match a hand-drawn or photographed skyline</summary>
+    <p class="hint">Draw the skyline or upload a photograph to extract it. Photos are processed on your device.</p>
     <div class="button-row">
-      <button id="horizon-blank" @click="blank">空白手繪</button>
-      <label>上傳照片<input id="horizon-photo" type="file" accept="image/*" @change="upload" /></label>
-      <button :disabled="!filename" @click="extract">重新擷取輪廓</button>
-      <button id="horizon-clear" @click="clear">清除輪廓</button>
+      <button id="horizon-blank" @click="blank">Start a blank drawing</button>
+      <label>Upload photograph<input id="horizon-photo" type="file" accept="image/*" @change="upload" /></label>
+      <button :disabled="!filename" @click="extract">Extract skyline again</button>
+      <button id="horizon-clear" @click="clear">Clear skyline</button>
     </div>
-    <p v-if="filename" class="hint">{{ filename }} · 請保持照片水平，依裁切後的畫面填寫水平視角。</p>
+    <p v-if="filename" class="hint">{{ filename }} · Keep the image level and enter the horizontal field of view of the cropped image.</p>
     <div class="button-row">
-      <label>影像投影<select id="horizon-projection" v-model="projection"><option value="perspective">單張透視照片／手繪</option><option value="equirectangular">等距全景圖／手繪</option></select></label>
-      <label>水平視角（°）<input id="horizon-fov" v-model.number="fov" type="number" min="10" :max="projection === 'perspective' ? 150 : 360" /></label>
-      <label>相機俯仰角（°，向上為正）<input id="horizon-pitch" v-model.number="pitch" type="number" min="-60" max="60" step="0.1" /></label>
+      <label>Image projection<select id="horizon-projection" v-model="projection"><option value="perspective">Perspective photograph or drawing</option><option value="equirectangular">Equirectangular panorama or drawing</option></select></label>
+      <label>Horizontal field of view (°)<input id="horizon-fov" v-model.number="fov" type="number" min="10" :max="projection === 'perspective' ? 150 : 360" /></label>
+      <label>Camera pitch (°, positive upward)<input id="horizon-pitch" v-model.number="pitch" type="number" min="-60" max="60" step="0.1" /></label>
     </div>
-    <canvas id="horizon-editor" ref="canvas" width="700" height="260" aria-label="可手繪及修正的山稜線畫布"
+    <canvas id="horizon-editor" ref="canvas" width="700" height="260" aria-label="Canvas for drawing and correcting a skyline"
       @pointerdown="start" @pointermove="draw" @pointerup="end" @pointercancel="end" @lostpointercapture="end" />
-    <p v-if="!filename" class="hint">手繪時，中央虛線對應上方設定的俯仰角。</p>
+    <p v-if="!filename" class="hint">The dashed center line corresponds to the camera pitch above.</p>
     <p id="horizon-input-status" class="hint" role="status">{{ message }}</p>
-    <p id="horizon-search-scope" class="hint">{{ !s.ready ? "正在載入 DEM，完成後即可比對。" : s.regionLoading ? "正在切換地形區域，完成後即可比對。" : s.searching ? "正在比對；可使用「取消」停止搜尋。" : s.hasStart ? "將搜尋估計位置附近。" : "未設起點，將搜尋目前載入的地形區域。" }}</p>
-    <button id="horizon-match" class="primary" :disabled="!s.ready || s.searching || s.regionLoading" @click="match">比對 DEM 找回候選位置</button>
-    <p class="hint">手繪與照片尚未校準定位可信度；結果只提供候選，不自動校正導航。視角狹窄、平坦山稜或相機角度有誤時，可能無法判定位置。</p>
+    <p id="horizon-search-scope" class="hint">{{ !s.ready ? "Loading DEM. Matching will be available shortly." : s.regionLoading ? "Switching terrain regions. Matching will resume when loading finishes." : s.searching ? "Matching. Select Cancel to stop the search." : s.hasStart ? "Search near the estimated position." : "No starting point set. Search the loaded terrain region." }}</p>
+    <button id="horizon-match" class="primary" :disabled="!s.ready || s.searching || s.regionLoading" @click="match">Find candidate positions in the DEM</button>
+    <p class="hint">Photos and drawings return candidate positions for inspection. A narrow view, a flat skyline or an incorrect camera angle can prevent a reliable match. Navigation is not corrected automatically.</p>
   </details>
 </template>
 <style scoped>

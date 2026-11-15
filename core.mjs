@@ -5,13 +5,13 @@ const api = (() => {
 const R=3396190, DEG=Math.PI/180;
 let LAT0=18.44,LON0=77.42,regionalProjection=false;
 const FEATURES=[
- {id:'P1',name:'蒼穹稜線 α',x:-3090,y:2060,width:190,code:0.18,status:'高反差山脊，可辨識雙峰輪廓',kind:'峰頂'},
- {id:'P2',name:'峽口主峰 β',x:1770,y:2650,width:155,code:0.32,status:'模擬鬆散碎石區，接近時需避開',kind:'峰頂'},
- {id:'P3',name:'東側錐丘 γ',x:3790,y:830,width:220,code:0.46,status:'地標辨識度高，適合遠距方位量測',kind:'錐丘'},
- {id:'P4',name:'南境高台 δ',x:2720,y:-2280,width:175,code:0.59,status:'模擬高坡度風險，禁止直接穿越',kind:'高台'},
- {id:'P5',name:'沙海孤峰 ε',x:-840,y:-2770,width:130,code:0.71,status:'表面紋理受風沙影響，辨識信心較低',kind:'孤峰'},
- {id:'P6',name:'西翼岩柱 ζ',x:-3880,y:-1020,width:150,code:0.83,status:'模擬清楚的幾何邊緣可作特徵點',kind:'岩柱'},
- {id:'P7',name:'中央岩丘 η',x:420,y:1240,width:125,code:0.94,status:'近距離特徵，適合視差估計',kind:'岩丘'}
+ {id:'P1',name:'Sky Ridge α',x:-3090,y:2060,width:190,code:0.18,status:'Twin peaks stand out against the skyline.',kind:'Peak'},
+ {id:'P2',name:'Canyon Peak β',x:1770,y:2650,width:155,code:0.32,status:'A simulated patch of loose scree lies on the approach.',kind:'Peak'},
+ {id:'P3',name:'East Cone γ',x:3790,y:830,width:220,code:0.46,status:'A distinctive landmark for long-distance bearing measurements.',kind:'Cone'},
+ {id:'P4',name:'Southern Mesa δ',x:2720,y:-2280,width:175,code:0.59,status:'The simulated slope is too steep to cross directly.',kind:'Mesa'},
+ {id:'P5',name:'Dune Peak ε',x:-840,y:-2770,width:130,code:0.71,status:'Windblown sand makes the surface texture harder to recognize.',kind:'Isolated peak'},
+ {id:'P6',name:'West Pillar ζ',x:-3880,y:-1020,width:150,code:0.83,status:'The simulated rock edges provide distinct reference points.',kind:'Pillar'},
+ {id:'P7',name:'Central Knoll η',x:420,y:1240,width:125,code:0.94,status:'A nearby feature for estimating parallax.',kind:'Knoll'}
 ];
 const SYNTHETIC_FEATURES=FEATURES.map(f=>({...f}));
 let realDEM=null;
@@ -103,26 +103,26 @@ function findDEMFeatures(d,maxCount=7){
   const chosen=[];
   for(const c of candidates){if(chosen.some(f=>distance(f,c)<(regional?d.cellMeters*3:750)))continue;
     chosen.push(c);if(chosen.length===maxCount)break;}
-  return chosen.map((c,i)=>({id:'P'+(i+1),name:'DEM 候選峰 '+String(i+1).padStart(2,'0'),x:c.x,y:c.y,width:estimateCandidateWidth(d,c),code:0.12+i*.11,
-    status:`高程格網自動抽出的候選局部峰，h=${Math.round(c.height)} m、相對高差指標 ${c.relief.toFixed(1)} m；尚未經影像人工驗證。${regional?"公里級 MOLA 地形候選，非精確峰頂。":""}`,kind:'DEM 峰候選'}));
+  return chosen.map((c,i)=>({id:'P'+(i+1),name:'DEM peak candidate '+String(i+1).padStart(2,'0'),x:c.x,y:c.y,width:estimateCandidateWidth(d,c),code:0.12+i*.11,
+    status:`Local maximum in the elevation grid: elevation ${Math.round(c.height)} m, relative relief ${c.relief.toFixed(1)} m. This peak has not been checked against imagery.${regional?"The kilometer-scale MOLA grid gives an approximate summit location.":""}`,kind:'DEM peak'}));
 }
 function setDEM(input){
-  if(!input||!['jezero-dem-grid-v1','mars-local-grid-v1','mars-region-grid-v1'].includes(input.schema)||input.crs!==(input.schema==='mars-region-grid-v1'?'MARS_AZIMUTHAL_EQUIDISTANT':'MARS_EQ_LOCAL_TANGENT')||!input.source||!input.source.url)throw Error('不支援的 DEM 格式或缺少來源 metadata');
+  if(!input||!['jezero-dem-grid-v1','mars-local-grid-v1','mars-region-grid-v1'].includes(input.schema)||input.crs!==(input.schema==='mars-region-grid-v1'?'MARS_AZIMUTHAL_EQUIDISTANT':'MARS_EQ_LOCAL_TANGENT')||!input.source||!input.source.url)throw Error('Unsupported DEM format or missing source metadata');
   const localGrid=input.schema==='mars-local-grid-v1';
   if(localGrid&&(!input.origin||!Number.isFinite(input.origin.lat)||Math.abs(input.origin.lat)>=90||!Number.isFinite(input.origin.lng)||Math.abs(input.origin.lng)>180))throw Error('Invalid Mars local origin');
   const {width,height,xMin,xMax,yMin,yMax}=input;const regional=input.schema==='mars-region-grid-v1';if(regional&&(!input.origin||!Number.isFinite(input.origin.lat)||Math.abs(input.origin.lat)>90||!Number.isFinite(input.origin.lng)||Math.abs(input.origin.lng)>180))throw Error('Invalid Mars region origin');
-  if(!Number.isInteger(width)||!Number.isInteger(height)||width<3||height<3||width*height>3000000)throw Error('DEM 網格尺寸異常');
-  if(![xMin,xMax,yMin,yMax].every(Number.isFinite)||xMax<=xMin||yMax<=yMin||(!regional&&!localGrid&&(xMin> -4850||xMax<4850||yMin> -3500||yMax<3500)))throw Error('DEM 未涵蓋示範全區');
-  if(!Array.isArray(input.heights)||input.heights.length!==width*height)throw Error('DEM 格網長度不正確');
+  if(!Number.isInteger(width)||!Number.isInteger(height)||width<3||height<3||width*height>3000000)throw Error('Invalid DEM grid dimensions');
+  if(![xMin,xMax,yMin,yMax].every(Number.isFinite)||xMax<=xMin||yMax<=yMin||(!regional&&!localGrid&&(xMin> -4850||xMax<4850||yMin> -3500||yMax<3500)))throw Error('The DEM does not cover the full demo area');
+  if(!Array.isArray(input.heights)||input.heights.length!==width*height)throw Error('Incorrect DEM grid length');
   // Convert directly into the typed grid; avoid a second full-size array while
   // loading the regional DEM (up to three million cells).
   const values=Float64Array.from(input.heights,v=>v===null?NaN:Number(v));
-  if(values.some(v=>Number.isFinite(v)&&Math.abs(v)>(regional?30000:12000)))throw Error('高程不合理，請檢查 Mars 垂直基準與單位');
+  if(values.some(v=>Number.isFinite(v)&&Math.abs(v)>(regional?30000:12000)))throw Error('Check the Mars elevation datum and units');
   const validCount=values.reduce((n,v)=>n+(Number.isFinite(v)?1:0),0);
-  if(validCount<width*height*.4)throw Error('DEM 有效區域不足 40%');
+  if(validCount<width*height*.4)throw Error('Valid elevation data cover less than 40% of the grid');
   const d={width,height,xMin,xMax,yMin,yMax,values,validCount,cellMeters:(xMax-xMin)/(width-1),metadata:{...input.source}};
   const prev=realDEM,frame={lat:LAT0,lng:LON0,regional:regionalProjection,bounds:{...LIMIT},fallback:molaFallback};realDEM=d;molaFallback=null;LAT0=regional||localGrid?input.origin.lat:18.44;LON0=regional||localGrid?input.origin.lng:77.42;regionalProjection=regional;Object.assign(LIMIT,regional||localGrid?{minX:xMin,maxX:xMax,minY:yMin,maxY:yMax}:{minX:-4850,maxX:4850,minY:-3500,maxY:3500});
-  if(!validDEMPoint(regional||localGrid?0:-1400,regional||localGrid?0:-820)){realDEM=prev;molaFallback=frame.fallback;LAT0=frame.lat;LON0=frame.lng;regionalProjection=frame.regional;Object.assign(LIMIT,frame.bounds);throw Error('探測車起點沒有有效高程，無法使用該裁切範圍');}
+  if(!validDEMPoint(regional||localGrid?0:-1400,regional||localGrid?0:-820)){realDEM=prev;molaFallback=frame.fallback;LAT0=frame.lat;LON0=frame.lng;regionalProjection=frame.regional;Object.assign(LIMIT,frame.bounds);throw Error('The rover starting point falls outside valid elevation data');}
   const peaks=findDEMFeatures(d);FEATURES.splice(0,FEATURES.length,...peaks);
   return {validCount,cells:values.length,featureCount:FEATURES.length,metadata:demInfo()};
 }
@@ -144,8 +144,8 @@ let navigationContext=null;
 function setNavigationContext(context=null){navigationContext=context;}
 function navigationAt(x,y){return navigationContext?.sample(x,y)||{blocked:false,factor:1,reasons:[],unknown:false};}
 let slopeLimit=15,roughnessLimit=1;
-function setRoughnessLimit(value){if(!Number.isFinite(value)||value<0||value>1)throw Error('粗糙度上限須介於 0–1');roughnessLimit=value;}
-function setSlopeLimit(value){if(!Number.isFinite(value)||value<1||value>45)throw Error('坡度門檻須介於 1–45°');slopeLimit=value;}
+function setRoughnessLimit(value){if(!Number.isFinite(value)||value<0||value>1)throw Error('The roughness limit must be between 0 and 1');roughnessLimit=value;}
+function setSlopeLimit(value){if(!Number.isFinite(value)||value<1||value>45)throw Error('The slope limit must be between 1° and 45°');slopeLimit=value;}
 function risk(x,y) {
   const slope = slopeDeg(x,y), rough = roughness(x,y), navigation = navigationAt(x,y);
   const hazard = !realDEM && ((x+150)**2/680**2+(y-350)**2/370**2)<1;

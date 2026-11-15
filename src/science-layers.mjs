@@ -1,7 +1,7 @@
 export const scienceLayerIds = ['thermal', 'spectral', 'geophysical', 'atmospheric', 'radiation', 'chemical'];
 
 export function decodeScienceGrid(buffer, meta) {
-  if (buffer.byteLength !== meta.width * meta.height * 4) throw Error('科學格網大小不符');
+  if (buffer.byteLength !== meta.width * meta.height * 4) throw Error('Science grid size mismatch');
   const view = new DataView(buffer);
   const values = new Float32Array(meta.width * meta.height);
   for (let i = 0; i < values.length; i++) values[i] = view.getFloat32(i * 4, true);
@@ -29,18 +29,18 @@ export function createScienceLoader(asset, fetcher = fetch) {
   const cache = new Map();
   const pending = new Map();
   async function download(key) {
-    if (!scienceLayerIds.includes(key)) throw Error('未知科學圖層');
+    if (!scienceLayerIds.includes(key)) throw Error('Unknown science layer');
     if (cache.has(key)) return cache.get(key);
     if (!manifest) {
       const response = await fetcher(asset('data/science/manifest.json'));
-      if (!response.ok) throw Error('科學圖層目錄載入失敗');
+      if (!response.ok) throw Error('Science layer catalog failed to load');
       manifest = await response.json();
     }
     const meta = manifest.datasets[key];
     let values = null;
     if (meta.kind === 'raster') {
       const response = await fetcher(asset(`data/science/${key}.bin`));
-      if (!response.ok) throw Error('科學數值格網載入失敗');
+      if (!response.ok) throw Error('Science data grid failed to load');
       values = decodeScienceGrid(await response.arrayBuffer(), meta);
     }
     const result = { meta, values };

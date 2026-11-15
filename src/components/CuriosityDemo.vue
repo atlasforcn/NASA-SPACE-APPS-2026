@@ -13,9 +13,9 @@ const predicted = ref(true);
 const selectedView = ref('ridge');
 const directory = 'data/gale/dingo-gap/';
 const views = {
-  ridge: { name: '右側山稜', start: 0.53, end: 0.92, bottom: 0.52 },
-  left: { name: '左側山稜', start: 0.025, end: 0.29, bottom: 0.36 },
-  full: { name: '360° 完整全景', start: 0, end: 1, bottom: 1 },
+  ridge: { name: 'Right-hand skyline', start: 0.53, end: 0.92, bottom: 0.52 },
+  left: { name: 'Left-hand skyline', start: 0.025, end: 0.29, bottom: 0.36 },
+  full: { name: 'Full 360° panorama', start: 0, end: 1, bottom: 1 },
 };
 const view = computed(() => views[selectedView.value]);
 const photoBox = computed(() => {
@@ -87,50 +87,50 @@ onBeforeUnmount(() => controller?.abort());
     <article class="sample">
       <header class="sample-heading">
         <div>
-          <p class="site-name"><span lang="en">Dingo Gap</span> · 好奇號第 538–539 個火星日</p>
-          <h2 id="curiosity-demo-title">好奇號在哪裡拍攝？</h2>
+          <p class="site-name"><span lang="en">Dingo Gap</span> · Curiosity, sols 538–539</p>
+          <h2 id="curiosity-demo-title">Where did Curiosity take this panorama?</h2>
         </div>
-        <button id="curiosity-close" type="button" autofocus aria-label="關閉好奇號實拍示範" @click="dialog.close()">關閉 <span aria-hidden="true">×</span></button>
+        <button id="curiosity-close" type="button" autofocus aria-label="Close the Curiosity demo" @click="dialog.close()">Close <span aria-hidden="true">×</span></button>
       </header>
-      <p v-if="failed" role="alert" class="load-state">無法載入示範資料。 <button type="button" @click="loadDemo">重新載入</button></p>
-      <p v-else-if="!data" role="status" class="load-state">正在載入實拍全景與站位圖…</p>
+      <p v-if="failed" role="alert" class="load-state">Demo data failed to load. <button type="button" @click="loadDemo">Reload</button></p>
+      <p v-else-if="!data" role="status" class="load-state">Loading panorama and camera position map…</p>
       <div v-else class="sample-content">
         <section class="observation">
           <div class="section-head">
-            <h3>實拍山稜比對</h3>
-            <select id="curiosity-view" v-model="selectedView" aria-label="選擇全景檢視範圍">
+            <h3>Photographed skyline</h3>
+            <select id="curiosity-view" v-model="selectedView" aria-label="Choose a panorama view">
               <option v-for="(v, key) in views" :key="key" :value="key">{{ v.name }}</option>
             </select>
           </div>
           <figure id="curiosity-photo">
-            <svg class="photo" role="img" :aria-label="'好奇號左導航相機全景，' + view.name"
+            <svg class="photo" role="img" :aria-label="'Curiosity left navigation camera panorama, ' + view.name"
               :viewBox="`${photoBox.x} 0 ${photoBox.width} ${photoBox.height}`" :style="{ aspectRatio: photoBox.width / photoBox.height }">
               <image :href="imageUrl" x="0" y="0" :width="data.photo.width" :height="data.photo.height" />
               <path v-for="trace in traces" v-show="trace.visible" :key="trace.field" :class="trace.field" :d="trace.onPhoto" />
             </svg>
-            <figcaption>NASA/JPL-Caltech · 左導航相機</figcaption>
+            <figcaption>NASA/JPL-Caltech · Left navigation camera</figcaption>
           </figure>
           <div class="plot">
-            <div class="plot-heading"><strong>山稜仰角</strong><span>垂直放大</span></div>
+            <div class="plot-heading"><strong>Skyline elevation angle</strong><span>Vertical exaggeration</span></div>
             <div class="plot-area">
               <div class="ticks" aria-hidden="true"><span>{{ graphLimits.high }}°</span><span>{{ graphLimits.low }}°</span></div>
-              <svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label="實拍山稜與候選位置的地形輪廓，缺測處留白">
+              <svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label="Photographed skyline and predicted horizon at the candidate location. Gaps indicate missing observations.">
                 <path v-for="trace in traces" v-show="trace.visible" :key="trace.field" :class="trace.field" :d="trace.onGraph" />
               </svg>
             </div>
-            <div class="traces" aria-label="選擇顯示的輪廓">
-              <button id="curiosity-observed" type="button" :aria-pressed="observed" @click="observed = !observed"><i class="line-sample measured" aria-hidden="true"></i>實拍山稜</button>
-              <button id="curiosity-predicted" type="button" :aria-pressed="predicted" @click="predicted = !predicted"><i class="line-sample modeled" aria-hidden="true"></i>候選地形</button>
+            <div class="traces" aria-label="Choose which profiles to show">
+              <button id="curiosity-observed" type="button" :aria-pressed="observed" @click="observed = !observed"><i class="line-sample measured" aria-hidden="true"></i>Photographed skyline</button>
+              <button id="curiosity-predicted" type="button" :aria-pressed="predicted" @click="predicted = !predicted"><i class="line-sample modeled" aria-hidden="true"></i>Predicted horizon</button>
             </div>
           </div>
-          <p class="explanation">橘線描出實拍全景中可辨認的 {{ data.result.validDegrees }}° 山稜，遮擋處留白。</p>
-          <p class="explanation">系統在長寬各 9.5 公里內搜尋位置與朝向。青色虛線是離線比對的首選位置望向 {{ data.result.searchRangeKm }} 公里內的山形。</p>
+          <p class="explanation">The orange line traces {{ data.result.validDegrees }}° of visible skyline. Gaps mark obstructions.</p>
+          <p class="explanation">The search tested positions and headings within a 9.5 × 9.5 km area. The dashed cyan line shows the horizon predicted at the top candidate using terrain out to {{ data.result.searchRangeKm }} km.</p>
         </section>
         <section class="location">
-          <div class="section-head"><h3>系統推估的拍攝位置</h3></div>
+          <div class="section-head"><h3>Estimated camera position</h3></div>
           <figure id="curiosity-map">
             <div class="map-frame-demo" :style="{ aspectRatio: data.map.width / data.map.height }" role="img"
-              :aria-label="revealed ? '蓋爾撞擊坑正射影像，標示候選與 NASA 紀錄的拍攝站位和兩點連線' : '蓋爾撞擊坑正射影像，標示系統首選位置'">
+              :aria-label="revealed ? 'Gale Crater orthophoto showing the top candidate, NASA’s recorded camera position and the line between them' : 'Gale Crater orthophoto showing the top candidate'">
               <img :src="mapUrl" alt="" :width="data.map.width" :height="data.map.height">
               <span class="north" aria-hidden="true">↑ N</span>
               <svg v-if="revealed" class="map-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
@@ -140,29 +140,29 @@ onBeforeUnmount(() => controller?.abort());
               <i v-if="revealed" id="curiosity-nasa-mark" class="map-pin official-pin" :style="pointStyle(data.reference)" aria-hidden="true"></i>
               <span class="scale" :style="{ width: scaleMeters / data.map.widthMeters * 100 + '%' }">{{ scaleMeters }} m</span>
             </div>
-            <figcaption class="map-key"><span><i class="key-swatch system-pin"></i>系統首選</span><span v-if="revealed"><i class="key-swatch official-pin"></i>NASA 拍攝站位</span></figcaption>
+            <figcaption class="map-key"><span><i class="key-swatch system-pin"></i>Top candidate</span><span v-if="revealed"><i class="key-swatch official-pin"></i>NASA’s camera position</span></figcaption>
           </figure>
-          <button id="curiosity-reveal" type="button" :class="{primary: !revealed}" :aria-expanded="revealed" @click="toggleResult">{{ revealed ? '隱藏 NASA 拍攝站位' : '揭曉 NASA 拍攝站位' }} <span aria-hidden="true">{{ revealed ? '−' : '→' }}</span></button>
+          <button id="curiosity-reveal" type="button" :class="{primary: !revealed}" :aria-expanded="revealed" @click="toggleResult">{{ revealed ? 'Hide NASA’s camera position' : 'Reveal NASA’s camera position' }} <span aria-hidden="true">{{ revealed ? '−' : '→' }}</span></button>
           <div aria-live="polite" aria-atomic="true">
             <div v-if="revealed" id="curiosity-result" ref="resultPanel" class="result">
-              <span>首選位置與拍攝站位相距</span>
-              <strong>{{ Math.round(data.result.distanceMeters).toLocaleString('zh-TW') }} <small>公尺</small></strong>
-              <p>兩條輪廓的差異仍超過自動校正門檻，系統保留候選位置。</p>
+              <span>Distance from top candidate to NASA’s camera position</span>
+              <strong>{{ Math.round(data.result.distanceMeters).toLocaleString('en-US') }} <small>m</small></strong>
+              <p>The skyline difference exceeds the automatic correction threshold. The result is shown as a candidate.</p>
             </div>
           </div>
         </section>
       </div>
       <details v-if="data" class="source">
-        <summary>查看方法與資料來源</summary>
-        <p>全景的山稜由人工標註，再每 3° 取樣。站位與朝向先由數值地形模型（DEM）離線推估，之後用 NASA 任務紀錄核對。</p>
-        <p v-if="revealed">系統首選 {{ coordinates(data.candidate) }}。NASA 拍攝站 {{ coordinates(data.reference) }}（Site {{ data.reference.site }}，Drive {{ data.reference.drive }}）。本次角度殘差 {{ data.result.rmsDeg.toFixed(2) }}°，自動校正門檻 {{ data.result.maxRmsDeg.toFixed(2) }}°。</p>
-        <p v-if="revealed">採用本站一般 6 公里視距時，同一張照片的首選距拍攝站 {{ Math.round(data.result.websiteDistanceMeters).toLocaleString('zh-TW') }} 公尺。</p>
-        <p>全景影像 {{ data.sources.photoCredit }}。站位圖 {{ data.sources.mapCredit }}。</p>
-        <nav aria-label="實拍與地形資料來源">
-          <a :href="data.sources.image" target="_blank" rel="noopener noreferrer">好奇號原始全景 ↗</a>
-          <a :href="data.sources.position" target="_blank" rel="noopener noreferrer">NASA 站位紀錄 ↗</a>
-          <a :href="data.sources.localTerrain" target="_blank" rel="noopener noreferrer">Gale 地形 ↗</a>
-          <a :href="data.sources.distantTerrain" target="_blank" rel="noopener noreferrer">遠山地形 ↗</a>
+        <summary>Method and data sources</summary>
+        <p>We traced the visible skyline by hand and sampled it every 3°. We used a digital elevation model (DEM) to estimate the position and heading offline, then checked the result against NASA’s mission record.</p>
+        <p v-if="revealed">Top candidate {{ coordinates(data.candidate) }}. NASA’s camera position {{ coordinates(data.reference) }} (Site {{ data.reference.site }}, Drive {{ data.reference.drive }}). Skyline RMS error {{ data.result.rmsDeg.toFixed(2) }}°, correction threshold {{ data.result.maxRmsDeg.toFixed(2) }}°.</p>
+        <p v-if="revealed">With the standard 6 km viewing range, the top candidate for this panorama was {{ Math.round(data.result.websiteDistanceMeters).toLocaleString('en-US') }} m away.</p>
+        <p>Panorama credit: {{ data.sources.photoCredit }}. Map credit: {{ data.sources.mapCredit }}.</p>
+        <nav aria-label="Image and terrain sources">
+          <a :href="data.sources.image" target="_blank" rel="noopener noreferrer">Original Curiosity panorama ↗</a>
+          <a :href="data.sources.position" target="_blank" rel="noopener noreferrer">NASA camera position record ↗</a>
+          <a :href="data.sources.localTerrain" target="_blank" rel="noopener noreferrer">Gale terrain ↗</a>
+          <a :href="data.sources.distantTerrain" target="_blank" rel="noopener noreferrer">Distant terrain ↗</a>
         </nav>
       </details>
     </article>
