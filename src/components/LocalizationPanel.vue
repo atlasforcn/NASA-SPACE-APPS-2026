@@ -17,7 +17,7 @@ const m = inject(missionKey),
           s.status
         }}</span>
       </div>
-      <p class="hint">比對眼前的山稜線與地形模型，找出自己可能所在的位置。山形不清楚時，可保留原估計並重掃。</p>
+      <p class="hint">比對眼前的山稜線與數值高程模型（DEM），找出自己可能所在的位置。山形不清楚時，可保留原估計並重掃。</p>
       <a id="open-curiosity-demo" class="demo-entry" href="#dingo-gap" aria-haspopup="dialog" @click="$emit('open-demo', $event)">看好奇號實拍定位示範 <span aria-hidden="true">→</span></a>
       <label
         >模擬觀測品質<select id="observe-mode" v-model="s.scenario">
@@ -46,7 +46,7 @@ const m = inject(missionKey),
         </button>
       </div>
       <button id="drift" :disabled="!s.ready || !s.hasStart" @click="m.drift">
-        注入里程偏差 +650 / −520 m
+        模擬導航偏差（向東 650 m、向南 520 m、朝向 +24°）
       </button>
       <p class="hint" id="search-progress" role="status">{{ s.progress }}</p>
       <p class="position" id="position">{{ m.position.value }}</p>
@@ -80,7 +80,7 @@ const m = inject(missionKey),
         <button :disabled="!s.ready || (!s.hasStart && !s.externalHorizon)" @click="m.turnView(30)">右轉 30° →</button>
         <button :disabled="!s.ready || m.viewBearing.value === null || (!s.poi && !s.destination)" @click="m.focusView">對準標記點</button>
       </div>
-      <p v-if="!s.externalHorizon" class="hint">標記為已知地圖位置的輔助投影，不參與地平線定位；虛線與空心點表示不可見或視野外，並非相機辨識結果。可點選地圖標記後對準。</p>
+      <p v-if="!s.externalHorizon" class="hint">點選地圖標記可對準已知地點。虛線與空心點表示地點受遮擋或在視野外。</p>
       <div class="chart-legend" aria-label="地平線圖例">
         <span><i class="legend-line orange"></i>橘線：{{ s.externalHorizon ? "手繪／照片輪廓" : "模擬觀測" }}</span>
         <span><i class="legend-line mint"></i>青線：候選地平線</span>
@@ -110,12 +110,12 @@ const m = inject(missionKey),
     </div>
     <div class="localization-results">
       <p id="match-msg" class="hint" role="status">{{ s.message }}</p>
-      <ol id="candidates" aria-label="Top 3 定位候選">
+      <ol id="candidates" aria-label="前三個候選位置">
         <li v-for="(v, i) in s.result?.candidates || []" :key="i">
           <button @click="m.drawCurve(v)">
             <strong>#{{ i + 1 }} · RMS {{ v.score.toFixed(3) }}°</strong
             ><small
-              >E {{ v.x.toFixed(0) }} / N {{ v.y.toFixed(0) }} · yaw
+              >E {{ v.x.toFixed(0) }} / N {{ v.y.toFixed(0) }} · 朝向
               {{ v.heading.toFixed(1) }}° · 有效
               {{ (v.coverage * 100).toFixed(0) }}%</small
             >

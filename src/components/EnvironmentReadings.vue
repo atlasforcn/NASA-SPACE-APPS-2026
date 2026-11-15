@@ -8,7 +8,7 @@ const { limits, checks, loading, area } = inject(missionKey).environment;
 <template>
   <details class="environment" id="environment-readings">
     <summary>歷史測站讀值與上限</summary>
-    <p class="hint">比對{{ area }}內的歷史測站與自訂上限。預設值供示範；沿途即時狀況與人員曝露量仍需現場量測。</p>
+    <p class="hint">用自訂上限比較{{ area }}內的歷史讀值。</p>
     <div class="readings">
       <section v-for="check in checks" :key="check.id" :aria-label="check.label">
         <label :for="'limit-' + check.id">{{ check.label }}上限（{{ check.unit }}）

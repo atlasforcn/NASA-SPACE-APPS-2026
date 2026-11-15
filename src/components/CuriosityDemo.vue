@@ -130,7 +130,7 @@ onBeforeUnmount(() => controller?.abort());
           <div class="section-head"><h3>系統推估的拍攝位置</h3></div>
           <figure id="curiosity-map">
             <div class="map-frame-demo" :style="{ aspectRatio: data.map.width / data.map.height }" role="img"
-              :aria-label="revealed ? '蓋爾隕石坑正射影像，標示候選與 NASA 紀錄的拍攝站位和兩點連線' : '蓋爾隕石坑正射影像，標示系統首選位置'">
+              :aria-label="revealed ? '蓋爾撞擊坑正射影像，標示候選與 NASA 紀錄的拍攝站位和兩點連線' : '蓋爾撞擊坑正射影像，標示系統首選位置'">
               <img :src="mapUrl" alt="" :width="data.map.width" :height="data.map.height">
               <span class="north" aria-hidden="true">↑ N</span>
               <svg v-if="revealed" class="map-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
@@ -147,14 +147,14 @@ onBeforeUnmount(() => controller?.abort());
             <div v-if="revealed" id="curiosity-result" ref="resultPanel" class="result">
               <span>首選位置與拍攝站位相距</span>
               <strong>{{ Math.round(data.result.distanceMeters).toLocaleString('zh-TW') }} <small>公尺</small></strong>
-              <p>這次首選落在拍攝點約一公里內。兩條輪廓的差異仍超過自動校正門檻，系統保留候選位置。</p>
+              <p>兩條輪廓的差異仍超過自動校正門檻，系統保留候選位置。</p>
             </div>
           </div>
         </section>
       </div>
       <details v-if="data" class="source">
         <summary>查看方法與資料來源</summary>
-        <p>全景的山稜由人工標註，再每 3° 取樣。站位與朝向先由數值地形模型（DEM）離線推估，之後用 NASA 任務紀錄核對。這裡重現這一張照片的結果。</p>
+        <p>全景的山稜由人工標註，再每 3° 取樣。站位與朝向先由數值地形模型（DEM）離線推估，之後用 NASA 任務紀錄核對。</p>
         <p v-if="revealed">系統首選 {{ coordinates(data.candidate) }}。NASA 拍攝站 {{ coordinates(data.reference) }}（Site {{ data.reference.site }}，Drive {{ data.reference.drive }}）。本次角度殘差 {{ data.result.rmsDeg.toFixed(2) }}°，自動校正門檻 {{ data.result.maxRmsDeg.toFixed(2) }}°。</p>
         <p v-if="revealed">採用本站一般 6 公里視距時，同一張照片的首選距拍攝站 {{ Math.round(data.result.websiteDistanceMeters).toLocaleString('zh-TW') }} 公尺。</p>
         <p>全景影像 {{ data.sources.photoCredit }}。站位圖 {{ data.sources.mapCredit }}。</p>

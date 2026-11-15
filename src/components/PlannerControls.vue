@@ -15,15 +15,15 @@ const chosenName = computed(() => s.entries.find(p => p.name === namedChoice.val
       <summary>中途停靠與地名搜尋</summary>
       <p class="hint">先加中途停靠點，最後選終點。</p>
       <label>搜尋地名與著陸點<input id="stop-named-search" v-model="namedQuery" type="search" placeholder="Olympus Mons、Jezero、Octavia E. Butler Landing…" @input="namedChoice = ''" /></label>
-      <label>選擇奇觀<select id="stop-named-place" v-model="namedChoice" :disabled="s.regionLoading">
-        <option value="">{{ namedMatches.length ? '請選擇奇觀' : '找不到地名，請調整搜尋文字' }}</option>
+      <label>選擇地點<select id="stop-named-place" v-model="namedChoice" :disabled="s.regionLoading">
+        <option value="">{{ namedMatches.length ? '請選擇地點' : '找不到地名，請調整搜尋文字' }}</option>
         <option v-for="p in namedMatches" :key="p.name" :value="p.name">{{ p.zh ? `${p.zh} · ${p.name}` : p.name }}</option>
       </select></label>
       <div class="button-row">
         <button id="stop-add-named" :disabled="!s.ready || s.regionLoading || !chosenName" @click="m.addNamedTarget(chosenName, 'stop')">加入停靠順序</button>
         <button id="stop-destination-named" :disabled="!s.ready || s.regionLoading || !chosenName" @click="m.addNamedTarget(chosenName, 'destination')">設為終點</button>
       </div>
-      <p class="hint">未搜尋時顯示精選奇觀；搜尋結果最多 100 筆。加入位置採地名目錄中心或歷史著陸座標，跨區會自動擴大地形覆蓋並保留現有任務。</p>
+      <p class="hint">未搜尋時顯示精選地點；搜尋結果最多 100 筆。加入位置採地名目錄中心或歷史著陸座標，跨區會自動擴大地形覆蓋並保留現有任務。</p>
       <p class="hint" role="status">{{ s.namedTargetStatus }}</p>
       <button id="add-stop" :disabled="!s.destination || s.stopIds.includes(s.destination)" @click="m.addStop">將所選目的地加入中途停靠</button>
       <ol class="planner-stops">

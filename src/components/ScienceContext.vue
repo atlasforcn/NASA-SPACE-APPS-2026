@@ -17,8 +17,8 @@ const examples = [
   { id: 'spectral', name: '光譜' },
   { id: 'terrain', name: '地形', example: '高程、坡度、地形陰影與粗糙度', use: '檢視地勢、視線遮蔽與路線坡度條件。' },
   { id: 'geophysical', name: '地球物理' },
-  { id: 'atmospheric', name: '大氣', example: '氣壓、風、塵埃與能見度', use: '補充觀測能見度與行進時段的環境資訊。' },
-  { id: 'radiation', name: '輻射', example: '輻射劑量率、累積曝露', use: '提供停留時間與任務曝露評估的背景。' },
+  { id: 'atmospheric', name: '大氣', use: '顯示毅力號 MEDA 測站記錄的氣壓。' },
+  { id: 'radiation', name: '輻射', use: '顯示好奇號 RAD 矽偵測器的歷史吸收劑量率。' },
   { id: 'chemical', name: '化學' },
 ];
 const active = computed(() => examples.filter(e => e.id === (
@@ -46,10 +46,10 @@ const active = computed(() => examples.filter(e => e.id === (
           <p>{{ s.siteId === 'gale' ? 'USGS HiRISE 正射影像：原生 0.25 m/pixel，本站約 6.67 m/pixel；彩色覆蓋約 51.5%，其他區域以灰階補足。' : s.siteId === 'valles-ctx' ? 'USGS CTX 正射影像：原生約 20 m/pixel，本站 40 m/pixel；缺值保持透明。' : 'USGS CTX 正射影像：顯示原始完整影像範圍；原生約 5 m/pixel，本站約 20 m/pixel。DEM 涵蓋中央 30×30 km。' }}</p>
           <button :disabled="!s.ready || s.regionLoading" @click="s.optical = true; s.layer = 'none'">在地圖查看光學影像</button>
           <a :href="m.asset(s.siteId === 'gale' ? 'data/gale/optical-source.json' : s.siteId === 'valles-ctx' ? 'data/valles/optical-source.json' : 'data/jezero-extended/optical-source.json')" target="_blank" rel="noopener noreferrer">影像來源與處理紀錄 ↗</a>
-          <p class="hint">靜態拼圖，非即時影像；目的地若在影像裁切範圍外，無該點影像。</p>
+          <p class="hint">影像拼圖僅涵蓋裁切範圍內的地點。</p>
         </template>
         <template v-else>
-          <p class="hint">USGS Viking 全球彩色光學拼圖 · 展示約 10.4 km/pixel；光學影像不提供地形高程，非即時影像。</p>
+          <p class="hint">USGS Viking 歷史影像拼圖，每像素約 10.4 公里。</p>
           <button :disabled="!s.ready" @click="s.optical = true; s.layer = 'none'">在地圖查看光學影像</button>
           <a href="https://astrogeology.usgs.gov/search/map/mars_viking_colorized_global_mosaic_232m" target="_blank" rel="noopener noreferrer">Viking 影像來源 ↗</a>
         </template>
@@ -67,7 +67,7 @@ const active = computed(() => examples.filter(e => e.id === (
             <p class="hint">原生產品最高 {{ meta.native_ppd }} pixels/degree；下載展示 {{ meta.display_ppd }} pixels/degree。游標及所選位置讀取下載格網，不跨缺值內插。</p>
             <p v-if="item.id === 'geophysical'" class="hint">GMM-3 截至球諧階數 100 的重力異常模型；顯示格距不代表模型能解析同尺度地形。</p>
             <p v-if="item.id === 'chemical'" class="hint">GRS 鐵濃度是 5° 格網的區域質量百分比，不能解析局部岩樣或小尺度導航障礙。</p>
-            <p v-if="item.id === 'spectral'" class="hint">此疊圖為 TES 熱紅外光譜解混的礦物豐度產品，並非 CRISM 高解析礦物圖。</p>
+            <p v-if="item.id === 'spectral'" class="hint">這張圖用 TES 熱紅外光譜估算橄欖石豐度。</p>
             <button @click="m.focusScience">查看全球疊圖</button>
             <a :href="m.asset(`data/science/${item.id}.bin`)" download>下載數值格網</a>
           </template>
@@ -85,7 +85,6 @@ const active = computed(() => examples.filter(e => e.id === (
       </template>
       <p v-if="item.use" class="hint">{{ item.use }}</p>
     </article>
-    <p class="hint">熱圖可獨立顯示。熱慣量成本{{ s.navigation.thermalEnabled ? "已啟用" : "未啟用" }}，地質材質成本{{ s.navigation.geologyEnabled ? "已啟用" : "未啟用" }}。路線另使用地形與禁行區。歷史觀測不代表所選位置已完成安全評估。</p>
   </div>
 </template>
 

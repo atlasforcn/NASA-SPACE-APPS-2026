@@ -1,4 +1,5 @@
 <script setup>
+import NavigationRiskKey from "./NavigationRiskKey.vue";
 import { inject, computed } from 'vue';
 import { layerNames } from '../layer-guidance.mjs';
 import LayerGuidance from './LayerGuidance.vue';
@@ -33,7 +34,7 @@ function toggleLayer(event) {
       ><fieldset class="layer-options">
         <legend>疊加資料</legend>
         <label v-for="layer in [
-          { id: 'terrain', name: s.globalView ? 'MOLA 全球高程' : '真實 DEM 高程' },
+          { id: 'terrain', name: s.globalView ? 'MOLA 全球高程' : '數值高程模型（DEM）' },
           { id: 'slope', name: 'DEM 衍生坡度', disabled: s.globalView },
           { id: 'hillshade', name: 'DEM 衍生地形陰影', disabled: s.regional || s.globalView },
           { id: 'roughness', name: 'DEM 衍生粗糙度', disabled: s.regional || s.globalView },
@@ -63,8 +64,7 @@ function toggleLayer(event) {
         </div>
       </div>
     <label class="checkbox"><input :id="compact ? 'map-navigation-risk' : 'navigation-risk'" v-model="s.showNavigationRisk" type="checkbox" :disabled="!s.ready" />標示路線避開區域</label>
-    <div v-if="s.showNavigationRisk && !s.globalView" class="navigation-risk-key"><span><i></i>超出通行上限</span><span><i class="missing"></i>地形資料不足</span></div>
+    <div v-if="!compact || (s.showNavigationRisk && !s.globalView)" class="navigation-risk-key"><NavigationRiskKey /></div>
     <p v-if="s.globalView && s.showNavigationRisk" class="hint">放大至任務區域後顯示避開標記。</p>
-    <p v-if="!compact" class="hint">紅色：人工標記的禁行區，黃色：資料缺失點</p>
   </div>
 </template>

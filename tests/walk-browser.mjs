@@ -107,7 +107,7 @@ export async function verifyWalk(page, url) {
   await check.click();
   await panel.locator('#science-route-verdict[data-verdict="hold"]').waitFor();
   assert.match(await verdict.innerText(), /暫緩出發/);
-  assert.match(await panel.locator('.reason').first().innerText(), /超限/);
+  assert.match(await panel.locator('.reason').first().innerText(), /基地坡度.+超過上限 1°。請另選出發點/);
   assert(await panel.locator('#check-science-detour').isHidden());
   assert.deepEqual(await vehicle(), atBase);
   await panel.locator('.limits summary').click();

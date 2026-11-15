@@ -10,8 +10,8 @@ export const temperatureHistory = [
 const advice = {
   thermal:'熱慣量描述地表升降溫的快慢。本站無即時氣溫或熱曝露預報。',
   spectral:'比較橄欖石豐度可協助選站。現地岩性仍需觀察或採樣確認。',
-  geophysical:'重力異常可比較區域地下質量分布；無法辨識路面空洞或鬆動岩塊。',
-  chemical:'GRS 提供區域總鐵含量。氧化態、鹽類、粉塵毒性及人員接觸安全均無法由此判定。',
+  geophysical:'重力異常可比較區域地下質量分布。',
+  chemical:'GRS 每格 5°，顯示區域總鐵含量。',
 };
 const fmt = n => Number.isFinite(n) ? String(Number(n.toFixed(3))) : '缺值';
 const key = c => c.row+','+c.col;
@@ -35,7 +35,7 @@ function viewportIron(meta,values,b) {
   return {low,high,missing};
 }
 export function scienceGuidance(id,record,points,route,bounds,nav) {
-  if(record?.status?.includes('失敗')) return {text:'此層暫無可靠判讀。',warning:record.status};
+  if(record?.status?.includes('失敗')) return {warning:record.status};
   if(!record?.meta || record.loading) return {text:record?.status || '正在載入資料…'};
   const {meta,values}=record;
   if(meta.kind==='station') return {text:meta.name+' · '+meta.start.slice(0,10)+' 起，測站平均 '+fmt(meta.value)+' '+meta.unit+'。',advice:id==='radiation'?'歷史矽偵測器讀值；評估人員劑量需當次量測、停留時間及屏蔽條件。':'歷史單站氣壓；沿線氣壓與當下風況仍需量測。',url:meta.source.url};

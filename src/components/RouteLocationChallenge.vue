@@ -246,11 +246,11 @@ onBeforeUnmount(() => searchController?.abort());
         <div v-else id="route-location-result" ref="resultPanel" tabindex="-1" aria-live="polite">
           <p>你的標記距模擬觀測點</p><strong class="guess-distance" :data-meters="answer.guessErrorMeters">{{ distance(answer.guessErrorMeters) }}</strong>
           <div id="route-location-system" :aria-busy="searching">
-            <span v-if="searching">系統正在這張地圖的範圍內獨立比對山稜…</span>
+            <span v-if="searching">正在比對地圖內的山稜…</span>
             <template v-else-if="system">
               <strong class="status-label">{{ statusLabels[system.status] }}</strong>
               <span>{{ system.reason }}。</span>
-              <span v-if="system.candidate && Number.isFinite(system.errorMeters)">在這張地圖中，系統首選距觀測點 <b class="system-distance" :data-meters="system.errorMeters">{{ distance(system.errorMeters) }}</b>。</span>
+              <span v-if="system.candidate && Number.isFinite(system.errorMeters)">系統首選距觀測點 <b class="system-distance" :data-meters="system.errorMeters">{{ distance(system.errorMeters) }}</b>。</span>
             </template>
           </div>
           <button id="route-location-again" type="button" @click="again">換一個路線觀測點 →</button>

@@ -27,12 +27,12 @@ function selectRegion(event) {
   <div>
     <section class="group">
       <h2>選擇探索區域</h2>
-      <label>DEM 區域快捷選擇<select id="dem-region-preset" v-model="selectedRegion" :disabled="!s.ready || s.regionLoading" @change="selectRegion">
+      <label>選擇地形區域<select id="dem-region-preset" v-model="selectedRegion" :disabled="!s.ready || s.regionLoading" @change="selectRegion">
         <option v-for="r in regions" :key="r.id" :value="r.id">{{ r.title }} · {{ r.name }} · {{ r.cellMeters }} m／格</option>
       </select></label>
       <button id="load-region" class="primary wide" :disabled="!s.ready || s.regionLoading" @click="loadPreset">{{ s.regionLoading ? '正在載入地形…' : '載入所選區域 →' }}</button>
       <h3 class="subheading">自訂座標 / 全球 MOLA</h3>
-      <p class="hint">自訂座標的區域格距至少 4 km，不代表高解析觀測。</p>
+      <p class="hint">自訂區域每格至少 4 公里。</p>
       <p class="hint">輸入中心座標建立任務；起點、目的地與繪製路線可跨區域，覆蓋範圍自動調整。</p>
       <div class="field-pair">
         <label
@@ -71,7 +71,7 @@ function selectRegion(event) {
     </section>
     <section class="group">
       <p class="eyebrow">IAU / USGS GAZETTEER · NASA LANDING</p>
-      <h2>火星已命名奇觀</h2>
+      <h2>火星地名與著陸點</h2>
       <label
         >搜尋地名與著陸點<input
           id="named-search"
@@ -121,7 +121,6 @@ function selectRegion(event) {
           {{ s.selected.kind ? '歷史著陸座標' : '目錄中心' }} {{ s.selected.lat.toFixed(4) }}°N /
           {{ s.selected.eastLongitude.toFixed(4) }}°E<span v-if="!s.selected.kind"> · 尺度 {{ s.selected.diameterKm }} km</span>
         </p>
-        <p class="hint">加入任務時採用上述座標；是否可達由地形與避險門檻檢查。</p>
         <div class="button-row">
           <button id="named-add-stop" :disabled="!s.ready || s.regionLoading" @click="m.addNamedTarget(s.selected, 'stop')">加入停靠順序</button>
           <button id="named-set-destination" :disabled="!s.ready || s.regionLoading" @click="m.addNamedTarget(s.selected, 'destination')">設為終點</button>

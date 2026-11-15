@@ -509,7 +509,7 @@ export function useMission() {
     stop(); cancel(); stopDrawing();
     state.pickingStart=false; state.pickingTarget=false;
     state.pickingNoGo=true;
-    state.routeStatus='請參照影像點選禁行區中心；半徑採火星公尺，不會自動辨識影像內容。';
+    state.routeStatus='點選禁行區中心，紅色虛線圈內禁止通行。';
   }
   function removeNoGo(id) { state.noGoZones=state.noGoZones.filter(z=>z.id!==id); }
   async function startWalk() {
@@ -696,7 +696,7 @@ export function useMission() {
       pane: "navigationRoute", weight: 3, dashArray: "7 6", interactive: false,
     }).addTo(idealLayer));
     state.straightStatus = `理想直線 ${fmt(direct.length)} · 最大坡度 ${direct.maxSlope.toFixed(1)}° · ` +
-      (direct.reachable ? "通過 DEM 檢查" : `${unknown ? "缺測或越界；" : ""}${direct.maxSlope > Number(state.slope) ? "超過坡度上限；" : ""}紅色路段不可通行，請沿青色建議路線繞行。`);
+      (direct.reachable ? "通過 DEM 檢查" : `${unknown ? "缺測或越界。" : ""}${direct.maxSlope > Number(state.slope) ? "超過坡度上限。" : ""}`);
     state.continuousLocalization = true;
     render();
     state.routeStatus = result.reachable
@@ -859,7 +859,7 @@ export function useMission() {
     const fail = (message) => {
       if (id !== job) return;
       cancel();
-      state.status = "無定位";
+      state.status = "未能定位";
       state.message = "搜尋失敗：" + message;
     };
     worker.onerror = (e) => fail(e.message);
@@ -875,7 +875,7 @@ export function useMission() {
       worker = null;
       state.searching = false;
       state.result = result;
-      state.status = { good: "定位良好", uncertain: "不確定", lost: "無定位" }[
+      state.status = { good: "定位良好", uncertain: "不確定", lost: "未能定位" }[
         result.status
       ];
       state.progress = `完成 · ${((performance.now() - start) / 1000).toFixed(1)} 秒`;
@@ -939,7 +939,7 @@ export function useMission() {
         state.evaluation = `校正前 ${fmt(before)} → 校正後 ${fmt(C.distance(state.truth, state.estimate))}；同 DEM 模擬評估`;
       } else {
         state.message = result.reason + "；保留原估計，請增加視角後再掃描。";
-        state.evaluation = "未套用候選；原導航估計保持不變。";
+        state.evaluation = "已保留原估計位置。";
       }
       render();
     };
@@ -1141,7 +1141,7 @@ export function useMission() {
     }
     ctx.fillStyle = "#fff0d6";
     ctx.font = "13px system-ui";
-    ctx.fillText(state.externalHorizon ? `使用者輪廓 · 相對視角 ${state.viewYaw.toFixed(0)}° · 深色區無觀測` : `${observation ? '掃描快照' : '掃描前預覽'} · yaw ${heading.toFixed(0)}° · 深色區無觀測`, 12, 22);
+    ctx.fillText(state.externalHorizon ? `使用者輪廓 · 相對視角 ${state.viewYaw.toFixed(0)}° · 深色區無觀測` : `${observation ? '掃描快照' : '掃描前預覽'} · 朝向 ${heading.toFixed(0)}° · 深色區無觀測`, 12, 22);
   }
   function syncViewBearing() {
     const bearing = viewBearing.value;
@@ -1334,7 +1334,7 @@ export function useMission() {
     if (state.globalView && ['none', 'terrain'].includes(kind)) {
       state.legend = kind === 'terrain' || !state.optical
         ? 'MOLA 全球高程與地形陰影 · −8,200 至 21,800 m；游標讀取 16 ppd 數值高程'
-        : 'USGS Viking 全球彩色光學拼圖 · 展示約 10.4 km/pixel；非即時影像';
+        : 'USGS Viking 歷史影像拼圖，每像素約 10.4 公里。';
       return;
     }
     if (kind === "geology") {
@@ -1393,11 +1393,11 @@ export function useMission() {
         state.legend =
           kind === "slope"
             ? "0–30° 坡度 · DEM 衍生；缺值透明"
-            : kind === "hillshade" ? "DEM 衍生陰影 · 西北光源、高度角 45°；非照片" : kind === "roughness" ? "DEM 衍生粗糙度指標 0–1；非車輪尺度實測" : "依目前 DEM 最小／最大高程縮放色階";
+            : kind === "hillshade" ? "模擬光源來自西北方，高度角 45°。" : kind === "roughness" ? "DEM 衍生粗糙度指標 0–1；非車輪尺度實測" : "依目前 DEM 最小／最大高程縮放色階";
       }
     } else
       state.legend = state.regional
-        ? (state.optical ? "USGS Viking 全球彩色光學拼圖 · 展示約 10.4 km/pixel；非即時影像" : "MOLA 全球地形陰影 · 16 ppd，赤道約 3.7 km/格")
+        ? (state.optical ? "USGS Viking 歷史影像拼圖，每像素約 10.4 公里。" : "MOLA 全球地形陰影 · 16 ppd，赤道約 3.7 km/格")
         : !state.optical ? "光學影像關閉 · 背景為 MOLA 全球地形陰影"
         : state.siteId === "gale" ? "USGS HiRISE 正射影像 · 展示約 6.67 m/pixel；約 51.5% 彩色，其餘灰階補足，非地質分區" : "CTX 光學影像 · 原生約 5 m；擴區完整影像展示約 20 m/pixel";
     estimateMarker.bringToFront();
@@ -1509,7 +1509,7 @@ export function useMission() {
   function selectPoi(p) {
     if (state.walk) {
       L.popup().setLatLng(ll(p)).setContent('<strong>'+esc(p.name)+'</strong><p>'+
-        (p.id === 'base' ? '基地到 A 的出發點。' : '基地到 A 的目的地。')+'這是示範任務設定的位置。</p>').openOn(map);
+        (p.id === 'base' ? '模擬任務的出發點。' : '模擬任務的觀測點。')+'</p>').openOn(map);
       return;
     }
     state.poi = p;
@@ -1656,7 +1656,7 @@ export function useMission() {
     state.pickingTarget = false;
     state.pickingStart = false;
     refreshPois();
-    state.namedTargetStatus = `已將「${place.zh || place.name}」加入${mode === 'stop' ? '停靠順序' : '終點'}；位置採${place.kind ? '歷史著陸座標' : '地名目錄中心'}，規劃時會檢查是否可達。`;
+    state.namedTargetStatus = `已將「${place.zh || place.name}」${mode === 'stop' ? '加入停靠順序' : '設為終點'}。`;
     state.routeStatus = state.namedTargetStatus;
     state.tab = 'mission'; state.panelOpen = true;
   }
@@ -2049,7 +2049,7 @@ export function useMission() {
       ),
       r = C.refinePose(a.pairs, state.estimate);
     state.bearing = r.ok
-      ? `模擬方位解算 E ${r.x.toFixed(0)} / N ${r.y.toFixed(0)}，yaw ${r.heading.toFixed(1)}°，RMS ${r.rmsDeg.toFixed(3)}°；未套用導航估計。`
+      ? `模擬方位解算 E ${r.x.toFixed(0)} / N ${r.y.toFixed(0)}，朝向 ${r.heading.toFixed(1)}°，RMS ${r.rmsDeg.toFixed(3)}°；未套用導航估計。`
       : "有效地標不足或未收斂。";
   }
   function clearExpedition() {
@@ -2190,7 +2190,7 @@ export function useMission() {
       name: v.name, color: v.color, length: fmt(v.length), baseline: v.baseline,
     }));
     const primary = profileSeries[0];
-    state.profileInfo = `${primary.name} · ${state.regional ? "MOLA" : state.siteName} DEM · ${fmt(primary.length)} · 最大格網坡度 ${primary.maxSlope.toFixed(1)}° · 缺值 ${primary.missing}；每 ≤${Math.ceil(primary.step)} m 取樣數值 DEM，非影像高程。`;
+    state.profileInfo = `${primary.name} · ${state.regional ? "MOLA" : state.siteName} DEM · ${fmt(primary.length)} · 最大格網坡度 ${primary.maxSlope.toFixed(1)}° · 缺值 ${primary.missing}。高程取自 DEM，取樣間距最多 ${Math.ceil(primary.step)} 公尺。`;
     paintProfile();
   }
   function paintProfile() {

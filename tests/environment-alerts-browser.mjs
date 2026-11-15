@@ -54,7 +54,7 @@ export async function verifyEnvironmentAlerts(page, url) {
   await explore.click();
   await page.locator('#dem-region-preset').selectOption('valles-ctx');
   await page.locator('#load-region').click();
-  await expect(page.locator('#region-title')).toHaveText('水手號峽谷');
+  await expect(page.locator('#region-title')).toHaveText('水手號谷');
   await expect(temperature).toHaveCount(0);
   await expect(radiation).toHaveCount(0);
   await page.goto(url);

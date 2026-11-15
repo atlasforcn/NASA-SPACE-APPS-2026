@@ -1,4 +1,5 @@
 <script setup>
+import NavigationRiskKey from "./NavigationRiskKey.vue";
 import { inject, ref, watch } from "vue";
 import { missionKey } from "../useMission";
 import WalkPanel from "./WalkPanel.vue";
@@ -67,14 +68,21 @@ watch(() => s.station, station => {
             <button type="button" @click="s.layer = 'roughness'" :disabled="s.regional || s.globalView">查看粗糙度</button>
             <button type="button" @click="s.tab = 'layers'; s.panelOpen = true">對照其他圖層 ↗</button>
           </div>
-          <p class="hint">紅色：坡度超過 {{ s.slope }}°，或粗糙度超過 {{ s.roughnessLimit }}，也包含人工禁行區。黃色：地形資料不足，無法判定能否通行。三種路線都會避開這些位置。取消勾選只隱藏標記，規劃仍會避開。</p>
+          <div class="navigation-risk-key"><NavigationRiskKey /></div>
+          <p class="hint">地形超限指坡度超過 {{ s.slope }}° 或粗糙度超過 {{ s.roughnessLimit }}。隱藏標記後，三種路線仍會避開這些區域。</p>
           <label>粗糙度上限 {{ s.roughnessLimit }}<input id="roughness-limit" v-model.number="s.roughnessLimit" type="range" min="0" max="1" step="0.05" /></label>
-          <p class="hint">上限採用示範設定。調低粗糙度上限可排除較粗糙地形；1 表示不額外排除粗糙度。人工禁行區也會阻擋通行；地質與選配熱慣量用於材質成本。遮罩為顯示取樣，路線會沿途細分檢查。</p>
+          <p class="hint">上限越低，排除的路段越多。設為 1 時，不因粗糙度排除路段。</p>
         </details>
         <NavigationMaterials />
         <PlannerControls />
       </details>
-      <p v-if="s.directRoute" id="straight-status" class="hint" role="status">{{ s.straightStatus }}</p>
+      <p v-if="s.directRoute" id="straight-status" class="hint" role="status">
+        {{ s.straightStatus }}
+        <template v-if="!s.directRoute.reachable">
+          <template v-if="s.route?.reachable">紅色路段未通過檢查，可沿{{ s.route.molaDistance ? '建議路線' : '青色路線' }}繞行。</template>
+          <template v-else>直線受阻，請調整目的地或停靠點。</template>
+        </template>
+      </p>
       <RouteAlternatives />
       <div v-if="s.directRoute && s.route && !s.routeOptions" class="route-comparison">
         <h3>同端點路線比較</h3>
@@ -104,7 +112,7 @@ watch(() => s.station, station => {
       <details class="planning-assumptions">
         <summary>規劃假設與資料限制</summary>
         <p class="hint">三條路線都用 A* 尋路。最短路線看距離，較低風險看坡度、起伏與材質，最低耗電則估算沿途用電。</p>
-        <p class="hint">{{ s.regional ? '全球 MOLA 為公里尺度高程，遠距結果僅供粗略模擬。' : '區域 DEM 有效處優先；越界或缺測時使用公里尺度 MOLA。MOLA 路段的粗糙度無法估計，只能作粗略規劃。' }}缺測與越界區段不視為可通行；未納入車輪尺度障礙、能源及真實任務時程。</p>
+        <p class="hint">{{ s.regional ? '全球 MOLA 為公里尺度高程，遠距結果僅供粗略模擬。' : '優先使用當地的數值高程模型（DEM），越界或缺測時使用公里尺度 MOLA。MOLA 路段的粗糙度無法估計，只能作粗略規劃。' }}路線會避開缺測與越界區段。格網無法辨識車輪尺度的障礙。耗電估算只計算行進用電，行程時間依模擬任務設定估算。</p>
         <p class="hint">建立路線會將車放回所選起點。{{ s.regional ? '行進中更新地平線實驗候選。' : '行進中用地平線校正位置並重新規劃剩餘路線。' }}</p>
         <a href="https://www.momar.si/planner/" target="_blank" rel="noopener noreferrer">路線規劃介面參考：MOMAR ↗</a>
       </details>

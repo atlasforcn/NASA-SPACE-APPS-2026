@@ -20,8 +20,8 @@
     "disposition": "publish",
     "reason": "Website runtime, reference, source record or presentation",
     "path": "data/mars-names.json",
-    "bytes": 773708,
-    "sha256": "3c0e264098227f7bdad742cd34b41191041263092f37147981738e6a9127a430"
+    "bytes": 773705,
+    "sha256": "463c1e1ce706216d19b60ed2691d5ffbb044a00eab00880812b58ef14e4122de"
   },
   {
     "source": "data/mission.json",
@@ -100,8 +100,8 @@
     "disposition": "publish",
     "reason": "Website runtime, reference, source record or presentation",
     "path": "docs/SOURCES.md",
-    "bytes": 16662,
-    "sha256": "32f43457dfaa8161422186148fd6608e011b938895c6b99f238bcd48268bf98a"
+    "bytes": 16693,
+    "sha256": "6ed35a80f09549631f2024adb6bae06c51841f11a9d29722f563b45ef12fea01"
   },
   {
     "source": "docs/Leaflet-LICENSE.txt",

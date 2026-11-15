@@ -17,7 +17,7 @@ const m = inject(missionKey),
         <strong>{{ { terrain: '高程', slope: '坡度', roughness: '粗糙度', hillshade: '地形陰影' }[kind] }}</strong>
         <div class="color-scale" :class="{ grayscale: kind === 'hillshade', regional: s.regional || s.globalView }"></div>
         <div class="scale-labels"><span>{{ kind === 'hillshade' ? '暗：背光' : kind === 'slope' ? '低坡度（0°）' : kind === 'roughness' ? '低粗糙度（0）' : '低高程' }}</span><span>{{ kind === 'hillshade' ? '亮：迎光' : kind === 'slope' ? (s.regional ? '高坡度（≥24°）' : '高坡度（≥30°）') : kind === 'roughness' ? '高粗糙度（1）' : '高高程' }}</span></div>
-        <p class="hint">{{ s.globalView ? 'MOLA 全球高程與陰影；游標讀取數值高程。' : s.regional ? 'MOLA 高程色階：−8,200 至 21,800 m；圓點為區域取樣。' : '透明處為缺值。高程色階依各區資料範圍縮放，相同顏色不代表跨區相同高程。' }}</p>
+        <p class="hint">{{ s.globalView ? 'MOLA 全球高程與陰影；游標讀取數值高程。' : s.regional ? 'MOLA 高程色階：−8,200 至 21,800 m；圓點為區域取樣。' : '透明處缺少資料。各區色階依當地最低與最高高程調整。' }}</p>
       </div>
       <p id="layer-legend" class="hint">{{ s.legend }}</p>
       <div v-for="unit in s.units" :key="unit.label" class="unit-key">
