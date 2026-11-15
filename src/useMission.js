@@ -17,6 +17,13 @@ import { asset, json } from "./asset";
 import { scienceLayerIds, createScienceLoader, sampleScienceGrid } from './science-layers.mjs';
 import { colorizeScienceGrid, rasterScales } from './science-style.mjs';
 
+function createUiId(prefix = "") {
+  const crypto = globalThis.crypto;
+  if (crypto?.randomUUID) return prefix + crypto.randomUUID();
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  return prefix + Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
+}
+
 export const missionKey = Symbol("mission");
 export const fmt = (m) =>
   m >= 1000 ? (m / 1000).toFixed(2) + " km" : Math.round(m) + " m";
@@ -1394,7 +1401,7 @@ export function useMission() {
     }
     const target = {
       ...p,
-      id: "custom-" + crypto.randomUUID(),
+      id: createUiId("custom-"),
       name: state.targetName.trim() || "自訂目的地 " + (state.targets.length + 1),
       unit: state.regional ? "MOLA 區域地形" : unitLabel(unitAt(p)),
       kind: "使用者自訂目的地",
@@ -2027,7 +2034,7 @@ export function useMission() {
       if(state.pickingNoGo) {
         const radius=Number(state.noGoRadius);
         if(!Number.isFinite(radius)||radius<10||radius>100000||Math.abs(e.latlng.lat)>90){state.routeStatus='禁行區半徑須介於 10–100,000 m';return;}
-        state.noGoZones.push({id:crypto.randomUUID(),name:state.noGoName.trim()||`人工禁行區 ${state.noGoZones.length+1}`,lat:e.latlng.lat,lng:((e.latlng.lng+180)%360+360)%360-180,radius});
+        state.noGoZones.push({id:createUiId(),name:state.noGoName.trim()||`人工禁行區 ${state.noGoZones.length+1}`,lat:e.latlng.lat,lng:((e.latlng.lng+180)%360+360)%360-180,radius});
         state.pickingNoGo=false; state.noGoName='';
         return;
       }
