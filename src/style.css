@@ -896,6 +896,9 @@ canvas.navigation-risk-tile {
 }
 .mode-menu .demo-entry { padding-inline: 4px; }
 .demo-entry:hover { color: #fff; }
+.project-about { margin-top: 8px; border-top: 1px solid var(--border); }
+.project-about summary { padding: 12px 4px; min-height: 44px; cursor: pointer; }
+.project-about p { margin: 0 4px 12px; line-height: 1.7; }
 .mode-switch { float:right; padding:3px 6px; font-size:11px; }
 .region-actions { padding:12px 20px; border-bottom:1px solid var(--border); }
 .region-actions p { font-size:13px; margin-bottom:6px; }

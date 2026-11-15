@@ -121,6 +121,13 @@ if (import.meta.env.MODE === "test") window.__mission = mission;
       <button id="start-free" @click="enterFree"><strong>自由探索</strong><span>自己選起點和終點，也可以用山頂相儀找位置。</span><b>選擇探索區域 →</b></button>
       <a id="curiosity-demo-entry" class="demo-entry" :href="demoHash" aria-haspopup="dialog" @click="openDemo">用好奇號實拍山稜找位置 <span aria-hidden="true">→</span></a>
       <p v-if="s.error" role="alert">{{ s.error }} <button @click="mission.boot">重試載入</button></p>
+      <details class="project-about">
+        <summary>關於這個計畫</summary>
+        <p>太空人從基地走到觀測點，眼前這段坡能不能走？途中如果迷了方向，能不能認出遠方的山頭？我們從這兩個問題開始做這張地圖。</p>
+        <p>我們把火星影像疊在高程地圖上，用 A* 找路、避開陡坡和禁行區。「山頂相儀」則把眼前的山稜和地圖算出的輪廓一一比對，找出可能的站位。</p>
+        <p>在 Jezero 模擬任務，多走約 680 公尺，沿途最大坡度從 8.8° 降到 5.4°。拿好奇號的 Dingo Gap 實拍全景比對，第一個候選位置距已知站位 815 公尺。</p>
+        <p>下一步，我們想用更多已知拍攝位置的照片，試試機器學習能不能把山稜抓得更準，再用新照片量定位誤差。其他星球如果也有高程資料和能核對位置的照片，我們也想把地圖搬過去試試。</p>
+      </details>
     </div>
   </section>
   <main :inert="choosing" class="workspace" :class="{ 'panel-closed': !s.panelOpen, 'planning-view': !s.localizationOpen }">
