@@ -10,8 +10,8 @@ const route=computed(()=>walkOption.value?.result.samples ?? s.walk?.assessment?
 const points=computed(()=>route.value?.map(p=>C.localToLatLng(p.x,p.y)) || [s.guidanceView?.center ?? {lat:s.lat,lng:s.lng}]);
 function terrain(id) {
   const local=route.value || points.value.map(p=>C.latLngToLocal(p.lat,p.lng));
-  if(id==='hillshade') return {text:'陰影來自模擬光源，可用來辨認坡面方向。通行門檻請對照數值坡度。'};
-  if(id==='geology') return {text:'起訖地質單元：'+m.geologyAt(local[0])+' → '+m.geologyAt(local.at(-1))+'。'};
+  if(id==='hillshade') return {text:'Simulated lighting reveals slope direction. Use the slope layer to check the route limit.'};
+  if(id==='geology') return {text:'Geological units, start → end: '+m.geologyAt(local[0])+' → '+m.geologyAt(local.at(-1))+'.'};
   const [read,unit,limit]=id==='slope'?[C.slopeDeg,'°',s.slope]:id==='roughness'?[C.roughness,'',s.roughnessLimit]:[C.elevation,' m',null];
   let low=Infinity,high=-Infinity,missing=false;
   for(const p of local) {
@@ -20,24 +20,24 @@ function terrain(id) {
     else {low=Math.min(low,n);high=Math.max(high,n);}
   }
   const exceeded=limit!==null && high>limit;
-  return {text:Number.isFinite(low)?'取樣範圍 '+low.toFixed(2)+'–'+high.toFixed(2)+unit+'。':'目前沒有有效讀值。',
-    warning:[exceeded?'超出任務設定上限 '+limit+unit+'，請調整路線。':'',missing?'部分位置缺少足夠地形資料。':''].filter(Boolean).join(' '),
-    advice:limit===null?'比較沿線高差時，請一併檢查坡度及高程來源。':'目前任務上限 '+limit+unit+'。'};
+  return {text:Number.isFinite(low)?'Sample range: '+low.toFixed(2)+'–'+high.toFixed(2)+unit+'.':'No valid readings.',
+    warning:[exceeded?'Exceeds mission limit of '+limit+unit+'. Adjust the route.':'',missing?'Some locations lack terrain data.':''].filter(Boolean).join(' '),
+    advice:limit===null?'Check the slope and elevation source when comparing elevation changes.':'Mission limit: '+limit+unit+'.'};
 }
-const cards=computed(()=>s.layers.map(id=>({id,...(!s.ready || s.regionLoading ? {text:'正在載入任務區域…'} : scienceLayerIds.includes(id)
+const cards=computed(()=>s.layers.map(id=>({id,...(!s.ready || s.regionLoading ? {text:'Loading mission region…'} : scienceLayerIds.includes(id)
   ? scienceGuidance(id,s.scienceLayers[id],points.value,!!route.value,s.guidanceView,s.navigation) : terrain(id))})));
 </script>
 <template>
-<section class="layer-guidance" aria-label="圖層判讀與警示">
-  <h3>圖層判讀與警示 · {{ cards.length }}</h3>
-  <p class="hint" v-if="walkOption">依所選「{{ walkOption.name }}」沿途取樣。</p>
-  <p class="hint" v-else>{{ s.walk ? route ? '依基地到 A 直線沿途取樣。' : '目前依地圖中心判讀；檢查基地到 A 後可看沿途變化。' : route ? '依目前規劃路線的節點取樣，含往返或中途停靠的路段。' : '目前依地圖中心判讀；規劃後會比較沿途節點。' }}</p>
+<section class="layer-guidance" aria-label="Layer readings and warnings">
+  <h3>Layer readings and warnings · {{ cards.length }}</h3>
+  <p class="hint" v-if="walkOption">Samples along the selected route: {{ walkOption.name }}.</p>
+  <p class="hint" v-else>{{ s.walk ? route ? 'Sampled along the straight line from the base to A.' : 'Readings are for the map center. Check the route from the base to A for measurements along it.' : route ? 'Sampled along the planned route, including intermediate stops and the return leg.' : 'Readings are for the map center. Plan a route to compare its waypoints.' }}</p>
   <article v-for="c in cards" :key="c.id" :data-layer="c.id">
     <h4>{{ layerNames[c.id] }}</h4><p v-if="c.text">{{ c.text }}</p>
-    <p v-if="c.warning" class="warning" role="status">警示 · {{ c.warning }}</p>
+    <p v-if="c.warning" class="warning" role="status">Warning · {{ c.warning }}</p>
     <p v-if="c.advice">{{ c.advice }}</p>
-    <p v-for="h in c.history" :key="h.url">同格歷史測站 · {{ h.text }} <a :href="h.url" target="_blank" rel="noopener noreferrer">測溫來源 ↗</a></p>
-    <a v-if="c.url" :href="c.url" target="_blank" rel="noopener noreferrer">圖層來源 ↗</a>
+    <p v-for="h in c.history" :key="h.url">Historical station in this cell · {{ h.text }} <a :href="h.url" target="_blank" rel="noopener noreferrer">Temperature source ↗</a></p>
+    <a v-if="c.url" :href="c.url" target="_blank" rel="noopener noreferrer">Layer source ↗</a>
   </article>
 </section>
 </template>

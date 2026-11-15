@@ -10,8 +10,8 @@ const tilted = observationFromTrace(trace, 700, 260, { fov: 60, pitch: 10 });
 assert(Math.abs(tilted.elevations[0] - 10) < 1e-6);
 const gaps = [...trace]; gaps.fill(null, 300, 401);
 assert.equal(observationFromTrace(gaps, 700, 260).valid[0], false);
-assert.throws(() => observationFromTrace(Array(700).fill(null), 700, 260), /輪廓太短/);
-assert.throws(() => observationFromTrace(trace, 700, 260, { fov: 180 }), /水平視角/);
+assert.throws(() => observationFromTrace(Array(700).fill(null), 700, 260), /The trace is too short/);
+assert.throws(() => observationFromTrace(trace, 700, 260, { fov: 180 }), /Horizontal field of view/);
 const width = 100, height = 70, data = new Uint8ClampedArray(width * height * 4);
 for (let x = 0; x < width; x++) for (let y = 0; y < height; y++) {
   const ridge = 25 + Math.round(Math.sin(x / 15) * 6), offset = (y * width + x) * 4;

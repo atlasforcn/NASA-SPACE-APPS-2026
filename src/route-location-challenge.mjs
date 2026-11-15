@@ -88,7 +88,7 @@ function coveredSegments(path, grid) {
     segments.push({ a, b, start, end, length, offset: distance });
     distance += length;
   }
-  if (!segments.length) throw new Error('這條路線未穿過目前的 DEM 圖幅。請改選有地形資料的路段，或為圖幅外的長路線建立 MOLA 區域任務。');
+  if (!segments.length) throw new Error('This route lies outside the current DEM. Select a segment with terrain coverage or create a regional MOLA mission for a longer route.');
   return { segments, distance };
 }
 
@@ -109,17 +109,17 @@ function searchMap(dem, observation, bounds, coarseStep, signal) {
     }
     function cancel() {
       finish();
-      reject(new DOMException('搜尋已取消', 'AbortError'));
+      reject(new DOMException('Search canceled', 'AbortError'));
     }
     worker.onmessage = ({ data }) => {
       if (data.type === 'progress') return;
       finish();
       if (data.type === 'result') resolve(data.result);
-      else reject(new Error(data.message || '山稜搜尋失敗'));
+      else reject(new Error(data.message || 'Skyline search failed'));
     };
     worker.onerror = () => {
       finish();
-      reject(new Error('無法執行山稜搜尋，請重新嘗試。'));
+      reject(new Error('Skyline search failed. Try again.'));
     };
     signal?.addEventListener('abort', cancel, { once: true });
     try {
@@ -133,15 +133,15 @@ function searchMap(dem, observation, bounds, coarseStep, signal) {
 }
 
 export function makeRouteChallenge({ route, grid, profileOptions, isCurrent, lifetime }) {
-  if (!grid || !route?.path || !isCurrent()) throw new Error('請先選擇有地形資料的路線。');
+  if (!grid || !route?.path || !isCurrent()) throw new Error('Select a route with terrain coverage first.');
   const path = [];
   for (const { x, y } of route.path) {
-    if (!Number.isFinite(x) || !Number.isFinite(y)) throw new Error('此路線缺少座標。');
+    if (!Number.isFinite(x) || !Number.isFinite(y)) throw new Error('This route has no coordinates.');
     const last = path.at(-1);
     if (last && x === last.x && y === last.y) continue;
     path.push({ x, y });
   }
-  if (path.length < 2) throw new Error('請先建立一段有長度的路線。');
+  if (path.length < 2) throw new Error('Build a route with a nonzero length first.');
 
   const cellSize = (grid.xMax - grid.xMin) / (grid.width - 1);
   const bounds = routeBounds(path, cellSize);
@@ -159,7 +159,7 @@ export function makeRouteChallenge({ route, grid, profileOptions, isCurrent, lif
     : C.distance;
   let previous = null;
   function checkRegion() {
-    if (!isCurrent()) throw new Error('地形區域已切換，請重新進入路線定位。');
+    if (!isCurrent()) throw new Error('The terrain region changed. Reopen route localization.');
   }
   function newRound() {
     checkRegion();
@@ -178,7 +178,7 @@ export function makeRouteChallenge({ route, grid, profileOptions, isCurrent, lif
       observation = scan;
       break;
     }
-    if (!truth) throw new Error('這段路線的 DEM 山稜覆蓋不足。請改選有地形資料的路段。若長路線超出局部圖幅，可建立 MOLA 區域任務來比對大尺度山形。');
+    if (!truth) throw new Error('This segment has insufficient DEM skyline coverage. Choose a segment with terrain data. For routes beyond the local DEM, create a regional MOLA mission to compare larger landforms.');
     previous = truth;
     return {
       observation,

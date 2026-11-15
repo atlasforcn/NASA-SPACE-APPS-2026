@@ -33,5 +33,5 @@ for sequence, station, sols, split in [('01','Butler Landing',[3,11],'developmen
         placesBracket=[{k:r[k] for k in keys} for r in [before,after]],
         exactSiteDrive=None if sequence else [4,1062],positionUncertaintyMeters=None,
         cameraHeightMeters=None,cameraAttitude=None,reviewedSkyline=None,mask=None,
-        status='excluded',result=None,reason='缺少經複核的相機幾何、輪廓、遮罩及逐方位 DEM 覆蓋。'))
+        status='excluded',result=None,reason='Camera geometry, skyline traces, masks and DEM coverage by bearing still need review.'))
 print(json.dumps(entries,indent=2,ensure_ascii=False))

@@ -19,7 +19,7 @@ export async function verifyCuriosityLanding(page, url) {
   await dialog.waitFor();
   await page.locator('#curiosity-reveal').waitFor();
   assert.equal(new URL(page.url()).hash, '#dingo-gap');
-  assert.doesNotMatch(await dialog.innerText(), /815\s*公尺/);
+  assert.doesNotMatch(await dialog.innerText(), /815\s*m/);
   assert(await referencePin.isHidden());
   assert(await page.locator('#curiosity-photo').isVisible());
   assert(await page.locator('#curiosity-map').isVisible());
@@ -50,7 +50,7 @@ export async function verifyCuriosityLanding(page, url) {
   await view.selectOption(otherView);
   await page.locator('#curiosity-reveal').click();
   await referencePin.waitFor();
-  assert.match(await result.innerText(), /815\s*公尺/);
+  assert.match(await result.innerText(), /815\s*m/);
   await page.waitForFunction(() => {
     const resultBox = document.getElementById('curiosity-result').getBoundingClientRect();
     const dialogBox = document.getElementById('curiosity-demo').getBoundingClientRect();

@@ -18,18 +18,18 @@ try {
   await page.waitForFunction(()=>window.__mission.state.hasStart);
   await page.evaluate(()=>{
     const s=window.__mission.state;
-    s.targets=[{id:'stop-a',name:'科學站 A',x:-1900,y:-800,unit:'測試'},{id:'stop-b',name:'科學站 B',x:-2200,y:-800,unit:'測試'},{id:'goal',name:'終點',x:-2400,y:-800,unit:'測試'}];
+    s.targets=[{id:'stop-a',name:'Science Site A',x:-1900,y:-800,unit:'Test'},{id:'stop-b',name:'Science Site B',x:-2200,y:-800,unit:'Test'},{id:'goal',name:'End',x:-2400,y:-800,unit:'Test'}];
     s.destination='stop-a';
   });
-  await page.getByRole('button', {name:'任務', exact:true}).click();
+  await page.getByRole('button', {name:'Mission', exact:true}).click();
   await page.locator('#mission-settings > summary').click();
   await page.locator('#settings-stops > summary').click();
   await page.locator('#add-stop').click();
   await page.locator('#destination').selectOption('stop-b');
   await page.locator('#add-stop').click();
-  await page.getByRole('button',{name:'上移第 2 站',exact:true}).click();
+  await page.getByRole('button',{name:'Move up stop 2',exact:true}).click();
   assert.deepEqual(await page.evaluate(()=>[...window.__mission.state.stopIds]),['stop-b','stop-a']);
-  await page.getByRole('button',{name:'移除第 1 站',exact:true}).click();
+  await page.getByRole('button',{name:'Remove stop 1',exact:true}).click();
   await page.locator('#destination').selectOption('goal');
   await page.locator('#settings-assumptions > summary').click();
   await page.locator('#round-trip').check();
@@ -38,10 +38,10 @@ try {
   await page.waitForFunction(()=>window.__mission.state.routeOptions?.safer.reachable);
   await page.locator('#route-comparison-details > summary').click();
   assert.equal(await page.locator('.itinerary li').count(),3);
-  assert((await page.locator('.route-comparison').innerText()).includes('超出'));
-  const compareProfiles = page.getByRole('checkbox',{name:'比較不同路線'});
-  const legend = page.getByRole('list', {name: '剖面曲線'});
-  const directEntry = legend.getByRole('listitem').filter({hasText: '直線'});
+  assert((await page.locator('.route-comparison').innerText()).includes('Over'));
+  const compareProfiles = page.getByRole('checkbox',{name:'Compare routes'});
+  const legend = page.getByRole('list', {name: 'Elevation profiles'});
+  const directEntry = legend.getByRole('listitem').filter({hasText: 'Straight line'});
   const directDistance = await page.evaluate(() => {
     const {state, fmt} = window.__mission;
     const goal = state.targets.find(target => target.id === state.destination);
@@ -56,10 +56,10 @@ try {
   await page.locator('#choose-shortest').click();
   assert.equal(await page.evaluate(()=>window.__mission.state.selectedRoute),'shortest');
   assert(await page.locator('#choose-shortest').getAttribute('aria-pressed')==='true');
-  await page.waitForFunction(()=>window.__mission.state.profileLegend.some(v=>v.name==='較低風險路線'));
+  await page.waitForFunction(()=>window.__mission.state.profileLegend.some(v=>v.name==='Lower-risk route'));
   assert((await directEntry.innerText()).includes(directDistance));
   await page.locator('#route-profile').hover({position: {x: 30, y: 40}});
-  await page.waitForFunction(() => /直線[^；]*高程\s*-?\d/.test(window.__mission.state.profileHover));
+  await page.waitForFunction(() => /Straight line.*?Elevation\s*-?\d/.test(window.__mission.state.profileHover));
   const downloadPromise=page.waitForEvent('download');
   await page.locator('#export-plan').click();
   const download=await downloadPromise;
@@ -79,7 +79,7 @@ try {
   assert(await page.locator('#simulate').isDisabled());
   assert(await page.locator('.map-profile').isHidden());
   await page.evaluate(([lng, lat]) => {
-    window.__mission.state.noGoZones.push({id: 'blocked-start', name: '起點禁行', lat, lng, radius: 100});
+    window.__mission.state.noGoZones.push({id: 'blocked-start', name: 'Blocked start', lat, lng, radius: 100});
   }, points[0]);
   await page.locator('#plan').click();
   await page.waitForFunction(() => {
@@ -90,9 +90,9 @@ try {
   assert.equal(await legend.getByRole('listitem').count(), 1);
   assert((await directEntry.innerText()).includes(directDistance));
   await page.locator('#route-profile').hover({position: {x: 30, y: 40}});
-  await page.waitForFunction(() => /直線[^；]*高程\s*-?\d/.test(window.__mission.state.profileHover));
+  await page.waitForFunction(() => /Straight line.*?Elevation\s*-?\d/.test(window.__mission.state.profileHover));
   assert(await page.locator('#simulate').isDisabled());
-  await page.getByRole('button', {name:'切換模式'}).click();
+  await page.getByRole('button', {name:'Switch modes'}).click();
   await page.locator('#start-walk').click();
   await page.locator('#check-science-route').waitFor();
   assert(await page.locator('.map-profile').isHidden());

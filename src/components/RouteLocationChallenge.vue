@@ -20,18 +20,18 @@ const direction = ref('all');
 let searchController;
 
 const views = {
-  all: { label: '360° 全景', start: 0, end: 360, ticks: ['北', '東', '南', '西', '北'] },
-  north: { label: '朝北', start: -60, end: 60, ticks: ['西北側', '北', '東北側'] },
-  east: { label: '朝東', start: 30, end: 150, ticks: ['東北側', '東', '東南側'] },
-  south: { label: '朝南', start: 120, end: 240, ticks: ['東南側', '南', '西南側'] },
-  west: { label: '朝西', start: 210, end: 330, ticks: ['西南側', '西', '西北側'] },
+  all: { label: '360° panorama', start: 0, end: 360, ticks: ['N', 'E', 'S', 'W', 'N'] },
+  north: { label: 'Facing north', start: -60, end: 60, ticks: ['Northwest', 'N', 'Northeast'] },
+  east: { label: 'Facing east', start: 30, end: 150, ticks: ['Northeast', 'E', 'Southeast'] },
+  south: { label: 'Facing south', start: 120, end: 240, ticks: ['Southeast', 'S', 'Southwest'] },
+  west: { label: 'Facing west', start: 210, end: 330, ticks: ['Southwest', 'W', 'Northwest'] },
 };
 const view = computed(() => views[direction.value]);
 const statusLabels = {
-  good: '候選通過定位門檻',
-  uncertain: '位置仍不確定',
-  lost: '未能可靠定位',
-  error: '搜尋未完成',
+  good: 'Candidate meets positioning thresholds',
+  uncertain: 'Position uncertain',
+  lost: 'No reliable fix',
+  error: 'Search incomplete',
 };
 const graph = computed(() => {
   const observation = round.value.observation;
@@ -85,7 +85,7 @@ const endpointLabels = computed(() => {
     const y = Math.max(10, Math.min(mapHeight - 10, point.y + (below ? 16 : -16)));
     return { point, label, width, x, y };
   }
-  if (loop.value) return [marker(start.value, '起／終')];
+  if (loop.value) return [marker(start.value, 'Start/end')];
   return [marker(start.value, session.value.startLabel), marker(end.value, session.value.endLabel, true)];
 });
 const mapScale = computed(() => {
@@ -95,12 +95,12 @@ const mapScale = computed(() => {
   return { width: meters / width * 100 + '%', label: distance(meters) };
 });
 const distance = meters => meters >= 1000
-  ? (meters / 1000).toLocaleString('zh-TW', {maximumFractionDigits: 2}) + ' 公里'
-  : Math.round(meters).toLocaleString('zh-TW') + ' 公尺';
+  ? (meters / 1000).toLocaleString('en-US', {maximumFractionDigits: 2}) + ' km'
+  : Math.round(meters).toLocaleString('en-US') + ' m';
 const mapMarks = computed(() => [
-  { id: 'guess', label: '你的標記', point: guess.value },
-  { id: 'truth', label: '模擬觀測點', point: answer.value?.truth },
-  { id: 'system', label: '系統候選', point: system.value?.candidate },
+  { id: 'guess', label: 'Your marker', point: guess.value },
+  { id: 'truth', label: 'Simulated observation point', point: answer.value?.truth },
+  { id: 'system', label: 'System candidate', point: system.value?.candidate },
 ].filter(mark => mark.point).map(mark => ({ ...mark, screen: project(mark.point) })));
 
 function newRound() {
@@ -115,7 +115,7 @@ function newRound() {
     round.value = session.value.newRound();
   } catch (e) {
     session.value = null;
-    error.value = e.message || '目前這條路線沒有可用的地平線觀測。';
+    error.value = e.message || 'This route has no usable skyline observations.';
   }
 }
 function choose(x,y) {
@@ -126,10 +126,10 @@ function choose(x,y) {
   previewError.value = '';
   try {
     preview.value = round.value.preview(point);
-    if (!preview.value?.valid.some(Boolean)) previewError.value = '此點的地形資料不足，可再選其他位置。';
+    if (!preview.value?.valid.some(Boolean)) previewError.value = 'Terrain coverage is insufficient at this point. Choose another location.';
   } catch {
     preview.value = null;
-    previewError.value = '此點無法預覽山稜，可再選其他位置。';
+    previewError.value = 'No skyline preview is available here. Choose another point.';
   }
 }
 function pick(event) {
@@ -154,10 +154,10 @@ async function submit() {
   try {
     const revealed = current.reveal(guess.value);
     if (!Number.isFinite(revealed?.guessErrorMeters) || !Number.isFinite(revealed.truth?.x) || !Number.isFinite(revealed.truth?.y))
-      throw new Error('缺少可用座標，請重新取樣。');
+      throw new Error('Coordinates are missing. Sample again.');
     answer.value = revealed;
   } catch (cause) {
-    error.value = cause.message || '無法核對這次定位，請重新取樣。';
+    error.value = cause.message || 'Unable to check this position. Sample again.';
     session.value = null;
     return;
   }
@@ -172,7 +172,7 @@ async function submit() {
     const result = await current.locate(controller.signal);
     if (!controller.signal.aborted) system.value = result;
   } catch {
-    if (!controller.signal.aborted) system.value = { status: 'error', reason: '無法完成這次地形比對' };
+    if (!controller.signal.aborted) system.value = { status: 'error', reason: 'Terrain matching failed' };
   } finally {
     if (!controller.signal.aborted) searching.value = false;
   }
@@ -193,36 +193,36 @@ onBeforeUnmount(() => searchController?.abort());
 <template>
   <dialog id="route-location-challenge" ref="dialog" aria-labelledby="route-location-title" @close="emit('close')" @click="closeBackdrop">
     <header class="heading">
-      <div><p class="overline">山頂相儀 · 路線定位練習</p><h2 id="route-location-title" tabindex="-1">我在路線上的哪裡？</h2></div>
-      <button id="route-location-close" type="button" aria-label="關閉路線定位練習" autofocus @click="dialog.close()">關閉 ×</button>
+      <div><p class="overline">Mountain Tracker · Route positioning exercise</p><h2 id="route-location-title" tabindex="-1">Where am I on the route?</h2></div>
+      <button id="route-location-close" type="button" aria-label="Close route positioning exercise" autofocus @click="dialog.close()">Close ×</button>
     </header>
-    <div v-if="error" class="issue" role="alert"><p>{{ error }}</p><button type="button" @click="again">重新取樣</button></div>
+    <div v-if="error" class="issue" role="alert"><p>{{ error }}</p><button type="button" @click="again">Sample again</button></div>
     <div v-else-if="round" class="body-grid">
       <section class="horizon-panel">
-        <div class="section-head"><h3>從觀測點看山稜</h3><select v-model="direction" aria-label="選擇山稜觀測方向">
+        <div class="section-head"><h3>Skyline at the observation point</h3><select v-model="direction" aria-label="Select viewing direction">
           <option v-for="(item,key) in views" :key="key" :value="key">{{ item.label }}</option>
         </select></div>
         <figure class="horizon-figure">
           <div class="chart-frame">
             <span class="axis top">{{ graph.high }}°</span><span class="axis bottom">{{ graph.low }}°</span>
-            <svg viewBox="0 0 600 190" preserveAspectRatio="none" class="horizon" role="img" aria-label="隱藏觀測點與所選位置的地形山稜，垂直放大仰角">
+            <svg viewBox="0 0 600 190" preserveAspectRatio="none" class="horizon" role="img" aria-label="Horizons at the hidden observation point and selected location, with vertically exaggerated elevation angles">
               <g class="grid" aria-hidden="true"><path d="M0 26H600 M0 99H600 M0 172H600 M150 0V190 M300 0V190 M450 0V190"/></g>
               <g id="route-location-observation"><g v-for="(s,i) in graph.measured" :key="i"><path class="ground" :d="s.area"/><path class="measured" :d="s.line"/></g></g>
               <g v-if="preview" id="route-location-preview"><path v-for="(s,i) in graph.comparison" :key="i" class="comparison" :d="s.line"/></g>
             </svg>
           </div>
           <div class="compass"><span v-for="(tick, i) in view.ticks" :key="i">{{ tick }}</span></div>
-          <figcaption>由數值地形模擬 · 山稜仰角垂直放大</figcaption>
+          <figcaption>Simulated terrain · Elevation angles vertically exaggerated</figcaption>
         </figure>
-        <div class="curve-key"><span><i class="observed-line"></i>觀測山稜</span><span><i class="guess-line"></i>所選位置的山稜</span></div>
-        <p class="guide">觀測點藏在這條路線上。點選地圖，看看該處的山形是否與橘線吻合。你可以換點比較，再提交判斷。</p>
-        <p v-if="session.regional" class="note">此區使用公里級 MOLA 地形，僅能比對大尺度山形。</p>
-        <p v-if="session.partialCoverage" class="note">路線有一部分超出這份高程圖。觀測點會選在有地形資料的路段。</p>
+        <div class="curve-key"><span><i class="observed-line"></i>Observed skyline</span><span><i class="guess-line"></i>Skyline at your selected position</span></div>
+        <p class="guide">The observation point is somewhere on this route. Click the map to compare the local skyline with the orange line. Try different points before submitting your guess.</p>
+        <p v-if="session.regional" class="note">This region uses kilometer-scale MOLA terrain. Only broad skyline features can be compared.</p>
+        <p v-if="session.partialCoverage" class="note">Part of the route lies outside this elevation map. The observation point is chosen from a segment with terrain coverage.</p>
         <p v-if="previewError" class="note" role="status">{{ previewError }}</p>
       </section>
       <section class="map-panel">
         <div class="section-head"><h3>{{ session.name }}</h3></div>
-        <div id="route-location-map" tabindex="0" role="group" aria-label="路線地形圖，點選位置或使用方向鍵移動標記，按 Enter 核對"
+        <div id="route-location-map" tabindex="0" role="group" aria-label="Route terrain map. Click or use the arrow keys to move your marker. Press Enter to check."
           @click="pick" @keydown="moveKey" :class="{locked: !!answer}">
           <img :src="session.mapImage" alt="" draggable="false" width="480" height="300">
           <svg class="map-ink" viewBox="0 0 480 300" preserveAspectRatio="none" aria-hidden="true">
@@ -242,18 +242,18 @@ onBeforeUnmount(() => searchController?.abort());
           <span class="north">↑ N</span><span class="scale" :style="{width:mapScale.width}">{{ mapScale.label }}</span>
         </div>
         <div class="map-key"><span><i class="route-sample"></i>{{ session.startLabel }} → {{ session.endLabel }}</span><span v-for="mark in mapMarks" :key="mark.id"><b :class="mark.id">{{ {guess:'○',truth:'◆',system:'×'}[mark.id] }}</b>{{ mark.label }}</span></div>
-        <button v-if="!answer" id="route-location-submit" type="button" class="primary" :disabled="!guess" @click="submit">{{ guess ? '提交我的位置並核對' : '先在地圖點選你的位置' }}</button>
+        <button v-if="!answer" id="route-location-submit" type="button" class="primary" :disabled="!guess" @click="submit">{{ guess ? 'Check my position' : 'Select your position on the map' }}</button>
         <div v-else id="route-location-result" ref="resultPanel" tabindex="-1" aria-live="polite">
-          <p>你的標記距模擬觀測點</p><strong class="guess-distance" :data-meters="answer.guessErrorMeters">{{ distance(answer.guessErrorMeters) }}</strong>
+          <p>Your marker’s distance from the observation point</p><strong class="guess-distance" :data-meters="answer.guessErrorMeters">{{ distance(answer.guessErrorMeters) }}</strong>
           <div id="route-location-system" :aria-busy="searching">
-            <span v-if="searching">正在比對地圖內的山稜…</span>
+            <span v-if="searching">Matching skylines within the map…</span>
             <template v-else-if="system">
               <strong class="status-label">{{ statusLabels[system.status] }}</strong>
-              <span>{{ system.reason }}。</span>
-              <span v-if="system.candidate && Number.isFinite(system.errorMeters)">系統首選距觀測點 <b class="system-distance" :data-meters="system.errorMeters">{{ distance(system.errorMeters) }}</b>。</span>
+              <span>{{ system.reason }}.</span>
+              <span v-if="system.candidate && Number.isFinite(system.errorMeters)">Distance from top candidate to observation point: <b class="system-distance" :data-meters="system.errorMeters">{{ distance(system.errorMeters) }}</b>.</span>
             </template>
           </div>
-          <button id="route-location-again" type="button" @click="again">換一個路線觀測點 →</button>
+          <button id="route-location-again" type="button" @click="again">Try another observation point →</button>
         </div>
       </section>
     </div>

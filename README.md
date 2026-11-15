@@ -1,31 +1,122 @@
 # Journey to the Mars
 
-Journey to the Mars 提供兩種探索火星地形的方式。
+How would you get from a landing site to an observation point on Mars? We built *Journey to the Mars* to explore that question for the 2026 NASA Space Apps Challenge. Our interactive map brings together NASA terrain, imagery and scientific observations. You can inspect a steep stretch in Jezero Crater, compare detours or plan a trip between points you choose. Our GPS-free positioning prototype, **Mountain Tracker**, compares the skyline in front of an observer with horizons predicted from the terrain.
 
-- **Jezero 科學任務**從東北側的示範基地前往觀測站 A，調查地表脊紋。先檢查 5.52 km 的直線，並在地圖找出超過預設 15° 門檻的坡段。搜尋替代路線後，可在同一張地圖與高程剖面比較較短繞行（約 5.84 km，最大格網坡度 8.8°）和較低風險繞行（約 6.52 km，5.4°）。變更門檻或新增禁行區後，重新規劃會依當時條件評估可走的路。
-- **自由探索**可自行選擇區域與起始點，開啟圖層回答當地的地形或科學問題，也可加入目的地、比較路線並模擬行進。建立路線後，高程剖面會自動顯示在地圖右下角，手機則顯示在地圖下方。也可開啟山頂相儀，比對地平線來找出自己在地圖上的位置。
+**[Open the interactive Mars map](https://atlasforcn.github.io/NASA-SPACE-APPS-2026/)** · [Read the Space Apps submission](https://www.spaceappschallenge.org/2026/find-a-team/seal-and-friends1/?tab=project) · [Explore the 50 resources cited in our submission](SUBMISSION-REFERENCES.md)
 
-[開啟可操作預覽](https://atlasforcn.github.io/NASA-SPACE-APPS-2026/)
+## Background
 
-好奇號在 Dingo Gap 拍下的全景可以直接試看。先比對照片與地形的山稜，再揭曉 NASA 的拍攝站位。這一例使用最遠 90 公里的地形，算出的首選距紀錄站位 815 公尺。[開啟好奇號實拍定位示範](https://atlasforcn.github.io/NASA-SPACE-APPS-2026/#dingo-gap)
+For our seventh Space Apps Challenge, our team, Seal and Friends, imagined a teammate about to land on Mars. Which slopes would they have to cross? What could they learn about the rocks at their destination? If they lost track of their position, could the mountains on the horizon help them find it again?
 
-## 自由探索與定位
+Google Maps inspired the route planner. Satellite star trackers and *The Legend of Zelda: Breath of the Wild* inspired Mountain Tracker. We drew on research into drone navigation and planetary rover localization to test whether the outline of a ridge could help identify a camera position in an orbital elevation map.
 
-想親自判斷站位，可以在 Jezero 科學任務的基地到 A 直線或所選繞行路線上練習。自由探索則先建立路線。點「看山稜，判斷我在路線上的哪裡」，或從地圖高程剖面點「沿途自我定位」，即可比較沿途一處模擬觀測與自己所選位置的山稜。提交後可核對模擬站位、自己的誤差與山頂相儀的候選結果。這項練習使用地形合成的觀測，毋須啟動行進。
+## Demo walkthrough
 
-Jezero 的「行進中自動以地平線校正」預設開啟，於起步及每行進 250 m 擷取模擬地平線，在背景搜尋位置。可靠結果會補回搜尋期間的里程位移並校正導航估計，保留目前路線；觀測不足時保留里程推估。MOLA 每 4 km 更新實驗候選，可信度尚未校準，不套用位置校正。手動掃描仍會停止行進，Jezero 成功校正後需重新規劃。此功能為同 DEM 模擬概念驗證。
+The demo opens in English. You can also follow this walkthrough in the [Traditional Chinese edition](https://atlasforcn.github.io/NASA-SPACE-APPS-2026/zh/).
 
-任務不受初始 512×512 km 裁切範圍限制。跨區域選起點、目的地或完成繪製路線時，會自動建立涵蓋既有起點、目的地及繪製點的 MOLA 格網，並保留目的地與行進紀錄。高程剖面、圖層與定位搜尋依實際格距調整；範圍越大，格網越粗，遠距路線是粗略地形模擬。
+### Jezero Science Mission
 
-## 開發與驗證
+1. Choose **Jezero Science Mission** on the opening screen. Find the base and observation site A. Before checking the route, look at the straight line between them and pick the stretch you think will be hardest to cross.
+2. Select **Check the route from the base to A**, then **Show the assessed segment on the map**. The highlighted segment and elevation profile show where the straight line exceeds the mission’s slope limit.
+3. Select **Find and compare detours**. Compare the distance and maximum slope for each alternative. Then open **Layers** and select **Spectral**. The base and site A share one olivine-abundance cell, more than 10 km across, even though the terrain profile changes sharply between them.
 
-路線規劃參考 [MOMAR](https://www.momar.si/planner/) 的雙方案與任務假設流程：選起點後，將目的地加入可排序的中途停靠清單，再選終點，可規劃返回起點。最短方案以格網三維距離為目標，較低風險方案加入坡度／粗糙度成本；兩者皆檢查坡度與缺測。可切換行進方案、比較高程剖面，查看升降、高坡度里程及時間預算，並匯出附火星座標說明與資料假設的 GeoJSON。步行時間採依設定平地速度正規化的 Tobler 模型，加上每站停留時間，屬地球經驗假設，並非火星 EVA 性能；與車輛加速模擬獨立。修改假設或停靠點後需重新規劃。新增互動驗證：`node tests/planner-browser.mjs`。
+### Free Exploration
 
-需要 Node.js 22.12+（建議 24）及 npm。
+Choose **Switch modes**, then **Free Exploration**. Open the **Mission** tab, select **Set starting point on the map** and click a location. Select **Add destination on the map** and click a second location. Select **Build and evaluate three routes** to compare the shortest, lower-risk and lowest-estimated-energy options. Switch between their elevation profiles to see where the paths diverge. You can add stops, adjust the terrain-risk and energy assumptions, or mark a circular exclusion zone and replan. The GeoJSON export records the itinerary, assumptions and sources.
+
+### Where am I?
+
+- **Try a simulated skyline.** In the Jezero mission, open the skyline exercise on the base-to-A route. In Free Exploration, build a route and open the exercise from its elevation profile. The orange line shows the simulated view from a hidden point. The dashed cyan line shows the predicted view from the spot you picked. Submit your guess to see the distance between the two positions.
+- **Try a real panorama.** We traced the ridgeline in Curiosity’s Dingo Gap panorama by hand. The demo replays a match calculated in advance. Pick the peak you trust most, then reveal NASA’s recorded camera position to see how far our top candidate landed from it. [Open the Dingo Gap replay](https://atlasforcn.github.io/NASA-SPACE-APPS-2026/#dingo-gap)
+- **Try your own photo.** In Free Exploration, open Mountain Tracker and expand the hand-drawn/photo skyline tool. Upload an image or trace a skyline, check the outline, set the projection, field of view and camera pitch, then search the loaded terrain. An approximate starting point narrows the search. The result is a set of candidate positions. Measuring the error requires an independently known camera position.
+
+![Distant ridges in Curiosity’s left navigation camera panorama at Dingo Gap](data/gale/dingo-gap/panorama.webp)
+
+*Curiosity’s left navigation camera, sols 538–539, Gale Crater. Image courtesy of NASA/JPL-Caltech.* [Original panorama](https://science.nasa.gov/resource/sol-0539-left-navigation-camera-cylindrical-projection/)
+
+## How it works
+
+### Route planning
+
+The Vue and Leaflet app uses A* to search a digital elevation model (DEM). Each route respects the slope and roughness limits, elevation coverage and any user-marked exclusion zones. The shortest route minimizes terrain distance. The lower-risk route accounts for slope, roughness and surface material. The energy model estimates relative travel costs along each segment using grade and material factors.
+
+Multi-stop and return-trip planning draw on MOMAR. Walking time uses Tobler’s hiking function, scaled to the chosen level-ground speed, plus time at stops. You can compare estimated walking times for all three routes. The model uses terrestrial walking data and adjustable energy assumptions. [MOMAR route planner](https://www.momar.si/planner/) · [Tobler’s technical report](https://escholarship.org/uc/item/05r820mz)
+
+### Maps and observations
+
+The global map combines Viking optical imagery with Mars Orbiter Laser Altimeter (MOLA) elevations. Regional terrain and orthorectified imagery support closer inspection. In Jezero, USGS geological units show which mapped surfaces a route crosses.
+
+| Region | Terrain used by the app |
+| --- | --- |
+| Jezero Crater | 30 × 30 km of Context Camera (CTX) terrain, sampled at 40 m |
+| Gale Crater | 10 × 10 km of merged terrain, sampled at 20 m from a native 1 m grid |
+| Valles Marineris | 20 × 20 km of CTX stereo terrain, sampled at 40 m |
+| Global Mars | MOLA at about 3.7 km per cell at the equator. Regional sampling starts at 4 km and coarsens for larger areas. |
+
+Four global science layers show TES thermal inertia and olivine abundance, GMM-3 gravity anomalies and Odyssey GRS iron concentration. The map also marks 2,055 official place names and ten sample-tube deposits at Three Forks. MEDA pressure and RAD absorbed-dose measurements appear at their historical stations. A map hint flags historical temperature readings at Jezero or Gale and radiation readings at Gale when they exceed thresholds set by the user. These station records describe conditions at the time and place of measurement. [Data sources, processing and resolution](docs/SOURCES.md)
+
+### Mountain Tracker
+
+Mountain Tracker uses color and brightness rules to propose a boundary between sky and terrain. Clouds, shadows and rover hardware can interrupt that boundary, so you can correct it by hand. For each candidate position and heading, the tracker predicts a horizon from the DEM and ranks matches by the difference between the observed and predicted outlines. Uploaded images are processed in the browser. A separate landmark-bearing exercise uses simulated bearings to known peaks to estimate position and heading.
+
+## What we measured
+
+In the Jezero scenario, one stretch of the 5.52 km straight line reaches **27.4°**, above the **15°** limit we set. Both detours pass the terrain checks. The shorter detour covers **5.84 km** with a maximum modeled slope of **8.8°**. The gentler detour covers **6.52 km** and reduces the maximum slope to **5.4°**, at the cost of about **680 m** of extra walking.
+
+We also tested three Curiosity panoramas against recorded rover positions. The table gives the distance from the top-ranked candidate to NASA’s position when the terrain search considered ridges up to 90 km from the observer.
+
+| Curiosity panorama | Role in the experiment | Position error |
+| --- | --- | ---: |
+| Sol 38 | Method development | 1,449 m |
+| Sol 535 | Blind test after fixing the method | 5,699 m |
+| Sols 538–539, Dingo Gap | Additional case, replayed in the demo | 815 m |
+
+At Dingo Gap the skyline residual was **0.378°**, above the **0.20°** threshold for automatic correction. The demo therefore presents a candidate position. [Photo validation report and Perseverance candidate records](docs/PHOTO-VALIDATION.md)
+
+## What we want to try next
+
+We want to collect more Mars photographs with independently known camera positions and test whether machine learning improves ridgeline extraction, particularly in cloudy scenes. We would reserve entire locations for evaluation and compare both methods against the recorded positions. The same experiment could be tried in a small area on the Moon or another world where both the terrain and camera positions are well documented.
+
+## Data and research references
+
+The submission lists 25 NASA resources and 25 partner or other resources. The register links each source to its use in the project. The research references below cover our positioning and route-planning methods and the scientific products behind the map. [Submission resource register](SUBMISSION-REFERENCES.md)
+
+<details>
+<summary>Research bibliography (11 works)</summary>
+
+**Positioning and route planning**
+
+- Ebadi K, Coble K, Kogan D, Atha D, Schwartz R, Padgett C, et al. Toward autonomous localization of planetary robotic explorers by relying on semantic mapping. In: 2022 IEEE Aerospace Conference (AERO). IEEE; 2022. p. 1–10. [doi:10.1109/AERO53065.2022.9843550](<https://doi.org/10.1109/AERO53065.2022.9843550>)
+- Liu WH. Automatic mountain peak recognition by curve matching [master’s thesis, in Chinese]. Chung Yuan Christian University; 2013. [National Central Library record](<https://ndltd.ncl.edu.tw/cgi-bin/gs32/gsweb.cgi?o=dnclcdr&s=id%3D%22101CYCU5392021%22.&searchmode=basic>)
+- Tobler W. Three presentations on geographical analysis and modeling. National Center for Geographic Information and Analysis, University of California, Santa Barbara; 1993. Technical Report 93-1. [University of California repository](<https://escholarship.org/uc/item/05r820mz>)
+- Zou LH, Lin CH. Deep learning-based image feature matching for UAV visual positioning. Journal of Photogrammetry and Remote Sensing. 2024;29(4):211–230. [doi:10.6574/JPRS.202412_29(4).0002](<https://doi.org/10.6574/JPRS.202412_29(4).0002>)
+
+**Mars terrain and scientific observations**
+
+- Bandfield JL. Global mineral distributions on Mars. Journal of Geophysical Research: Planets. 2002;107(E6):5042. [doi:10.1029/2001JE001510](<https://doi.org/10.1029/2001JE001510>)
+- Bell JF 3rd, Maki JN, Alwmark S, Ehlmann BL, Fagents SA, Grotzinger JP, et al. Geological, multispectral, and meteorological imaging results from the Mars 2020 Perseverance rover in Jezero crater. Science Advances. 2022;8(47):eabo4856. [doi:10.1126/sciadv.abo4856](<https://doi.org/10.1126/sciadv.abo4856>)
+- Boynton WV, Taylor GJ, Evans LG, Reedy RC, Starr R, Janes DM, et al. Concentration of H, Si, Cl, K, Fe, and Th in the low- and mid-latitude regions of Mars. Journal of Geophysical Research: Planets. 2007;112(E12):E12S99. [doi:10.1029/2007JE002887](<https://doi.org/10.1029/2007JE002887>)
+- Christensen PR, Moore HJ. The Martian surface layer. In: Kieffer HH, Jakosky BM, Snyder CW, Matthews MS, editors. Mars. University of Arizona Press; 1992. p. 686–729. [NASA Technical Reports Server](<https://ntrs.nasa.gov/citations/19930043876>)
+- Genova A, Goossens S, Lemoine FG, Mazarico E, Neumann GA, Smith DE, et al. Seasonal and static gravity field of Mars from MGS, Mars Odyssey and MRO radio science. Icarus. 2016;272:228–245. [doi:10.1016/j.icarus.2016.02.050](<https://doi.org/10.1016/j.icarus.2016.02.050>)
+- Sun VZ, Stack KM. Geologic map of Jezero crater and the Nili Planum region, Mars. U.S. Geological Survey; 2020. Scientific Investigations Map 3464. Scale 1:75,000. [doi:10.3133/sim3464](<https://doi.org/10.3133/sim3464>)
+- Vasavada AR, Grotzinger JP, Arvidson RE, Calef FJ, Crisp JA, Gupta S, et al. Overview of the Mars Science Laboratory mission: Bradbury Landing to Yellowknife Bay and beyond. Journal of Geophysical Research: Planets. 2014;119(6):1134–1161. [doi:10.1002/2014JE004622](<https://doi.org/10.1002/2014JE004622>)
+
+</details>
+
+## Development and validation records
+
+### Running locally
+
+Use Node.js 22.12 or later and npm. CI uses Node.js 24. Install dependencies and start the development server.
 
 ```sh
 npm ci
 npm run dev
+```
+
+In a second terminal, run the tests and preview the production build.
+
+```sh
 npm test
 npx playwright install chromium
 npm run test:pages
@@ -33,55 +124,26 @@ npm run build
 npm run preview
 ```
 
-網站只需靜態 HTTP 服務，不需要後端或 Python。產物位於 `dist/`；全球 DEM 約 33 MB，建立全球區域任務時才載入，失敗可重試。
+The built app is static and can be served from `dist/`. The approximately 33 MB global elevation grid loads on demand. The Pages suite exercises root and project-subpath builds, route planning, positioning, Mars place data, DEM download retries, date-line crossings, polar terrain and mobile layouts. Browser screenshots go to `test-results/`. The dedicated planner check is `node tests/planner-browser.mjs`. It defaults to Edge on Windows and accepts a browser path through `BROWSER_EXECUTABLE`.
 
-`test:pages` 對 `/` 和 `/nasa2026/` 建置驗證定位、取消與重設、路線與行進、Three Forks、全球 DEM 重試、換日線、兩極與手機畫面，另驗證正式建置。Windows 預設使用 Edge，可透過 `BROWSER_EXECUTABLE` 指定瀏覽器。截圖位於 `test-results/`；只有測試模式提供 `window.__mission`。
+### Reproducing a scenario
 
-## GitHub Pages
+- **Route assumptions.** The defaults are 3 km/h on level ground, 15 minutes per stop, an eight-hour budget, a 10° steep-slope flag and a 15° slope limit. Roughness uses a 0–1 scale and defaults to a limit of 1. These are adjustable simulation settings. The DEM cannot resolve wheel- or foot-scale hazards.
+- **Surface costs.** The Jezero scenario applies an energy multiplier of 1.8 to aeolian unit 7, 1.25 to units 9–13, 1.0 to other known units and 1.1 to unknown material. An optional TES adjustment uses the native eight-pixels-per-degree grid. By default it applies a factor of 1.2 below 200 J m⁻² K⁻¹ s⁻½. Where both factors apply, the planner uses the larger one. Displaying a layer and enabling its route cost are separate controls.
+- **Image geometry.** Perspective images support a horizontal field of view of 10–150° and equirectangular panoramas 10–360°. Use the field of view after cropping and correct lens distortion and camera roll. The simulated drive uses the same DEM to generate and match skylines. By default it checks at the start and every 250 m in Jezero. On global MOLA terrain it reports experimental candidates every 4 km and retains the odometry estimate.
+- **Global coverage.** When a route extends beyond the initial 512 × 512 km MOLA window, the app rebuilds the grid around its points. Larger areas use coarser cells, and the local projection limits the accuracy of long-distance bearings and distances.
 
-在 repository 的 Settings → Pages 選擇 **GitHub Actions**。PR 和 push 執行驗證；預設分支通過後部署。工作流程從 Pages 設定取得 base，支援專案子路徑與自訂網域。本機模擬子路徑時，設定 `PAGES_BASE_PATH=/nasa2026/` 再執行 build 與 preview，瀏覽相同子路徑。
+### Repository and deployment
 
-## 原始碼與資產
+| Location | Contents |
+| --- | --- |
+| `src/`, `core.mjs`, `planet.mjs`, `skyline.mjs` | Vue interface, shared terrain and routing functions, and skyline matching |
+| `data/` | Terrain, imagery, mission records, source labels and science grids |
+| `docs/` | [Source notes](docs/SOURCES.md), [photo tests](docs/PHOTO-VALIDATION.md) and the [Leaflet license](docs/Leaflet-LICENSE.txt) |
+| `scripts/`, `tests/` | Data preparation, asset verification and regression tests |
 
-「圖層 → 疊加資料」可疊加已下載的 TES 熱慣量、TES 橄欖石豐度、GMM-3 重力異常及 GRS 鐵濃度格網，並讀取游標／目的地的格網值；MEDA 氣壓與 RAD 吸收劑量以 Sol 1 歷史測站呈現。所有資料由本站靜態提供，保留缺值、格距、原表與來源雜湊。`scripts/prepare-science.py` 可重建 `data/science/`，來源與限制見 `docs/SOURCES.md`。這些科學觀測不改寫 DEM 路線成本。
+Run `python3 scripts/prepare-science.py` to rebuild the science layers with the required Python packages. Use `node scripts/export-regions.mjs` to export regional grids from MOLA. The web app itself runs entirely in the browser. After changing a data asset, review its classification in `static-assets.json` and run `npm run assets:update`. The build checks file paths, case, sizes, published hashes and links in the built HTML and CSS.
 
-「探索」可載入 Jezero 30×30 km CTX 擴區、Gale 10×10 km 合併 DEM，以及 Valles Marineris 20×20 km CTX DTM。Jezero 擴區取樣 40 m；Gale 原生 1 m、取樣 20 m；Valles CTX 取樣 40 m。來源及處理方式見 `docs/SOURCES.md`。
+The public demo linked above is hosted on Atlas GitHub Pages. This repository also has its own GitHub Actions workflow. It verifies pushes and pull requests and deploys successful default-branch builds with a root base path for the configured custom domain. To reproduce the project-subpath test locally, set `PAGES_BASE_PATH=/nasa2026/` for the build and preview, then open that path. [Pages workflow](.github/workflows/pages.yml)
 
-- `src/`：Vue 元件、共用任務狀態與定位 Worker。
-- `core.mjs`、`planet.mjs`、`skyline.mjs`：網站與測試共用的計算核心。
-- `data/`：必要 DEM、底圖、地質、任務、地名、PDS 原表與來源標籤。
-- `docs/`：網站的來源說明與 Leaflet 授權。
-- `scripts/`、`tests/`：資產檢查與網站自動驗證。
-
-`static-assets.json` 列出靜態資產。建置前複製到自動產生的 `public/`，建置後驗證路徑、大小、SHA-256 與 HTML/CSS 引用。缺檔、大小寫錯誤、未分類檔案或雜湊不符會使建置失敗。修改資料後先檢視內容與清單，再執行 `npm run assets:update`。
-
-## 資料限制
-
-預設規劃假設為平地步速 3 km/h、每站停留 15 分鐘、時間預算 8 小時、高坡度標記 10°、通行坡度上限 15°（中等坡度情境）。粗糙度上限預設為 1（量尺最大值），因此初始規劃主要由坡度、缺測與人工禁行區限制；需要排除粗糙地形時，請降低粗糙度上限。地質材質成本預設啟用，熱慣量成本預設關閉。這些數值供情境比較，並非火星任務安全標準。
-
-DEM 快捷選擇提供 Jezero CTX 擴區、Gale 與 Valles CTX，另有 Elysium、Olympus、Hellas、Valles 的公里級 MOLA 快捷中心；自訂座標同樣使用全球 MOLA。執行 `node scripts/export-regions.mjs` 可輸出附來源的各中心 MOLA 數值區域格網。毅力號實景照片驗證的來源、阻礙與評估指令見 [實景驗證說明](docs/PHOTO-VALIDATION.md)；目前尚無真實照片定位改善的實測結論。
-
-圖層為真實資料，觀測、車輛與漂移為模擬。Jezero 展示格網約 40 m；全球 MOLA 來源赤道約 3.7 km，區域格網從 4 km 起隨任務範圍調整。跨洲路線使用局部球面投影近似，距離、方位與通行判斷不代表真實任務導航。全球定位候選未校準，不自動校正。15° 為展示門檻，DEM 無法保證腳下或車輪尺度安全。來源與精度限制見 `docs/SOURCES.md`。
-
-### 手繪／照片山稜線比對
-
-在「用地平線找回位置」的手繪／照片區塊，直接畫出天空與山體交界，或上傳照片產生可修正的 2D 邊界提案。輸入影像投影、裁切後影像的水平視角與相機俯仰角，再比對估計位置附近的 DEM；未設定起點時搜尋目前載入的 DEM 區域；橘線為使用者輸入，青線為候選地平線。圖片只在瀏覽器內處理。
-
-影像轉換提供單張透視（10–150°）與等距全景（10–360°）模型，寬幅照片可直接載入；請依相機資料選擇投影並校正鏡頭畸變與水平傾斜。自動擷取從頂端天空色彩追蹤首次山體邊界，無天空處保留缺口，可能誤選雲、陰影或車體，應確認並手動修正。手繪／照片沒有經實測校準可信度，僅顯示候選，不套用導航校正；有起點時搜尋估計位置周邊，未設定起點時搜尋目前 DEM 區域，並非全球辨識。
-
-
-### 多圖層導航成本
-
-在「任務」展開「進階路線設定」，可用「人工禁行區」標記要避開的地點，也可在「地質與熱慣量耗電參數」調整 Jezero 地質材質倍率與選配 TES 熱慣量修正。以影像參考人工點選中心並設定火星公尺半徑；不會自動辨識障礙。禁行圈使用地理座標，跨區、極區與日期變更線不綁定原 DEM 框架；三種路線及手繪路線都使用相同禁行檢查。
-
-地質假設把風成單元 `7` 視為沙地（預設 ×1.8），崎嶇／上部蝕刻／坑緣／噴出物／坑內單元 `9,10,11,12,13` 預設 ×1.25，其餘已知單元 ×1。這是可調成本場景，不是源資料提供的可通行分類。未知材質預設 ×1.1，增加成本但不禁行；DEM 缺測仍禁行。熱慣量需使用者啟用，預設低於 200 J m⁻² K⁻¹ s⁻½ 時 ×1.2；僅取原始 8 ppd 格網，不內插或推論細部溫度。地質與熱慣量取較高倍率，避免把同一材質證據重複相乘。
-
-最低耗電方案逐段將坡度耗電乘上材質倍率；較低風險方案亦考慮材質成本；最短方案維持距離目標，三者遵守共同禁行條件。材質倍率未改變步行時間模型，尚未校準打滑、磨損或車輛物理參數。路線比較列出材質額外能耗、未知材質距離與原因。設定或禁行區變更會清除舊路線並停止行進；圖層顯示切換不影響導航設定。熱資料載入失敗時停止規劃，可重試或取消啟用。匯出任務包含材質假設、地理禁行圈與資料來源。
-
-光譜／化學仍供採樣位置參考；目前未實作自動科學停靠推薦。重力異常、單站歷史大氣與 RAD 觀測未作為導航成本或禁行判定。
-
-### 公開入口驗收
-
-1. 維護者在 GitHub 的 Settings → Pages 確認自訂網域為 `mars.chuan.one`，網域檢查成功、HTTPS 已啟用。從外部網路以 `dig mars.chuan.one CNAME`、`dig mars.chuan.one A` 與 `dig mars.chuan.one AAAA` 核對 DNS 與實際託管設定。
-2. 從對外公布的 https://mars.chuan.one 開啟無痕視窗，確認沒有憑證警告，憑證有效且涵蓋該主機名稱，影像與 DEM 均可載入。
-3. 在 Jezero 選起點，新增兩個附近的自訂目的地、兩個人工禁行區。逐一刪除並確認剩餘項目正確，再規劃一條避開禁行區的可達短程。記錄網址、日期、瀏覽器及結果。分支的 Pages 測試只驗證建置內容，正式站待預設分支部署後另驗。
+For a release to the configured custom domain, `mars.chuan.one`, verify the Pages domain setting, DNS records and HTTPS certificate. From a fresh browser session, load the terrain and imagery, add and remove destinations and exclusion zones, and plan a short route around a marked zone. Record the URL, test date and result.

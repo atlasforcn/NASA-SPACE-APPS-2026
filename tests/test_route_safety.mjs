@@ -28,7 +28,7 @@ assert.deepEqual(flat.samples.at(-1), direct[1]);
 const center = at(31, 0);
 const nav = createNavigationContext({
   options: { sandFactor: 1, rockFactor: 1, unknownFactor: 1, thermalFactor: 1, thermalThreshold: 200 },
-  zones: [{ ...C.localToLatLng(center.x, center.y), radius: 0.4, name: '測試禁行區' }], toGeo: C.localToLatLng
+  zones: [{ ...C.localToLatLng(center.x, center.y), radius: 0.4, name: 'Test exclusion zone' }], toGeo: C.localToLatLng
 });
 C.setNavigationContext(nav);
 const blocked = assessRouteSafety(direct);
@@ -43,12 +43,12 @@ assert(detour.length > flat.length);
 // The proposal crosses the circle earlier and ends inside it. Focus the fixed endpoint.
 const excludedGoal = assessRouteSafety([direct[0], at(100), center]);
 assert.equal(excludedGoal.verdict, 'hold');
-assert.match(excludedGoal.reason, /A 站位於人工禁行區/);
+assert.match(excludedGoal.reason, /Site A is inside a marked exclusion zone/);
 assert.deepEqual(excludedGoal.point, center);
 assert.deepEqual(excludedGoal.segment.at(-1), center);
 const excludedBase = assessRouteSafety([center, direct[1]]);
 assert.equal(excludedBase.verdict, 'hold');
-assert.match(excludedBase.reason, /基地位於人工禁行區/);
+assert.match(excludedBase.reason, /Base is inside a marked exclusion zone/);
 assert.deepEqual(excludedBase.segment[0], center);
 C.setNavigationContext(null);
 
@@ -66,7 +66,7 @@ within(steep.maxSlope, C.slopeDeg(steep.point.x, steep.point.y));
 const rough = assessRouteSafety(direct, { slopeLimit: 45, roughnessLimit: 0.1 });
 assert.equal(rough.verdict, 'reroute');
 within(rough.maxRoughness, C.roughness(rough.point.x, rough.point.y));
-assert.match(rough.reason, /粗糙度/);
+assert.match(rough.reason, /roughness/);
 // A is over the limit even though the highest slope/roughness and a narrow exclusion lie earlier.
 C.setNavigationContext(nav);
 const goal = at(120);
@@ -75,13 +75,13 @@ assert.equal(steepGoal.verdict, 'hold');
 assert(steepGoal.noGoCrossed && steepGoal.maxSlope > C.slopeDeg(goal.x, goal.y));
 assert.deepEqual(steepGoal.point, goal);
 assert.deepEqual(steepGoal.segment.at(-1), goal);
-assert.match(steepGoal.reason, /坡度/);
+assert.match(steepGoal.reason, /slope/);
 const roughBase = assessRouteSafety([goal, direct[0]], { slopeLimit: 45, roughnessLimit: 0.02 });
 assert.equal(roughBase.verdict, 'hold');
 assert(roughBase.maxRoughness > C.roughness(goal.x, goal.y));
 assert.deepEqual(roughBase.point, goal);
 assert.deepEqual(roughBase.segment[0], goal);
-assert.match(roughBase.reason, /基地.*粗糙度/);
+assert.match(roughBase.reason, /Base.*roughness/);
 C.setNavigationContext(null);
 
 C.setDEM(fixture);
