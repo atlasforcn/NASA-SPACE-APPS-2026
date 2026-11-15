@@ -413,8 +413,9 @@ export function useMission() {
     C.setRoughnessLimit(roughness);
     return true;
   }
-  function installRoute(result) {
-    clearRoute();
+  function installRoute(result, { preserveComparison = false } = {}) {
+    if (preserveComparison) remove(routeLayer);
+    else clearRoute();
     state.route = result;
     if (result.path.length > 1) state.profileIndex = -1;
     waypoint = 0;
@@ -428,6 +429,7 @@ export function useMission() {
         pane: "navigationRoute",
         dashArray: C.terrainProduct(result.path[i].x,result.path[i].y)?.coarse ? "7 5" : null,
       }).addTo(routeLayer);
+    if (preserveComparison) idealLayer?.eachLayer(line => line.bringToFront());
   }
   function redrawNoGoZones() {
     if (!map) return;
@@ -600,7 +602,6 @@ export function useMission() {
     }
     const result = alternatives[state.selectedRoute];
     installRoute(result);
-    if (result.path.length > 1) state.profileRevision++;
     state.routeOptions = alternatives;
     const n = Math.max(1, Math.ceil(C.distance(missionStart, goal) / checkStep()));
     const points = Array.from({ length: n + 1 }, (_, i) => ({
@@ -609,6 +610,8 @@ export function useMission() {
     }));
     const direct = routeCheck(points);
     state.directRoute = direct;
+    state.profileIndex = -1;
+    state.profileRevision++;
     const unknown = points.some(p => C.risk(p.x, p.y).unknown || !C.validDEMPoint(p.x, p.y));
     idealLayer = L.layerGroup().addTo(map);
     points.slice(1).forEach((p, i) => L.polyline([ll(points[i]), ll(p)], {
@@ -626,16 +629,14 @@ export function useMission() {
   function selectRoute(key) {
     if (!state.routeOptions || !['shortest','safer','energy'].includes(key)) return;
     stop(); cancel();
-    const alternatives = state.routeOptions, direct = state.directRoute;
+    const route = state.routeOptions[key];
     state.selectedRoute = key;
     state.truth = { ...missionStart, heading: 45 };
     state.estimate = { ...missionStart, heading: 45 };
     state.travelled = 0;
     trail.setLatLngs([ll(missionStart)]);
-    installRoute(alternatives[key]);
-    state.routeOptions = alternatives;
-    state.directRoute = direct;
-    state.routeStatus = alternatives[key].reachable ? '已切換路線並返回規劃起點。' : '此方案無可達路線。';
+    installRoute(route, { preserveComparison: true });
+    state.routeStatus = route.reachable ? '已切換路線並返回規劃起點。' : '此方案無可達路線。';
     nextTick(drawProfile);
     render();
   }
@@ -847,13 +848,7 @@ export function useMission() {
               ? current.stopIndices.filter(index => index > waypoint).map(index => current.path[index])
               : [goal];
             const remaining = buildItinerary(state.estimate, pending.length ? pending : [goal], { ...state.planner, roundTrip: false })[state.selectedRoute];
-            // Preserve the ideal baseline while updating only the remaining route.
-            const baseline = idealLayer, status = state.straightStatus, alternatives = state.routeOptions;
-            idealLayer = null;
-            installRoute(remaining);
-            state.routeOptions = alternatives;
-            idealLayer = baseline;
-            state.straightStatus = status;
+            installRoute(remaining, { preserveComparison: true });
             if (!remaining.reachable) {
               stop();
               state.routeStatus = "定位後無可通行路線，已停止行進。";
@@ -2025,82 +2020,90 @@ export function useMission() {
     nextTick(drawProfile);
     map.fitBounds(bounds, { animate: false });
   }
+  function sampleProfile(path, measureSlope) {
+    const length = path.reduce((sum, p, i) => sum + (i ? C.distance(path[i - 1], p) : 0), 0);
+    const step = Math.max(15, state.regional ? C.demInfo().cellMeters / 4 : 0, length / 4096);
+    const samples = [];
+    let distance = 0, missing = 0, maxSlope = 0;
+    for (let i = 1; i < path.length; i++) {
+      const a = path[i - 1], b = path[i], len = C.distance(a, b);
+      const count = Math.max(1, Math.ceil(len / step));
+      for (let k = i === 1 ? 0 : 1; k <= count; k++) {
+        const t = k / count, x = a.x + (b.x - a.x) * t, y = a.y + (b.y - a.y) * t;
+        const z = C.elevation(x, y);
+        if (!Number.isFinite(z)) missing++;
+        if (measureSlope) {
+          const slope = C.slopeDeg(x, y);
+          if (Number.isFinite(slope)) maxSlope = Math.max(maxSlope, slope);
+        }
+        samples.push({ distance: distance + len * t, z, x, y });
+      }
+      distance += len;
+    }
+    return { samples, length, step, missing, maxSlope };
+  }
   function drawProfile() {
     leaveProfile();
     profileSeries = [];
     profileScale = null;
     state.profileLegend = [];
     state.profileInfo = "";
-    const leg = state.profileIndex === -1
-        ? state.route && { ...state.route, name: "目前路線" }
-        : !state.regional && state.expedition[state.profileIndex],
-      cv = profileCanvas.value;
+    const cv = profileCanvas.value;
     if (!cv) return;
-    if (!leg) {
-      cv.getContext("2d").clearRect(0, 0, cv.width, cv.height);
+    cv.getContext("2d").clearRect(0, 0, cv.width, cv.height);
+
+    const labels = { shortest: "最短路線", safer: "較低風險路線", energy: "最低耗電路線" };
+    const currentName = state.route && state.route === state.routeOptions?.[state.selectedRoute]
+      ? labels[state.selectedRoute] : "目前路線";
+    const current = state.route && { name: currentName, path: state.route.path };
+    const selected = state.profileIndex === -1 ? current : state.expedition[state.profileIndex];
+    const routes = [];
+    if (selected?.path.length > 1) routes.push(selected);
+    if (state.compareProfiles) {
+      for (const [key, route] of Object.entries(state.routeOptions || {})) {
+        if (key !== state.selectedRoute && route.reachable) routes.push({ name: labels[key], path: route.path });
+      }
+      if (state.profileIndex !== -1 && current?.path.length > 1) routes.push(current);
+      if (!state.regional) {
+        state.expedition.forEach((leg, i) => {
+          if (i !== state.profileIndex && leg.path.length > 1) routes.push(leg);
+        });
+      }
+    }
+    const direct = state.directRoute?.path;
+    if (direct?.length > 1 && (state.profileIndex === -1 || state.compareProfiles)) {
+      routes.push({ name: "起終點直線", path: [direct[0], direct.at(-1)], baseline: true });
+    }
+    if (!routes.length) {
       state.profileInfo = "請先建立一般路線、手繪路線或 Three Forks 往返路線，以顯示高程剖面。";
       return;
     }
-    const ctx = cv.getContext("2d"),
-      samples = [],
-      length = leg.path.reduce((sum, p, i, path) =>
-        sum + (i ? C.distance(path[i - 1], p) : 0), 0),
-      sampleStep = Math.max(15, state.regional ? C.demInfo().cellMeters / 4 : 0, length / 4096);
-    let d = 0,
-      maxSlope = 0,
-      missing = 0;
-    ctx.clearRect(0, 0, cv.width, cv.height);
-    for (let i = 1; i < leg.path.length; i++) {
-      const a = leg.path[i - 1],
-        b = leg.path[i],
-        len = C.distance(a, b),
-        n = Math.max(1, Math.ceil(len / sampleStep));
-      for (let k = i === 1 ? 0 : 1; k <= n; k++) {
-        const t = k / n,
-          x = a.x + (b.x - a.x) * t,
-          y = a.y + (b.y - a.y) * t,
-          z = C.elevation(x, y),
-          s = C.slopeDeg(x, y);
-        if (Number.isFinite(s)) maxSlope = Math.max(maxSlope, s);
-        if (!Number.isFinite(z)) missing++;
-        samples.push({ distance: d + len * t, z, x, y });
+
+    const colors = ["#83e5d2", "#ffbb79", "#b9b1ef", "#6ebdf0", "#e59eb6"];
+    profileSeries = routes.map((route, i) => ({
+      ...sampleProfile(route.path, i === 0),
+      name: route.name, baseline: !!route.baseline,
+      color: route.baseline ? "#f2ed48" : colors[i % colors.length],
+    }));
+    let lo = Infinity, hi = -Infinity;
+    for (const series of profileSeries) {
+      for (const { z } of series.samples) {
+        if (!Number.isFinite(z)) continue;
+        lo = Math.min(lo, z);
+        hi = Math.max(hi, z);
       }
-      d += len;
     }
-    const finite = samples.map((p) => p.z).filter(Number.isFinite);
-    if (!finite.length) {
-      state.profileInfo = "不可達路段，沒有可用剖面。";
+    if (!Number.isFinite(lo)) {
+      state.profileInfo = "沿線缺少有效 DEM 高程，無法繪製剖面。";
       return;
     }
-    profileSeries = [{ name: leg.name, samples, length: d, color: "#83e5d2" }];
-    if (state.compareProfiles) {
-      const labels = {shortest:'最短路線',safer:'較低風險路線',energy:'最低耗電路線'};
-      const alternatives = Object.entries(state.routeOptions || {}).filter(([key,route]) => key !== state.selectedRoute && route.reachable)
-        .map(([key,route],i) => ({...route,name:labels[key],index:-2-i}));
-      const others = [...alternatives, state.route && { ...state.route, name: "目前路線", index: -1 },
-        ...(!state.regional ? state.expedition.map((v, index) => ({ ...v, index })) : [])];
-      for (const other of others.filter(v => v && v.index !== state.profileIndex && v.path?.length > 1)) {
-        const points = [];
-        let distance = 0;
-        for (let i = 1; i < other.path.length; i++) {
-          const a = other.path[i - 1], b = other.path[i], len = C.distance(a, b);
-          const count = Math.max(1, Math.ceil(len / Math.max(sampleStep, (other.length || len) / 4096)));
-          for (let k = i === 1 ? 0 : 1; k <= count; k++) {
-            const t = k / count, x = a.x + (b.x - a.x) * t, y = a.y + (b.y - a.y) * t;
-            points.push({ distance: distance + len * t, x, y, z: C.elevation(x, y) });
-          }
-          distance += len;
-        }
-        profileSeries.push({ name: other.name, samples: points, length: distance,
-          color: ["#ffbb79", "#b9b1ef"][ (profileSeries.length - 1) % 2] });
-      }
-    }
-    const heights = profileSeries.flatMap(v => v.samples.map(p => p.z)).filter(Number.isFinite);
-    const lo = Math.min(...heights), hi = Math.max(...heights);
     const longest = Math.max(...profileSeries.map(v => v.length), 1);
     profileScale = { longest, lo, hi };
-    state.profileLegend = profileSeries.map(v => ({ name: v.name, color: v.color, length: fmt(v.length) }));
-    state.profileInfo = `${leg.name} · ${state.regional ? "MOLA" : state.siteName} DEM · ${fmt(d)} · 最大格網坡度 ${maxSlope.toFixed(1)}° · 缺值 ${missing}；每 ≤${Math.ceil(sampleStep)} m 取樣數值 DEM，非影像高程。`;
+    state.profileLegend = profileSeries.map(v => ({
+      name: v.name, color: v.color, length: fmt(v.length), baseline: v.baseline,
+    }));
+    const primary = profileSeries[0];
+    state.profileInfo = `${primary.name} · ${state.regional ? "MOLA" : state.siteName} DEM · ${fmt(primary.length)} · 最大格網坡度 ${primary.maxSlope.toFixed(1)}° · 缺值 ${primary.missing}；每 ≤${Math.ceil(primary.step)} m 取樣數值 DEM，非影像高程。`;
     paintProfile();
   }
   function paintProfile() {
@@ -2117,6 +2120,7 @@ export function useMission() {
     for (const series of profileSeries) {
       ctx.strokeStyle = series.color;
       ctx.lineWidth = 2;
+      ctx.setLineDash(series.baseline ? [5, 4] : []);
       ctx.beginPath();
       let open = false;
       for (const p of series.samples) {
@@ -2128,6 +2132,7 @@ export function useMission() {
       }
       ctx.stroke();
     }
+    ctx.setLineDash([]);
   }
   function leaveProfile() {
     remove(profileMarker);
@@ -2136,7 +2141,7 @@ export function useMission() {
   }
   function hoverProfile(event) {
     const cv = profileCanvas.value;
-    if (!cv || !profileSeries.length) return;
+    if (!cv || !profileScale) return;
     leaveProfile();
     paintProfile();
     const rect = cv.getBoundingClientRect(), px = (event.clientX - rect.left) / rect.width * cv.width;
@@ -2476,8 +2481,7 @@ export function useMission() {
     cancel();
     if (enabled && state.running) scan(true);
   });
-  watch(() => [state.profileIndex, state.regional, state.compareProfiles, state.expedition], drawProfile);
-  watch(() => state.route, drawProfile);
+  watch(() => [state.profileIndex, state.regional, state.compareProfiles, state.expedition, state.route, state.directRoute], drawProfile);
   watch(() => [JSON.stringify(state.planner), state.stopIds.join('|')], () => {
     stop(); clearRoute();
     state.routeStatus = '規劃假設或停靠順序已變更，請重新建立路線。';
