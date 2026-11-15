@@ -25,7 +25,8 @@ export function assessRouteSafety(path, { slopeLimit = 15, roughnessLimit = 1 } 
   const result = {
     verdict: 'hold', reason: '', point: null, segment: null, samples: [], length: 0,
     maxSlope: null, worstSlopePoint: null, maxRoughness: null,
-    localDistance: 0, molaDistance: 0, missingDistance: 0, noGoCrossed: null
+    localDistance: 0, molaDistance: 0, missingDistance: 0, noGoCrossed: null,
+    steepSections: [], steepDistance: 0
   };
   if (!Array.isArray(path) || path.length < 2 || !path.every(finitePoint)) {
     result.reason = '請先選取基地與 A 站，建立要檢查的路段。';
@@ -37,7 +38,7 @@ export function assessRouteSafety(path, { slopeLimit = 15, roughnessLimit = 1 } 
     return result;
   }
   const focus = {};
-  function checkSample(point, segment) {
+  function checkSample(point, segment, midpoint = false) {
     const { x, y } = point;
     const last = result.samples.at(-1);
     if (!last || x !== last.x || y !== last.y) result.samples.push(point);
@@ -47,6 +48,13 @@ export function assessRouteSafety(path, { slopeLimit = 15, roughnessLimit = 1 } 
       return 'missingDistance';
     }
     const { slope, rough } = C.risk(x, y);
+    if (midpoint && slope > slopeLimit) {
+      const [from, to] = segment;
+      const section = result.steepSections.at(-1);
+      if (section?.at(-1) === from) section.push(to);
+      else result.steepSections.push([from, to]);
+      result.steepDistance += C.distance(from, to);
+    }
     if (Number.isFinite(slope) && (result.maxSlope === null || slope > result.maxSlope)) {
       result.maxSlope = slope;
       result.worstSlopePoint = point;
@@ -75,7 +83,7 @@ export function assessRouteSafety(path, { slopeLimit = 15, roughnessLimit = 1 } 
       const segment = [previous, next];
       if (j === 1) checkSample(previous, segment);
       // The midpoint assigns this small interval to one product. Coverage lengths are estimates.
-      const distanceField = checkSample(middle, segment);
+      const distanceField = checkSample(middle, segment, true);
       result[distanceField] += length / count;
       checkSample(next, segment);
       if (!focus.zone && C.navigationSegmentBlocked(previous, next)) {

@@ -104,13 +104,20 @@ assert.equal(assessRouteSafety(direct).verdict, 'hold');
 assert.equal(assessRouteSafety(direct).maxSlope, null);
 
 const json = file => JSON.parse(readFileSync(file, 'utf8'));
-const { start, targets: [a] } = json('data/mission.json');
+const { guidedStart: start, targets: [a] } = json('data/mission.json');
 C.setDEM(json('data/jezero-extended/dem.json'));
 const demo = assessRouteSafety([start, a]);
-assert.equal(demo.verdict, 'go');
-assert(demo.maxSlope > 5 && demo.maxSlope < 6 && demo.maxRoughness > 0);
-const endpoint = assessRouteSafety([start, a], { slopeLimit: 5 });
-assert.equal(endpoint.verdict, 'hold');
-assert.match(endpoint.reason, /A 站本身超限/);
-assert.match(assessRouteSafety([a, start], { slopeLimit: 5 }).reason, /基地本身超限/);
+assert.equal(demo.verdict, 'reroute');
+assert(demo.length > 5000);
+assert(demo.maxSlope > 15);
+assert(demo.steepSections.length > 1);
+assert(demo.steepDistance > 0 && demo.steepDistance < demo.length);
+const highlightedLength = demo.steepSections.reduce((sum, points) =>
+  sum + points.slice(1).reduce((length, point, i) => length + C.distance(points[i], point), 0), 0);
+within(highlightedLength, demo.steepDistance);
+assert.equal(demo.noGoCrossed, false);
+assert.equal(demo.missingDistance + demo.molaDistance, 0);
+assert.deepEqual(demo.point, demo.worstSlopePoint);
+assert(C.slopeDeg(start.x, start.y) <= 15 && C.slopeDeg(a.x, a.y) <= 15);
+assert(C.distance(start, demo.point) > 40 && C.distance(a, demo.point) > 40);
 console.log('Predeparture assessments passed for local slopes, exclusions, polyline detours, coverage gaps and the Jezero demo.');

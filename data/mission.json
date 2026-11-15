@@ -4,6 +4,10 @@
     "y": -820
   },
   "startUnit": "Jezero floor unit",
+  "guidedStart": {
+    "x": 1600,
+    "y": 3200
+  },
   "policy": "Simulated mission locations selected on official geologic units; not historical rover traverse or formal place names.",
   "targets": [
     {
