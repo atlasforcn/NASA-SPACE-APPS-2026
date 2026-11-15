@@ -12,17 +12,17 @@ Google Maps inspired the route planner. Satellite star trackers and *The Legend 
 
 ## Demo walkthrough
 
-The submitted demo opens in Traditional Chinese. The steps below describe the controls in English.
+The demo opens in English. You can also follow this walkthrough in the [Traditional Chinese edition](https://atlasforcn.github.io/NASA-SPACE-APPS-2026/zh/).
 
 ### Jezero Science Mission
 
 1. Choose **Jezero Science Mission** on the opening screen. Find the base and observation site A. Before checking the route, look at the straight line between them and pick the stretch you think will be hardest to cross.
-2. Check the route from the base to A, then show the assessed segment on the map. The highlighted segment and elevation profile show where the straight line exceeds the mission’s slope limit.
-3. Select **Search for and compare detours**. Compare the distance and maximum slope for each alternative. Then open **Layers** and select **Spectral**. The base and site A share one olivine-abundance cell, more than 10 km across, even though the terrain profile changes sharply between them.
+2. Select **Check the route from the base to A**, then **Show the assessed segment on the map**. The highlighted segment and elevation profile show where the straight line exceeds the mission’s slope limit.
+3. Select **Find and compare detours**. Compare the distance and maximum slope for each alternative. Then open **Layers** and select **Spectral**. The base and site A share one olivine-abundance cell, more than 10 km across, even though the terrain profile changes sharply between them.
 
 ### Free Exploration
 
-Choose **Switch mode**, then **Free Exploration**. Under **Mission**, pick a starting point on the map and add a destination. Select **Build and evaluate three routes** to compare the shortest, lower-risk and lowest-estimated-energy options. Switch between their elevation profiles to see where the paths diverge. You can add stops, adjust the terrain-risk and energy assumptions, or mark a circular exclusion zone and replan. The GeoJSON export records the itinerary, assumptions and sources.
+Choose **Switch modes**, then **Free Exploration**. Open the **Mission** tab, select **Set starting point on the map** and click a location. Select **Add destination on the map** and click a second location. Select **Build and evaluate three routes** to compare the shortest, lower-risk and lowest-estimated-energy options. Switch between their elevation profiles to see where the paths diverge. You can add stops, adjust the terrain-risk and energy assumptions, or mark a circular exclusion zone and replan. The GeoJSON export records the itinerary, assumptions and sources.
 
 ### Where am I?
 
