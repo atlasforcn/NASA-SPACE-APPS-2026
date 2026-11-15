@@ -23,7 +23,7 @@ function measurement(value, digits, suffix = '') {
 <template>
   <article class="group walk-panel">
     <h2>從基地前往 A，沿途安全嗎？</h2>
-    <p class="mission-brief">基地與觀測點 A 都是這次在 Jezero 隕石坑設定的示範位置。檢查兩點間的直線，依沿途地形決定出發、改道或暫緩。</p>
+    <p class="mission-brief">基地與觀測點 A 是這次任務的示範位置。先檢查兩點間的直線，再點上方<strong>「圖層」</strong>。勾選「熱」可查看反映地表升降溫快慢的熱慣量，勾選「光譜」可查看橄欖石分布。參考沿途地形、圖層判讀與警示，再決定要前往 A、改道或暫緩。</p>
 
     <details class="limits">
       <summary>通行門檻與禁行區 · {{ s.slope }}° ／ {{ s.roughnessLimit }}</summary>
