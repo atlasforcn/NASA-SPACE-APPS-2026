@@ -9,13 +9,14 @@ import PlannerControls from './PlannerControls.vue';
 import RouteAlternatives from './RouteAlternatives.vue';
 const m = inject(missionKey),
   s = m.state;
+defineEmits(['open-route-challenge']);
 const toolsPanel = ref(null);
 watch(() => s.station, station => {
   if (station && toolsPanel.value) toolsPanel.value.open = true;
 });
 </script>
 <template>
-  <WalkPanel v-if="s.walk" />
+  <WalkPanel v-if="s.walk" @open-route-challenge="$emit('open-route-challenge', $event)" />
   <div v-else>
     <section class="group">
       <h2>規劃探索路線</h2>
@@ -49,6 +50,10 @@ watch(() => s.station, station => {
         </button>
       </div>
       <p id="route-status" class="hint" role="status">{{ s.routeStatus }}</p>
+      <button v-if="m.challengeRoute.value" id="free-route-challenge" class="route-challenge-entry" type="button" aria-haspopup="dialog" @click="$emit('open-route-challenge', $event)">
+        看山稜，判斷我在路線上的哪裡 <span aria-hidden="true">↗</span>
+      </button>
+      <p v-else-if="!s.route" class="hint">建立路線後，可從地圖的高程剖面開啟「沿途自我定位」。</p>
       <p v-show="s.navigationLoading || s.navigationError || s.navigation.thermalEnabled" id="navigation-data-status" class="hint" role="status">{{ s.navigationLoading ? '正在載入導航用熱慣量資料…' : s.navigationError || s.navigationStatus }}</p>
       <button v-if="s.navigationError" :disabled="s.navigationLoading" @click="m.retryNavigation">重試導航資料</button>
       <details id="mission-settings" class="task-disclosure">
