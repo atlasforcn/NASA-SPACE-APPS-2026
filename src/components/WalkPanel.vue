@@ -48,7 +48,6 @@ function measurement(value, digits, suffix = '') {
           <label>半徑（m）<input id="science-no-go-radius" v-model.number="s.noGoRadius" type="number" min="10" max="100000" required :disabled="s.pickingNoGo" /></label>
         </div>
         <button id="science-pick-no-go" class="wide" type="submit" :disabled="!s.ready || s.regionLoading" :aria-pressed="s.pickingNoGo">{{ s.pickingNoGo ? '取消標記' : '在地圖標記禁行區' }}</button>
-        <p v-if="s.pickingNoGo" class="hint" role="status">點選地圖，設定禁行區的中心。</p>
       </form>
       <ul v-if="s.noGoZones.length" aria-label="已標記的禁行區" class="no-go-list">
         <li v-for="zone in s.noGoZones" :key="zone.id">{{ zone.name }} · 半徑 {{ m.fmt(zone.radius) }}<button type="button" :aria-label="`移除禁行區 ${zone.name}`" @click="m.removeNoGo(zone.id)">移除</button></li>

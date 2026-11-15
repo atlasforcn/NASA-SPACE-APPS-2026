@@ -98,7 +98,7 @@ watch(() => s.station, station => {
       </div>
       <details class="planning-assumptions">
         <summary>規劃假設與資料限制</summary>
-        <p class="hint">黃色直線提供起終點的距離與沿線高程對照。三種方案都使用 A* 搜尋。最短方案最小化格網三維距離，較低風險方案加入坡度與粗糙度成本；最低耗電方案逐段考慮上坡增耗與下坡省電。結果受搜尋格網限制，不保證連續地形上的全域最優。</p>
+        <p class="hint">三條路線都用 A* 尋路。最短路線看距離，較低風險看坡度、起伏與材質，最低耗電則估算沿途用電。</p>
         <p class="hint">{{ s.regional ? '全球 MOLA 為公里尺度高程，遠距結果僅供粗略模擬。' : '區域 DEM 有效處優先；越界或缺測時使用公里尺度 MOLA。MOLA 路段的粗糙度無法估計，只能作粗略規劃。' }}缺測與越界區段不視為可通行；未納入車輪尺度障礙、能源及真實任務時程。</p>
         <p class="hint">建立路線會將車放回所選起點。{{ s.regional ? '行進中更新地平線實驗候選。' : '行進中用地平線校正位置並重新規劃剩餘路線。' }}</p>
         <a href="https://www.momar.si/planner/" target="_blank" rel="noopener noreferrer">路線規劃介面參考：MOMAR ↗</a>

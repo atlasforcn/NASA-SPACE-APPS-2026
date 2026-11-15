@@ -85,6 +85,7 @@ const m = inject(missionKey),
         <span><i class="legend-line orange"></i>橘線：{{ s.externalHorizon ? "手繪／照片輪廓" : "模擬觀測" }}</span>
         <span><i class="legend-line mint"></i>青線：候選地平線</span>
         <span>深色／缺口：無觀測資料</span>
+        <span v-if="!s.externalHorizon">地圖上的橘箭頭指向畫面中央。</span>
       </div>
       <canvas
         id="panorama"
@@ -124,7 +125,7 @@ const m = inject(missionKey),
       <details>
         <summary>已知地標方位定位：原理解說</summary>
         <p class="hint">
-          模擬 descriptor 配對已知峰頂，以方位角最小平方法解算；僅展示數學結果。
+          用已知山峰的方位，試算模擬位置。
         </p>
         <button id="bearing-demo" :disabled="!s.ready || !s.hasStart" @click="m.bearingDemo">
           執行模擬地標解算
@@ -133,7 +134,7 @@ const m = inject(missionKey),
       </details>
       <details>
         <summary>如何判讀掃描圖與定位結果</summary>
-        <p v-if="!s.externalHorizon" class="hint">地圖的橘色箭頭指向上下圖的 120° 視窗中央。轉動視窗時，箭頭以掃描位置的估計為中心旋轉。深色區與曲線缺口表示無觀測。行進時保留掃描當下的視角，直到下一次掃描更新。畫面以仰角縮放，並非相機透視照片；定位仍比對完整掃描中的有效資料。60° 視角不足全周 50% 的校正門檻，顯示候選不代表定位成功。</p>
+        <p v-if="!s.externalHorizon" class="hint">行進中會保留上次掃描的山形。可見範圍不足半圈時，系統保留原位置，等下一次掃描。</p>
         <p class="notice">
           教育概念驗證 · DEM 為真實資料；手繪／照片為使用者輸入，其餘觀測、車輛與漂移為模擬。
         </p>

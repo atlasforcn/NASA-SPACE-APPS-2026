@@ -4,6 +4,10 @@ import { missionKey } from "../useMission";
 import LayerControls from './LayerControls.vue';
 const m = inject(missionKey),
   container = ref();
+const showMapHint = ref(true);
+function dismissMapHint() {
+  if (!m.state.walk) showMapHint.value = false;
+}
 let observer;
 const activeLayer = computed(() => {
   const labels = {
@@ -43,6 +47,9 @@ onUnmounted(() => observer?.disconnect());
     :class="{ drawing: m.state.drawMode || m.state.pickingNoGo }"
     role="region"
     aria-label="火星地圖"
+    @pointerdown.capture="dismissMapHint"
+    @wheel.capture.passive="dismissMapHint"
+    @keydown.capture="dismissMapHint"
   ></div>
   <div class="map-badge">
     <h2>{{ m.state.walk ? '基地 → 觀測點 A' : m.state.mapTitle }}</h2>
@@ -50,7 +57,7 @@ onUnmounted(() => observer?.disconnect());
     <p v-else-if="m.state.localizationOpen && !m.state.globalView && m.viewBearing.value !== null" aria-live="polite">
       橘色箭頭 · {{ m.state.externalHorizon ? '候選視線方位' : '視線方位' }} {{ Math.round(m.viewBearing.value) % 360 }}°
     </p>
-    <p v-else-if="!m.state.walk">拖曳移動 · 滾輪縮放 · 在「任務」設定起終點</p>
+    <p v-else-if="!m.state.walk && showMapHint">拖曳地圖，放大查看地形。</p>
   </div>
   <details class="map-legend">
     <summary>地圖標示與顏色</summary>

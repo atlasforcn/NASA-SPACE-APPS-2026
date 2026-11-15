@@ -9,9 +9,7 @@ const m = inject(missionKey),
 <template>
   <div>
     <section class="group">
-      <p class="eyebrow">MAP DISPLAY / LIVE</p>
       <h2>圖層設定</h2>
-      <p class="hint">變更會立即套用到地圖；目前顯示狀態也會同步出現在地圖右上角。</p>
       <LayerControls />
       <div v-for="kind in s.layers.filter(id => ['terrain', 'slope', 'roughness', 'hillshade'].includes(id))" :key="kind" class="scale-legend">
         <strong>{{ { terrain: '高程', slope: '坡度', roughness: '粗糙度', hillshade: '地形陰影' }[kind] }}</strong>
