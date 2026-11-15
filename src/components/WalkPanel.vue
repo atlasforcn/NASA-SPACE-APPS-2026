@@ -15,7 +15,7 @@ function chooseB(include) {
 <template>
   <article class="walk-panel">
     <h2>值得加訪 B 站嗎？</h2>
-    <p>基地已設為起始點。先比較兩站的地質單元與 TES 格距，再看加訪 B 會多走多久。</p>
+    <p>A、B 是本次示範設計的觀測點。從基地看，A 在西側，B 在東側。打開地質圖，看看 A 的 Nue 單元和 B 的 Njf 單元；再切到 TES 熱慣量圖，兩站卻落在同一格。</p>
     <p role="status">{{ w.at === 'home' ? '已返抵基地' : here ? '目前位於'+here.name : '目前位於任務基地' }}</p>
     <div class="button-row"><button v-for="t in w.stations" :key="t.id" :aria-pressed="station.id === t.id" @click="m.focusWalkStation(t)">{{ t.name }} · {{ t.symbol }}</button></div>
     <h3>{{ station.question }}</h3>
@@ -30,6 +30,7 @@ function chooseB(include) {
       <h3>步行與返程</h3>
       <p v-for="(routes,id) in w.comparison" :key="id">{{ id === 'a' ? '基地 → A → 基地' : '基地 → A → B → 基地' }} · {{ routes[s.selectedRoute].reachable ? m.fmt(routes[s.selectedRoute].length)+'／'+minutes(routes[s.selectedRoute].totalHours)+' 分鐘，'+(routes[s.selectedRoute].marginHours >= 0 ? '可完成，餘裕 ' : '超時 ')+minutes(Math.abs(routes[s.selectedRoute].marginHours))+' 分鐘' : '無可達路線' }}</p>
     </template>
+    <p v-if="w.at === 'base' || w.at === 's1'">加訪 B 可以用相同方法記錄另一種地質單元的地表紋理。若這項比較不值得額外的步行時間，從 A 直接返程也能完成任務。</p>
     <div v-if="w.at === 'base' || w.at === 's1'" class="button-row"><button :aria-pressed="w.includeB" @click="chooseB(true)">加訪 B</button><button :aria-pressed="!w.includeB" @click="chooseB(false)">略過 B 返程</button></div>
     <label v-if="w.at !== 'home'">選站理由<input v-model="w.decisionNote" placeholder="哪項證據影響你的決定？"></label>
     <template v-if="here">
