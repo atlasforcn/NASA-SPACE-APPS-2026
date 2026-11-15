@@ -10,6 +10,7 @@ import TaskPanel from "./components/TaskPanel.vue";
 import LayersPanel from "./components/LayersPanel.vue";
 import LocalizationPanel from "./components/LocalizationPanel.vue";
 import CuriosityDemo from "./components/CuriosityDemo.vue";
+import PhotoMatcher from "./components/PhotoMatcher.vue";
 import RouteLocationChallenge from "./components/RouteLocationChallenge.vue";
 const mission = useMission(),
   { state: s } = mission;
@@ -20,8 +21,9 @@ const mola = {
 const region = computed(() => regions.find(r => r.id === s.siteId) ?? mola);
 const choosing = ref(true);
 const demoHash = '#dingo-gap';
-const demoOpen = ref(window.location.hash === demoHash);
-let demoOpener = null;
+const photoHash = '#photo-matcher';
+const activePage = ref(window.location.hash);
+const pageOpeners = new Map();
 const challengeOpen = ref(false);
 let challengeOpener = null;
 
@@ -38,43 +40,45 @@ async function closeRouteChallenge() {
   challengeOpener = null;
 }
 
-function openDemo(event) {
+function openPage(event) {
   if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
   event.preventDefault();
-  demoOpener = event.currentTarget;
-  if (window.location.hash !== demoHash) {
-    history.pushState({ ...history.state, curiosityDemoEntry: true }, '', demoHash);
+  const link = event.currentTarget;
+  pageOpeners.set(link.hash, link);
+  if (window.location.hash !== link.hash) {
+    history.pushState({ ...history.state, missionPage: link.hash }, '', link.hash);
   }
-  demoOpen.value = true;
+  syncPageFromUrl();
 }
-function syncDemoFromUrl() {
-  const wasOpen = demoOpen.value;
-  demoOpen.value = window.location.hash === demoHash;
-  if (wasOpen && !demoOpen.value) {
+function syncPageFromUrl() {
+  const previous = activePage.value;
+  activePage.value = window.location.hash;
+  if ((previous === photoHash || previous === demoHash) &&
+      activePage.value !== photoHash && activePage.value !== demoHash) {
     nextTick(() => {
-      const target = demoOpener?.isConnected ? demoOpener : document.getElementById('curiosity-demo-entry');
+      const opener = pageOpeners.get(previous);
+      const target = opener?.isConnected ? opener : document.getElementById(previous === photoHash ? 'start-photo' : 'curiosity-demo-entry');
       target?.focus({ preventScroll: true });
     });
   }
 }
-function closeDemo() {
-  if (history.state?.curiosityDemoEntry) {
+function closePage() {
+  if (history.state?.missionPage === activePage.value) {
     history.back();
   } else {
     history.replaceState(history.state, '', window.location.pathname + window.location.search);
-    syncDemoFromUrl();
+    syncPageFromUrl();
   }
 }
-onMounted(() => window.addEventListener('hashchange', syncDemoFromUrl));
-onBeforeUnmount(() => window.removeEventListener('hashchange', syncDemoFromUrl));
+onMounted(() => window.addEventListener('hashchange', syncPageFromUrl));
+onBeforeUnmount(() => window.removeEventListener('hashchange', syncPageFromUrl));
 
-function enterFree(event, openPhoto = false) {
+function enterFree() {
   if (s.walk) mission.reset();
   s.tab = 'explore';
   s.panelOpen = true;
   choosing.value = false;
-  if (openPhoto) mission.openLocalization(event, 'horizon-photo');
-  else nextTick(() => document.getElementById('region-title')?.focus());
+  nextTick(() => document.getElementById('region-title')?.focus());
 }
 async function enterWalk() {
   if (!s.ready || s.regionLoading) return;
@@ -136,9 +140,9 @@ if (import.meta.env.MODE === "test") window.__mission = mission;
       <p class="eyebrow">Journey to the Mars</p><h1 id="mode-title" tabindex="-1">這次想怎麼探索火星？</h1>
       <button id="start-walk" :disabled="!s.ready || s.regionLoading" @click="enterWalk"><strong>Jezero 科學任務</strong><span>找出前往 A 站途中的陡坡，比較兩條繞行路線。選好路線後，也能看山稜判斷自己在哪裡。</span><b>{{ s.walk ? '繼續科學任務' : '開始路線檢查' }} →</b></button>
       <button id="start-free" @click="enterFree"><strong>自由探索</strong><span>自己選起點和終點，也可以用山頂相儀找位置。</span><b>選擇探索區域 →</b></button>
-      <div class="landing-skyline-tools">
-        <a id="curiosity-demo-entry" class="demo-entry" :href="demoHash" aria-haspopup="dialog" @click="openDemo">用好奇號實拍山稜找位置 <span aria-hidden="true">→</span></a>
-        <button id="start-photo" type="button" class="demo-entry" aria-controls="localization-tool" @click="enterFree($event, true)">上傳自己的火星照片，搜尋可能的拍攝位置 <span aria-hidden="true">→</span></button>
+      <div class="skyline-links">
+        <a id="curiosity-demo-entry" class="demo-entry" :href="demoHash" aria-haspopup="dialog" @click="openPage">用好奇號實拍山稜找位置 <span aria-hidden="true">→</span></a>
+        <a id="start-photo" class="demo-entry" :href="photoHash" aria-haspopup="dialog" @click="openPage">上傳自己的火星照片，搜尋可能的拍攝位置 <span aria-hidden="true">→</span></a>
       </div>
       <p v-if="s.error" role="alert">{{ s.error }} <button @click="mission.boot">重試載入</button></p>
       <details class="project-about">
@@ -214,8 +218,9 @@ if (import.meta.env.MODE === "test") window.__mission = mission;
         </div>
       </div>
     </aside>
-    <LocalizationPanel v-if="!s.walk" v-show="s.localizationOpen" @open-demo="openDemo" />
+    <LocalizationPanel v-if="!s.walk" v-show="s.localizationOpen" :photo-page-open="activePage === photoHash" @open-page="openPage" />
   </main>
-  <CuriosityDemo v-if="demoOpen" @close="closeDemo" />
+  <CuriosityDemo v-if="activePage === demoHash" @close="closePage" />
+  <PhotoMatcher v-if="activePage === photoHash" @close="closePage" />
   <RouteLocationChallenge v-if="challengeOpen" @close="closeRouteChallenge" />
 </template>
