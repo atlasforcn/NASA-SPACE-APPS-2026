@@ -4,11 +4,9 @@ import {missionKey} from '../useMission';
 const m=inject(missionKey),s=m.state;
 </script>
 <template>
-  <section class="detail-card navigation-materials">
-    <h3>影像與材質如何影響路線</h3>
-    <p class="hint">導航設定獨立於圖層顯示；切換或關閉圖層不會取消禁行區與材質成本。</p>
-    <details class="planning-assumptions" open>
-      <summary>參照光學影像標記禁行區</summary>
+  <div class="navigation-materials">
+    <details id="settings-no-go" class="planning-assumptions">
+      <summary>人工禁行區（{{ s.noGoZones.length }}）</summary>
       <label>區域名稱<input id="no-go-name" v-model="s.noGoName" maxlength="80" placeholder="例如：鬆砂、岩塊密集區" /></label>
       <label>禁行半徑（m）<input id="no-go-radius" v-model.number="s.noGoRadius" type="number" min="10" max="100000" /></label>
       <button id="pick-no-go" :disabled="!s.ready || s.regionLoading" :aria-pressed="s.pickingNoGo" @click="m.beginNoGo">{{ s.pickingNoGo ? '取消標記' : '在地圖點選禁行區中心' }}</button>
@@ -16,8 +14,9 @@ const m=inject(missionKey),s=m.state;
       <ul class="no-go-list"><li v-for="zone in s.noGoZones" :key="zone.id">{{ zone.name }} · 半徑 {{ m.fmt(zone.radius) }}<button :aria-label="`移除禁行區 ${zone.name}`" @click="m.removeNoGo(zone.id)">移除</button></li></ul>
       <p class="hint">人工禁行區會阻擋三種路線，包括起點或終點；跨區任務仍保留其地理位置。</p>
     </details>
-    <details class="planning-assumptions" open>
-      <summary>材質耗電修正（可調示範假設）</summary>
+    <details id="settings-material" class="planning-assumptions">
+      <summary>地質與熱慣量耗電參數</summary>
+      <p class="hint">材質成本與禁行區可獨立設定，切換地圖圖層只會改變顯示。</p>
       <label class="checkbox"><input id="nav-geology" v-model="s.navigation.geologyEnabled" type="checkbox" />依地質單元修正耗電</label>
       <div class="field-pair">
         <label>風成沙地倍率<input id="nav-sand-factor" v-model.number="s.navigation.sandFactor" type="number" min="1" max="5" step="0.1" /></label>
@@ -32,8 +31,7 @@ const m=inject(missionKey),s=m.state;
       <p v-if="s.navigation.thermalEnabled" class="hint">門檻單位 J m⁻² K⁻¹ s⁻½；TES 為區域材質線索，非即時溫度或陷車機率。原格網約 7.4 km／格，不會產生格內的細部差異。</p>
       <label>材質資料不足的耗電倍率<input id="nav-unknown-factor" v-model.number="s.navigation.unknownFactor" type="number" min="1" max="5" step="0.05" /></label>
       <p class="hint">地質與熱慣量取較高倍率，不重複相乘。未知材質增加假設成本，不直接禁行；地形缺測仍禁行。最低耗電與較低風險方案會參考材質，最短方案保留距離目標。</p>
-      <p id="navigation-data-status" role="status" class="hint">{{ s.navigationLoading ? '正在載入導航用熱慣量資料…' : s.navigationError || s.navigationStatus }}</p>
-      <button v-if="s.navigationError" @click="m.retryNavigation" :disabled="s.navigationLoading">重試導航資料</button>
+      <p v-if="!s.navigation.thermalEnabled && !s.navigationError" class="hint">{{ s.navigationStatus }}</p>
     </details>
-  </section>
+  </div>
 </template>

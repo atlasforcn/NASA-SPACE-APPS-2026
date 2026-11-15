@@ -11,10 +11,9 @@ const chosenName = computed(() => s.entries.find(p => p.name === namedChoice.val
 </script>
 <template>
   <div class="planner-controls">
-    <h3>停靠順序</h3>
-    <p class="hint">先選一個目的地，加入中途停靠；最後選擇終點。系統會逐段搜尋路徑。</p>
-    <details class="planning-assumptions" open>
-      <summary>加入火星已命名奇觀</summary>
+    <details id="settings-stops" class="planning-assumptions">
+      <summary>中途停靠與地名搜尋</summary>
+      <p class="hint">先選一個目的地，加入中途停靠；最後選擇終點。系統會逐段搜尋路徑。</p>
       <label>搜尋地名與著陸點<input id="stop-named-search" v-model="namedQuery" type="search" placeholder="Olympus Mons、Jezero、Octavia E. Butler Landing…" @input="namedChoice = ''" /></label>
       <label>選擇奇觀<select id="stop-named-place" v-model="namedChoice" :disabled="s.regionLoading">
         <option value="">{{ namedMatches.length ? '請選擇奇觀' : '找不到地名，請調整搜尋文字' }}</option>
@@ -25,19 +24,19 @@ const chosenName = computed(() => s.entries.find(p => p.name === namedChoice.val
         <button id="stop-destination-named" :disabled="!s.ready || s.regionLoading || !chosenName" @click="m.addNamedTarget(chosenName, 'destination')">設為終點</button>
       </div>
       <p class="hint">未搜尋時顯示精選奇觀；搜尋結果最多 100 筆。加入位置採地名目錄中心或歷史著陸座標，跨區會自動擴大地形覆蓋並保留現有任務。</p>
+      <p class="hint" role="status">{{ s.namedTargetStatus }}</p>
+      <button id="add-stop" :disabled="!s.destination || s.stopIds.includes(s.destination)" @click="m.addStop">將所選目的地加入中途停靠</button>
+      <ol class="planner-stops">
+        <li v-for="(id, i) in s.stopIds" :key="id">
+          <span>{{ s.targets.find(t => t.id === id)?.name }}</span>
+          <button :disabled="i === 0" :aria-label="`上移第 ${i+1} 站`" @click="m.moveStop(i,-1)">↑</button>
+          <button :disabled="i === s.stopIds.length-1" :aria-label="`下移第 ${i+1} 站`" @click="m.moveStop(i,1)">↓</button>
+          <button :aria-label="`移除第 ${i+1} 站`" @click="m.removeStop(i)">移除</button>
+        </li>
+      </ol>
+      <p class="hint">終點：{{ s.targets.find(t => t.id === s.destination)?.name || '請選擇終點' }}</p>
     </details>
-    <p class="hint" role="status">{{ s.namedTargetStatus }}</p>
-    <button id="add-stop" :disabled="!s.destination || s.stopIds.includes(s.destination)" @click="m.addStop">將所選目的地加入中途停靠</button>
-    <ol class="planner-stops">
-      <li v-for="(id, i) in s.stopIds" :key="id">
-        <span>{{ s.targets.find(t => t.id === id)?.name }}</span>
-        <button :disabled="i === 0" :aria-label="`上移第 ${i+1} 站`" @click="m.moveStop(i,-1)">↑</button>
-        <button :disabled="i === s.stopIds.length-1" :aria-label="`下移第 ${i+1} 站`" @click="m.moveStop(i,1)">↓</button>
-        <button :aria-label="`移除第 ${i+1} 站`" @click="m.removeStop(i)">移除</button>
-      </li>
-    </ol>
-    <p class="hint">終點：{{ s.targets.find(t => t.id === s.destination)?.name || '請選擇終點' }}</p>
-    <details class="planning-assumptions" open>
+    <details id="settings-energy" class="planning-assumptions">
       <summary>坡度耗電模型</summary>
       <div class="field-pair">
         <label>每 1% 上坡增耗（%）<input id="uphill-penalty" v-model.number="s.planner.uphillPenalty" type="number" min="0" max="100" /></label>
@@ -45,8 +44,8 @@ const chosenName = computed(() => s.entries.find(p => p.name === namedChoice.val
       </div>
       <p class="hint">預設 10% 上坡每公尺耗電約為平地的 2 倍，10% 下坡約為 0.5 倍；最低保留 25% 行進耗電。逐段讀取 DEM，返程依反方向重算。係數為可調示範假設，尚未依車輛校準。</p>
     </details>
-    <details class="planning-assumptions" open>
-      <summary>路線與任務假設</summary>
+    <details id="settings-assumptions" class="planning-assumptions">
+      <summary>行程與風險參數</summary>
       <div class="field-pair">
         <label>平地步速（km/h）<input id="walk-speed" v-model.number="s.planner.speedKmh" type="number" min="0.1" max="10" step="0.1" /></label>
         <label>時間預算（小時）<input id="time-budget" v-model.number="s.planner.budgetHours" type="number" min="0.1" step="0.5" /></label>
