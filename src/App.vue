@@ -68,12 +68,13 @@ function closeDemo() {
 onMounted(() => window.addEventListener('hashchange', syncDemoFromUrl));
 onBeforeUnmount(() => window.removeEventListener('hashchange', syncDemoFromUrl));
 
-function enterFree() {
+function enterFree(event, openPhoto = false) {
   if (s.walk) mission.reset();
   s.tab = 'explore';
   s.panelOpen = true;
   choosing.value = false;
-  nextTick(() => document.getElementById('region-title')?.focus());
+  if (openPhoto) mission.openLocalization(event, 'horizon-photo');
+  else nextTick(() => document.getElementById('region-title')?.focus());
 }
 async function enterWalk() {
   if (!s.ready || s.regionLoading) return;
@@ -135,7 +136,10 @@ if (import.meta.env.MODE === "test") window.__mission = mission;
       <p class="eyebrow">Journey to the Mars</p><h1 id="mode-title" tabindex="-1">How would you like to explore Mars?</h1>
       <button id="start-walk" :disabled="!s.ready || s.regionLoading" @click="enterWalk"><strong>Jezero Science Mission</strong><span>Find the steep stretch on the way to observation site A and compare two detours. Then use the skyline to work out where you are on your route.</span><b>{{ s.walk ? 'Continue science mission' : 'Start route check' }} →</b></button>
       <button id="start-free" @click="enterFree"><strong>Free Exploration</strong><span>Choose your starting point and destination. Use the Mountain Tracker to find your position.</span><b>Choose a region →</b></button>
-      <a id="curiosity-demo-entry" class="demo-entry" :href="demoHash" aria-haspopup="dialog" @click="openDemo">Explore Curiosity’s Dingo Gap panorama <span aria-hidden="true">→</span></a>
+      <div class="landing-skyline-tools">
+        <a id="curiosity-demo-entry" class="demo-entry" :href="demoHash" aria-haspopup="dialog" @click="openDemo">Explore Curiosity’s Dingo Gap panorama <span aria-hidden="true">→</span></a>
+        <button id="start-photo" type="button" class="demo-entry" aria-controls="localization-tool" @click="enterFree($event, true)">Upload your own Mars photo to find candidate locations <span aria-hidden="true">→</span></button>
+      </div>
       <p v-if="s.error" role="alert">{{ s.error }} <button @click="mission.boot">Retry loading</button></p>
       <details class="project-about">
         <summary>About this project</summary>

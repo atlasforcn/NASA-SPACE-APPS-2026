@@ -317,11 +317,14 @@ export function useMission() {
     cancelAnimationFrame(frame);
   }
   let localizationTrigger;
-  async function openLocalization(event) {
+  async function openLocalization(event, focusId = 'close-localization') {
     localizationTrigger = event.currentTarget;
     state.localizationOpen = true;
     await nextTick();
-    document.getElementById('close-localization')?.focus();
+    const target = document.getElementById(focusId);
+    const details = target?.closest('details');
+    if (details) details.open = true;
+    target?.focus();
   }
   async function closeLocalization() {
     state.localizationOpen = false;
