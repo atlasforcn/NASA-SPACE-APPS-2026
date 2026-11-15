@@ -1,59 +1,100 @@
 <script setup>
-import {computed, inject} from 'vue';
-import {missionKey} from '../useMission';
-import ScienceContext from './ScienceContext.vue';
-const m = inject(missionKey), s = m.state;
-const w = computed(() => s.walk);
-const station = computed(() => w.value.station);
-const here = computed(() => w.value.stations.find(t => t.id === w.value.at));
-const minutes = h => Math.round(h*60);
-function chooseB(include) {
-  w.value.includeB = include;
-  w.value.stations[1].outcome = include ? '待觀察' : '略過';
+import { computed, inject } from 'vue';
+import { missionKey } from '../useMission';
+
+const m = inject(missionKey);
+const s = m.state;
+const verdictLabels = { go: '可前往', reroute: '建議改道', hold: '暫緩出發' };
+const visibleRoutes = computed(() => [
+  { title: '基地 → A 直線', result: s.walk?.assessment, detour: false },
+  { title: '基地 → A 替代路線', result: s.walk?.detour, detour: true },
+].filter(route => route.result));
+const unavailable = computed(() => !s.ready || s.regionLoading || s.pickingNoGo || s.navigationLoading || !!s.navigationError);
+const stationTerrain = computed(() => m.scienceAt(s.walk?.station));
+function markNoGo() {
+  m.beginNoGo();
+  if (s.pickingNoGo) document.getElementById('map')?.scrollIntoView({ block: 'center' });
+}
+function measurement(value, digits, suffix = '') {
+  return Number.isFinite(value) ? value.toFixed(digits) + suffix : '無資料';
 }
 </script>
+
 <template>
-  <article class="walk-panel">
-    <h2>值得加訪 B 站嗎？</h2>
-    <p>A、B 是本次示範設計的觀測點。從基地看，A 在西側，B 在東側。打開地質圖，看看 A 的 Nue 單元和 B 的 Njf 單元；再切到 TES 熱慣量圖，兩站卻落在同一格。</p>
-    <p role="status">{{ w.at === 'home' ? '已返抵基地' : here ? '目前位於'+here.name : '目前位於任務基地' }}</p>
-    <div class="button-row"><button v-for="t in w.stations" :key="t.id" :aria-pressed="station.id === t.id" @click="m.focusWalkStation(t)">{{ t.name }} · {{ t.symbol }}</button></div>
-    <h3>{{ station.question }}</h3>
-    <p>{{ station.observation }}</p>
-    <p>選站依據：{{ station.unit }}（{{ station.symbol }}），USGS 多邊形 {{ station.sourceObjectId }}。<a v-if="station.source" :href="station.source" target="_blank" rel="noopener noreferrer">SIM 3464</a><span v-else>來源未查證</span></p>
-    <label>預計工作分鐘（情境假設）<input v-model.number="station.stopMinutes" type="number" min="0" step="1"></label>
-    <div class="button-row"><button @click="s.layer = 'thermal'">比較 TES 格網</button><button @click="s.layer = 'geology'">查看地質單元</button></div>
-    <ScienceContext />
-    <label>步行速度（km/h）<input v-model.number="s.planner.speedKmh" type="number" min="0.1" max="10" step="0.1"></label>
-    <label>任務預算（小時）<input v-model.number="s.planner.budgetHours" type="number" min="0.01" step="0.1"></label>
-    <template v-if="w.at === 'base' && w.comparison">
-      <h3>步行與返程</h3>
-      <p v-for="(routes,id) in w.comparison" :key="id">{{ id === 'a' ? '基地 → A → 基地' : '基地 → A → B → 基地' }} · {{ routes[s.selectedRoute].reachable ? m.fmt(routes[s.selectedRoute].length)+'／'+minutes(routes[s.selectedRoute].totalHours)+' 分鐘，'+(routes[s.selectedRoute].marginHours >= 0 ? '可完成，餘裕 ' : '超時 ')+minutes(Math.abs(routes[s.selectedRoute].marginHours))+' 分鐘' : '無可達路線' }}</p>
-    </template>
-    <p v-if="w.at === 'base' || w.at === 's1'">加訪 B 可以用相同方法記錄另一種地質單元的地表紋理。若這項比較不值得額外的步行時間，從 A 直接返程也能完成任務。</p>
-    <div v-if="w.at === 'base' || w.at === 's1'" class="button-row"><button :aria-pressed="w.includeB" @click="chooseB(true)">加訪 B</button><button :aria-pressed="!w.includeB" @click="chooseB(false)">略過 B 返程</button></div>
-    <label v-if="w.at !== 'home'">選站理由<input v-model="w.decisionNote" placeholder="哪項證據影響你的決定？"></label>
-    <template v-if="here">
-      <label>{{ here.name }} 現場紀錄<select v-model="here.outcome"><option>待觀察</option><option>已觀察</option><option>略過</option></select></label>
-      <label>觀察筆記<textarea v-model="here.note" /></label>
-      <button aria-controls="localization-tool" @click="m.openLocalization">我現在在哪裡？用山頂相儀定位</button>
-      <p v-for="(scan,i) in here.scans" :key="i">{{ scan.source }}{{ scan.scenario === 'poor' ? '（60°、55% 遮擋）' : scan.scenario === 'good' ? '（360°）' : '' }} · 有效 {{ scan.coverageDegrees.toFixed(0) }}° · {{ scan.reason }} · {{ scan.updated ? '已更新位置' : '保留里程推估' }}</p>
-      <button @click="m.planWalkFromStation">從當下估計重新規劃</button>
-    </template>
-    <p v-if="s.route?.reachable && here">本路線含返程 · {{ s.route.marginHours >= 0 ? '返程餘裕' : '超時' }} {{ minutes(Math.abs(s.route.marginHours)) }} 分鐘</p>
-    <button v-if="w.at !== 'home'" class="primary" :disabled="!s.route?.reachable || s.searching" @click="m.advanceWalk">示範快轉到{{ s.route?.legs?.[0]?.name || '下一站' }}</button>
-    <section v-else>
-      <h3>任務回顧</h3>
-      <p>{{ w.completedLegs.map(leg => leg.name).join(' → ') }} · {{ minutes(w.elapsed) }} 分鐘 · {{ w.elapsed > s.planner.budgetHours ? '超時' : '時間內完成' }}</p>
-      <p>選站理由：{{ w.decisionNote || '未填寫' }}</p>
-      <p v-for="t in w.stations" :key="t.id">{{ t.name }} · {{ t.outcome }}{{ t.note ? ' · '+t.note : '' }}</p>
-    </section>
-    <button v-if="s.route?.reachable" @click="m.exportPlan">匯出行程與站點紀錄</button>
+  <article class="group walk-panel">
+    <h2>從基地前往 A，沿途安全嗎？</h2>
+    <p class="mission-brief">基地與觀測點 A 都是這次在 Jezero 隕石坑設定的示範位置。檢查兩點間的直線，依沿途地形決定出發、改道或暫緩。</p>
+
+    <details class="limits">
+      <summary>通行門檻與禁行區 · {{ s.slope }}° ／ {{ s.roughnessLimit }}</summary>
+      <label>坡度上限 {{ s.slope }}°<input id="science-slope-limit" v-model.number="s.slope" type="range" min="1" max="45" /></label>
+      <label>粗糙度上限 {{ s.roughnessLimit }}<input id="science-roughness-limit" v-model.number="s.roughnessLimit" type="range" min="0" max="1" step="0.05" /></label>
+      <p class="hint">兩項上限皆為示範設定。粗糙度越接近 1，地形起伏越大。</p>
+      <form class="exclusion-form" @submit.prevent="markNoGo">
+        <h3>沿途有需要避開的地方嗎？</h3>
+        <div class="field-pair">
+          <label>區域名稱（選填）<input id="science-no-go-name" v-model="s.noGoName" maxlength="80" /></label>
+          <label>半徑（m）<input id="science-no-go-radius" v-model.number="s.noGoRadius" type="number" min="10" max="100000" required :disabled="s.pickingNoGo" /></label>
+        </div>
+        <button id="science-pick-no-go" class="wide" type="submit" :disabled="!s.ready || s.regionLoading" :aria-pressed="s.pickingNoGo">{{ s.pickingNoGo ? '取消標記' : '在地圖標記禁行區' }}</button>
+        <p v-if="s.pickingNoGo" class="hint" role="status">點選地圖，設定禁行區的中心。</p>
+      </form>
+      <ul v-if="s.noGoZones.length" aria-label="已標記的禁行區" class="no-go-list">
+        <li v-for="zone in s.noGoZones" :key="zone.id">{{ zone.name }} · 半徑 {{ m.fmt(zone.radius) }}<button type="button" :aria-label="`移除禁行區 ${zone.name}`" @click="m.removeNoGo(zone.id)">移除</button></li>
+      </ul>
+    </details>
+    <button id="check-science-route" type="button" class="primary wide" :disabled="unavailable" @click="m.checkScienceRoute()">
+      {{ s.walk.assessment ? '重新檢查基地到 A' : '檢查基地到 A 的路線' }}
+    </button>
+
+    <p v-if="s.navigationLoading || s.navigationError" class="hint" role="status">{{ s.navigationLoading ? '正在載入導航資料…' : s.navigationError }}</p>
+    <button v-if="s.navigationError && !s.navigationLoading" type="button" @click="m.retryNavigation()">重試載入導航資料</button>
+
+    <div aria-live="polite" aria-atomic="false">
+      <section v-for="route in visibleRoutes" :key="route.title" class="assessment" :data-verdict="route.result.verdict">
+        <p class="route-name">{{ route.title }} · {{ m.fmt(route.result.length) }}</p>
+        <h3 :id="route.detour ? 'science-detour-verdict' : 'science-route-verdict'" :data-verdict="route.result.verdict">
+          {{ verdictLabels[route.result.verdict] }}
+        </h3>
+        <p class="reason">{{ route.result.reason }}</p>
+        <dl class="evidence">
+          <div><dt>沿途最大坡度</dt><dd>{{ measurement(route.result.maxSlope, 1, '°') }}</dd></div>
+          <div><dt>沿途最大粗糙度</dt><dd>{{ measurement(route.result.maxRoughness, 2) }}</dd></div>
+          <div><dt>穿越人工禁行區</dt><dd>{{ route.result.noGoCrossed == null ? '未能判定' : route.result.noGoCrossed ? '是' : '否' }}</dd></div>
+          <div><dt>區域 DEM 涵蓋</dt><dd>{{ m.fmt(route.result.localDistance) }}</dd></div>
+          <div><dt>僅有公里級 MOLA</dt><dd>{{ m.fmt(route.result.molaDistance) }}</dd></div>
+          <div><dt>地形缺測路段</dt><dd>{{ m.fmt(route.result.missingDistance) }}</dd></div>
+        </dl>
+        <button v-if="route.result.point" :id="route.detour ? 'focus-science-detour' : 'focus-science-evidence'" class="wide" type="button" @click="m.focusScienceEvidence(route.detour)">在地圖查看判定路段</button>
+      </section>
+      <section v-if="s.walk.detourUnavailable" class="assessment" data-verdict="hold">
+        <p class="route-name">基地 → A 替代路線</p>
+        <h3 id="science-detour-verdict" data-verdict="hold">暫緩出發</h3>
+        <p class="reason">目前的門檻下找不到通往 A 的替代路線。</p>
+      </section>
+    </div>
+    <button v-if="s.walk.assessment?.verdict === 'reroute'" id="check-science-detour" type="button" class="wide" :disabled="unavailable" @click="m.checkDetour()">搜尋並檢查替代路線</button>
+    <p class="hint">判定採用 DEM 取樣和地圖上的人工禁行區。公里級高程只能概覽地形，車輪尺度的岩塊仍需現地資料。<a v-if="stationTerrain?.source" :href="stationTerrain.source" target="_blank" rel="noopener noreferrer">Jezero 數值高程原始資料 ↗</a></p>
   </article>
 </template>
+
 <style scoped>
-.walk-panel { border-inline-start: 3px solid #81d9cc; padding-inline-start: 1rem; margin-block-end: 2rem; }
-.walk-panel h3 { margin-block: 1rem .4rem; }
-.walk-panel p { overflow-wrap: anywhere; }
-.walk-panel textarea { width: 100%; min-height: 4em; }
+.walk-panel { overflow-wrap: anywhere; }
+.walk-panel h2 { margin-bottom: .5rem; }
+.mission-brief, .reason { font-size: .85rem; line-height: 1.7; }
+.limits { margin-block: 1rem .3rem; padding-block: .65rem; border-block: 1px solid var(--border); }
+.limits summary { cursor: pointer; font-size: .8rem; }
+.limits label { font-size: .8rem; }
+.exclusion-form { margin-top: 1rem; }
+.exclusion-form h3 { font-size: .85rem; }
+.assessment { --verdict-color: var(--mint); margin-top: 1.3rem; }
+.assessment[data-verdict="reroute"] { --verdict-color: #ff938c; }
+.assessment[data-verdict="hold"] { --verdict-color: #e6b772; }
+.route-name { color: var(--muted); font-size: .75rem; margin: 0; }
+.assessment h3 { color: var(--verdict-color); border-inline-start: .2rem solid currentColor; padding-inline-start: .6rem; margin-block: .45rem; font-size: 1.25rem; }
+.reason { margin: 0; }
+.evidence { font-size: .8rem; margin-block: .65rem .2rem; }
+.evidence div { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; border-bottom: 1px solid var(--border); padding-block: .32rem; }
+.evidence dt { color: var(--muted); }
+.evidence dd { margin: 0; font-variant-numeric: tabular-nums; }
 </style>
