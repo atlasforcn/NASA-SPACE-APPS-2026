@@ -186,12 +186,21 @@ export function useMission() {
     lastTime,
     lastDraw = 0,
     observation,
-    observationPose,
-    displayedCandidate,
     panoramaFrame,
     hoveredHorizonIndex,
     lastScanDistance = -Infinity,
     stroke = false;
+  const observationPose = shallowRef(null);
+  const captureMapPosition = shallowRef(null);
+  const displayedCandidate = shallowRef(null);
+  const viewPose = computed(() => state.externalHorizon ? displayedCandidate.value : observationPose.value || state.truth);
+  const viewBearing = computed(() => {
+    if (!viewPose.value || (!state.hasStart && !state.externalHorizon)) return null;
+    return C.modDeg(viewPose.value.heading + state.viewYaw);
+  });
+  const viewMapPosition = computed(() => state.externalHorizon
+    ? displayedCandidate.value : captureMapPosition.value || state.estimate);
+  let viewBearingMarker;
   const abort = new AbortController();
   const scienceLoader = createScienceLoader(asset);
   let navigationThermal = null, geologyIndex = [], navigationLoadToken = 0;
@@ -364,8 +373,9 @@ export function useMission() {
     state.result = null;
     observation = null;
     state.externalHorizon = false;
-    observationPose = null;
-    displayedCandidate = null;
+    observationPose.value = null;
+    captureMapPosition.value = null;
+    displayedCandidate.value = null;
     state.viewYaw = 0;
     candidateLayer?.clearLayers();
     trail?.setLatLngs([]);
@@ -731,11 +741,12 @@ export function useMission() {
     const capturePose = { ...state.estimate };
     candidateLayer.clearLayers();
     state.result = null;
-    observationPose = { ...(suppliedObservation ? state.estimate : state.truth) };
-    displayedCandidate = null;
+    observationPose.value = { ...(suppliedObservation ? state.estimate : state.truth) };
+    captureMapPosition.value = capturePose;
+    displayedCandidate.value = null;
     state.viewYaw = 0;
     state.externalHorizon = !!suppliedObservation;
-    observation = suppliedObservation || S.simulate(observationPose, {
+    observation = suppliedObservation || S.simulate(observationPose.value, {
       ...profileOptions,
       seed: 42,
       noise: 0.025,
@@ -815,6 +826,7 @@ export function useMission() {
         state.message = `${result.reason}；手繪／照片比對僅提供候選，請核對橘色輸入與青色 DEM 輪廓及相機設定。未套用位置校正。`;
         state.evaluation = "外部觀測沒有模擬真值可評估。";
       } else if (result.status === "good" && best) {
+        captureMapPosition.value = best;
         // Search describes the capture instant; carry intervening odometry forward.
         state.estimate = {
           x: best.x + (continuous ? state.estimate.x - capturePose.x : 0),
@@ -869,7 +881,7 @@ export function useMission() {
     });
   }
   function drawCurve(candidate) {
-    displayedCandidate = candidate;
+    displayedCandidate.value = candidate;
     const cv = curve.value;
     if (!cv) return;
     const ctx = cv.getContext("2d"),
@@ -957,14 +969,14 @@ export function useMission() {
     const W = cv.width,
       H = cv.height,
       ctx = cv.getContext("2d"),
-      pose = observationPose || state.truth,
+      pose = observationPose.value || state.truth,
       obs = observation || S.simulate(pose, {
         ...profileOptions, seed: 42, noise: 0.025,
         fov: state.scenario === "good" ? 360 : 60,
         occlusion: state.scenario === "good" ? 0 : 0.55,
       }),
       view = S.viewport(obs, state.viewYaw),
-      heading = C.modDeg(pose.heading + state.viewYaw),
+      heading = viewBearing.value,
       validValues = obs.elevations.filter((v, i) => obs.valid[i] && Number.isFinite(v)),
       lo = validValues.length ? Math.min(...validValues) - 0.3 : -1,
       hi = validValues.length ? Math.max(...validValues) + 0.3 : 1,
@@ -1055,6 +1067,36 @@ export function useMission() {
     ctx.fillStyle = "#fff0d6";
     ctx.font = "13px system-ui";
     ctx.fillText(state.externalHorizon ? `使用者輪廓 · 相對視角 ${state.viewYaw.toFixed(0)}° · 深色區無觀測` : `${observation ? '掃描快照' : '掃描前預覽'} · yaw ${heading.toFixed(0)}° · 深色區無觀測`, 12, 22);
+  }
+  function syncViewBearing() {
+    const bearing = viewBearing.value;
+    const origin = viewMapPosition.value;
+    if (!map || !state.localizationOpen || state.globalView || !origin || bearing === null) {
+      remove(viewBearingMarker);
+      return;
+    }
+    const start = ll(origin);
+    if (!viewBearingMarker) {
+      const icon = L.divIcon({
+        className: 'horizon-view-bearing',
+        iconSize: [64, 64], iconAnchor: [32, 32],
+        html: '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 2 41 24 32 20 23 24Z" fill="#ffb477" stroke="#15232a" stroke-width="2"/></svg>',
+      });
+      viewBearingMarker = L.marker(start, { icon, interactive: false, keyboard: false, zIndexOffset: 500 });
+    }
+    viewBearingMarker.setLatLng(start).addTo(map);
+    // Rotate the glyph in screen coordinates; Leaflet owns the outer marker transform.
+    const radians = bearing * C.DEG;
+    const end = ll({
+      x: origin.x + 100 * Math.sin(radians),
+      y: origin.y + 100 * Math.cos(radians),
+    });
+    end[1] = start[1] + C.wrapRad((end[1] - start[1]) * C.DEG) / C.DEG;
+    const vector = map.project(end).subtract(map.project(start));
+    const screenAngle = Math.atan2(vector.x, -vector.y) / C.DEG;
+    const element = viewBearingMarker.getElement();
+    element.dataset.bearing = String(bearing);
+    element.firstElementChild.style.transform = `rotate(${screenAngle}deg)`;
   }
   function clearHorizonHover() {
     horizonHoverLayer?.clearLayers();
@@ -2396,9 +2438,10 @@ export function useMission() {
       state.message = state.hasStart ? "保留導航估計；請重新掃描。" : "請先在「任務」選擇起點。";
       if (!state.hasStart) state.status = "尚未設定起點";
       observation = null;
-    state.externalHorizon = false;
-      observationPose = null;
-      displayedCandidate = null;
+      state.externalHorizon = false;
+      observationPose.value = null;
+      captureMapPosition.value = null;
+      displayedCandidate.value = null;
       candidateLayer?.clearLayers();
       drawCurve();
       render();
@@ -2429,10 +2472,11 @@ export function useMission() {
     state.routeStatus = '目的地已變更，請建立路線。';
   });
   watch(profileCanvas, drawProfile);
+  watch([viewBearing, viewMapPosition, () => state.localizationOpen, () => state.globalView], syncViewBearing);
   watch(panorama, render);
   watch(() => [state.viewYaw, state.destination, state.poi, state.pois, state.targets], () => {
     render();
-    drawCurve(displayedCandidate);
+    drawCurve(displayedCandidate.value);
   });
   watch(curve, () => drawCurve(state.result?.candidates[0]));
   onScopeDispose(() => {
@@ -2449,7 +2493,7 @@ export function useMission() {
   return {
     state,
     dem,
-    openLocalization, closeLocalization, startWalk, checkScienceRoute, focusScienceEvidence, checkDetour,
+    viewBearing, openLocalization, closeLocalization, startWalk, checkScienceRoute, focusScienceEvidence, checkDetour,
     geologyAt: point => unitLabel(unitAt(point)),
     scienceAt: (point) => {
       if (!state.ready || state.regionLoading || !dem.value || !point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) return null;
@@ -2501,8 +2545,9 @@ export function useMission() {
     focusView: () => {
       const target = state.poi || state.targets.find((p) => p.id === state.destination);
       if (!target) return;
-      const pose = observationPose || state.truth;
-      state.viewYaw = C.modDeg(Math.atan2(target.x - pose.x, target.y - pose.y) / C.DEG - pose.heading);
+      const pose = viewPose.value;
+      if (!pose) return;
+      state.viewYaw = C.modDeg(C.bearingDeg(pose, target) - pose.heading);
     },
     beginDrawing,
     selectRoute,
