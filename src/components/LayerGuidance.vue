@@ -11,7 +11,7 @@ const points=computed(()=>route.value?.map(p=>C.localToLatLng(p.x,p.y)) || [s.gu
 function terrain(id) {
   const local=route.value || points.value.map(p=>C.latLngToLocal(p.lat,p.lng));
   if(id==='hillshade') return {text:'陰影來自模擬光源，可用來辨認坡面方向。通行門檻請對照數值坡度。'};
-  if(id==='geology') return {text:'起訖地質單元：'+m.geologyAt(local[0])+' → '+m.geologyAt(local.at(-1))+'。地質圖可比較選站環境，腳下岩塊仍需現場查看。'};
+  if(id==='geology') return {text:'起訖地質單元：'+m.geologyAt(local[0])+' → '+m.geologyAt(local.at(-1))+'。'};
   const [read,unit,limit]=id==='slope'?[C.slopeDeg,'°',s.slope]:id==='roughness'?[C.roughness,'',s.roughnessLimit]:[C.elevation,' m',null];
   let low=Infinity,high=-Infinity,missing=false;
   for(const p of local) {
@@ -22,7 +22,7 @@ function terrain(id) {
   const exceeded=limit!==null && high>limit;
   return {text:Number.isFinite(low)?'取樣範圍 '+low.toFixed(2)+'–'+high.toFixed(2)+unit+'。':'目前沒有有效讀值。',
     warning:[exceeded?'超出任務設定上限 '+limit+unit+'，請調整路線。':'',missing?'部分位置缺少足夠地形資料。':''].filter(Boolean).join(' '),
-    advice:limit===null?'比較沿線高差時，請一併檢查坡度及高程來源。':'目前任務上限 '+limit+unit+'。仍須對照其他避險條件。'};
+    advice:limit===null?'比較沿線高差時，請一併檢查坡度及高程來源。':'目前任務上限 '+limit+unit+'。'};
 }
 const cards=computed(()=>s.layers.map(id=>({id,...(!s.ready || s.regionLoading ? {text:'正在載入任務區域…'} : scienceLayerIds.includes(id)
   ? scienceGuidance(id,s.scienceLayers[id],points.value,!!route.value,s.guidanceView,s.navigation) : terrain(id))})));
@@ -33,10 +33,10 @@ const cards=computed(()=>s.layers.map(id=>({id,...(!s.ready || s.regionLoading ?
   <p class="hint" v-if="walkOption">依所選「{{ walkOption.name }}」沿途取樣。</p>
   <p class="hint" v-else>{{ s.walk ? route ? '依基地到 A 直線沿途取樣。' : '目前依地圖中心判讀；檢查基地到 A 後可看沿途變化。' : route ? '依目前規劃路線的節點取樣，含往返或中途停靠的路段。' : '目前依地圖中心判讀；規劃後會比較沿途節點。' }}</p>
   <article v-for="c in cards" :key="c.id" :data-layer="c.id">
-    <h4>{{ layerNames[c.id] }}</h4><p>{{ c.text }}</p>
+    <h4>{{ layerNames[c.id] }}</h4><p v-if="c.text">{{ c.text }}</p>
     <p v-if="c.warning" class="warning" role="status">警示 · {{ c.warning }}</p>
     <p v-if="c.advice">{{ c.advice }}</p>
-    <p v-for="h in c.history" :key="h.url">同格歷史測站 · {{ h.text }} 此為測站當時觀測。<a :href="h.url" target="_blank" rel="noopener noreferrer">測溫來源 ↗</a></p>
+    <p v-for="h in c.history" :key="h.url">同格歷史測站 · {{ h.text }} <a :href="h.url" target="_blank" rel="noopener noreferrer">測溫來源 ↗</a></p>
     <a v-if="c.url" :href="c.url" target="_blank" rel="noopener noreferrer">圖層來源 ↗</a>
   </article>
 </section>

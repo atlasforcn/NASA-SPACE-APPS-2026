@@ -41,7 +41,7 @@ function measurement(value, digits, suffix = '') {
       <summary>通行門檻與禁行區 · {{ s.slope }}° ／ {{ s.roughnessLimit }}</summary>
       <label>坡度上限 {{ s.slope }}°<input id="science-slope-limit" v-model.number="s.slope" type="range" min="1" max="45" /></label>
       <label>粗糙度上限 {{ s.roughnessLimit }}<input id="science-roughness-limit" v-model.number="s.roughnessLimit" type="range" min="0" max="1" step="0.05" /></label>
-      <p class="hint">兩項上限皆為示範設定。粗糙度越接近 1，地形起伏越大。</p>
+      <p class="hint">粗糙度越接近 1，地形起伏越大。</p>
       <form class="exclusion-form" @submit.prevent="markNoGo">
         <h3>沿途有需要避開的地方嗎？</h3>
         <div class="field-pair">
@@ -114,7 +114,7 @@ function measurement(value, digits, suffix = '') {
         <p class="reason">目前的門檻下找不到通往 A 的替代路線。</p>
       </section>
     </div>
-    <p class="hint">判定採用 DEM 取樣和地圖上的人工禁行區。公里級高程只能概覽地形，車輪尺度的岩塊仍需現地資料。<a v-if="stationTerrain?.source" :href="stationTerrain.source" target="_blank" rel="noopener noreferrer">Jezero 數值高程原始資料 ↗</a></p>
+    <p class="hint">判定採用數值高程模型（DEM）的取樣和地圖上的人工禁行區。公里級高程只能概覽地形，車輪尺度的岩塊仍需現地資料。<a v-if="stationTerrain?.source" :href="stationTerrain.source" target="_blank" rel="noopener noreferrer">Jezero 數值高程原始資料 ↗</a></p>
   </article>
 </template>
 

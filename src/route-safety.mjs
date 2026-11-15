@@ -102,22 +102,22 @@ export function assessRouteSafety(path, { slopeLimit = 15, roughnessLimit = 1 } 
   }
   // A new line between the same fixed endpoints cannot resolve a hazard at either end.
   const endpoints = [
-    { name: '基地', point: result.samples[0], segment: result.samples.slice(0, 2), advice: '請重新評估出發位置。' },
-    { name: 'A 站', point: result.samples.at(-1), segment: result.samples.slice(-2), advice: '請暫緩造訪，或另選觀測位置。' }
+    { name: '基地', point: result.samples[0], segment: result.samples.slice(0, 2), advice: '請另選出發點。' },
+    { name: 'A 站', point: result.samples.at(-1), segment: result.samples.slice(-2), advice: '請另選觀測點。' }
   ];
   for (const { name, point, segment, advice } of endpoints) {
     const { x, y } = point;
     if (C.navigationAt(x, y).blocked) {
       result.noGoCrossed = true;
-      return conclude('hold', `${name}位於人工禁行區內，更換中途路段仍會經過此點。${advice}`, { point, segment });
+      return conclude('hold', `${name}位於人工禁行區內。${advice}`, { point, segment });
     }
     if (!productAt(x, y)) continue;
     const { slope, rough } = C.risk(x, y);
     if (slope > slopeLimit) {
-      return conclude('hold', `${name}本身超限，坡度 ${slope.toFixed(2)}° 超過 ${slopeLimit}°。更換中途路段仍會經過此點。${advice}`, { point, segment });
+      return conclude('hold', `${name}坡度 ${slope.toFixed(2)}°，超過上限 ${slopeLimit}°。${advice}`, { point, segment });
     }
     if (rough > roughnessLimit) {
-      return conclude('hold', `${name}本身超限，地形粗糙度 ${rough.toFixed(3)} 超過 ${roughnessLimit}。更換中途路段仍會經過此點。${advice}`, { point, segment });
+      return conclude('hold', `${name}粗糙度 ${rough.toFixed(3)}，超過上限 ${roughnessLimit}。${advice}`, { point, segment });
     }
   }
   if (focus.zone) return conclude('reroute', '路線穿越已標示的人工禁行區。請繞開標記的路段，再檢查新路線。', focus.zone);

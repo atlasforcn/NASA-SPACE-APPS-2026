@@ -9,8 +9,7 @@ const m = inject(missionKey),
     <p class="eyebrow">Three Forks</p>
     <h2>重訪樣本存放區</h2>
     <p class="hint">
-      假想人員考察：使用你選定的任務起點 → Three Forks → 返回。亮黃色站點為 NASA
-      歷史車體位置；路線為情境模擬。
+      從所選起點模擬往返 Three Forks。黃色標記是毅力號投放樣本時的位置。
     </p>
     <p v-if="s.regional || s.siteId !== 'jezero'" class="hint">此區未提供 Three Forks 歷史樣本資料；請使用自訂目的地規劃路線。</p>
     <div class="button-row">
@@ -38,7 +37,7 @@ const m = inject(missionKey),
     </p>
     <article v-if="s.station" class="detail-card">
       <h3>{{ s.station.properties.name }}</h3>
-      <p>NASA PDS 歷史紀錄 · 非人員位置／非樣本管端點</p>
+      <p>NASA PDS 記錄的是投放樣本時的車體位置。</p>
       <p>
         {{ s.station.properties["Sample Designation"] }} · Sol
         {{ s.station.properties["Dropoff Sol"] }}<br />Site

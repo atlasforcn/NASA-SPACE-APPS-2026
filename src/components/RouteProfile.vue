@@ -66,7 +66,7 @@ function toggleProfile() {
           <summary>剖面資料</summary>
           <p>{{ s.profileInfo }}</p>
           <p v-if="s.profileLegend.some(item => item.baseline)">黃色虛線取樣起點到終點的單程直線，不含中途停靠或返程。{{ s.directRoute?.reachable ? '' : '這條直線未通過目前的通行檢查。' }}</p>
-          <p>{{ s.regional ? 'MOLA 公里級地形，格距隨覆蓋範圍調整。' : s.siteId === 'gale' ? 'Gale 原生格距 1 m，本站 DEM 取樣 20 m。' : 'CTX 原生約 20 m，本站 DEM 取樣 40 m。' }}格距以下的岩塊仍需現地判讀。</p>
+          <p>{{ s.regional ? 'MOLA 公里級地形，格距隨覆蓋範圍調整。' : s.siteId === 'gale' ? 'Gale 原生格距 1 m，本站 DEM 取樣 20 m。' : 'CTX 原生約 20 m，本站 DEM 取樣 40 m。' }}</p>
           <p>移動游標或輕觸曲線，可在地圖查看對應位置。多條曲線共用距離與高程尺度。</p>
         </details>
       </div>

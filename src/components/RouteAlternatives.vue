@@ -48,7 +48,7 @@ const rows = [
       <template v-if="s.routeOptions[s.selectedRoute].reachable">
         <h3>導航成本原因</h3>
         <ul><li v-for="cause in s.routeOptions[s.selectedRoute].navigationReasons" :key="cause.reason">{{ cause.reason }} · {{ m.fmt(cause.distance) }}</li></ul>
-        <p v-if="!s.routeOptions[s.selectedRoute].navigationReasons?.length" class="hint">此路線未增加材質成本；仍套用坡度耗電與禁行檢查。</p>
+        <p v-if="!s.routeOptions[s.selectedRoute].navigationReasons?.length" class="hint">這條路線沒有因材質增加耗電。</p>
         <h3>所選方案行程</h3>
         <ol class="itinerary"><li v-for="(leg,i) in s.routeOptions[s.selectedRoute].legs" :key="i"><strong>{{ leg.name }}</strong><span>{{ m.fmt(leg.surface) }} · 耗電 {{ (leg.energy/1000).toFixed(2) }} 單位 · 步行 {{ hours(leg.hours) }} · 停留 {{ leg.stopMinutes }} min</span></li></ol>
       </template>

@@ -1,5 +1,6 @@
 import { verifyWalk, verifyScienceOrder } from './walk-browser.mjs';
 import { verifyCuriosityLanding } from './curiosity-browser.mjs';
+import { verifyEnvironmentAlerts } from './environment-alerts-browser.mjs';
 import { verifyRouteLocation } from './route-location-browser.mjs';
 import { chromium } from "@playwright/test";
 import fs from "node:fs";
@@ -129,6 +130,7 @@ try {
     await page.addInitScript(() => Object.defineProperty(crypto, "randomUUID", { value: undefined }));
   }
   await page.goto(url);
+  if (process.env.PRODUCTION_SMOKE === '1') await verifyEnvironmentAlerts(page, url);
   if (process.env.PRODUCTION_SMOKE === '1') await verifyCuriosityLanding(page, url);
   await page.locator('#start-free').click();
   if (process.env.PRODUCTION_SMOKE !== '1') { await verifyScienceOrder(page, url); await verifyWalk(page, url); }
@@ -328,6 +330,7 @@ try {
     assert(await page.locator('#simulate').isDisabled());
     await page.locator('#plan').click();
     assert((await page.locator('#route-status').textContent()).includes('無法抵達'));
+    assert.match(await page.locator('#straight-status').innerText(), /直線受阻，請調整目的地或停靠點/);
     assert(await page.locator('#free-route-challenge').isHidden());
     assert(await page.locator('#map-route-challenge').isHidden());
     await page.locator('#task-navigation-risk').uncheck();
@@ -416,6 +419,7 @@ try {
     await page.locator(".horizon-input summary").click();
     // Drawing and uploads must also work before any mission start is chosen.
     assert(await page.locator("#horizon-match").isEnabled());
+    assert.equal(await page.locator("#horizon-search-scope").textContent(), "未設起點，將搜尋目前載入的地形區域。");
     const initialEditor = page.locator("#horizon-editor");
     await initialEditor.scrollIntoViewIfNeeded();
     const initialBox = await initialEditor.boundingBox();
@@ -425,7 +429,7 @@ try {
     await page.mouse.up();
     await page.locator("#horizon-match").click();
     await page.waitForFunction(() => window.__mission.state.externalHorizon);
-    assert((await page.locator("#horizon-input-status").textContent()).includes("未設定起點"));
+    assert((await page.locator("#horizon-input-status").textContent()).includes("已送出輪廓"));
     await page.locator("#cancel").click();
     const widePhoto = await page.evaluate(() => {
       const cv = document.createElement("canvas"); cv.width = 3430; cv.height = 450;
@@ -435,7 +439,7 @@ try {
     });
     await page.locator("#horizon-photo").setInputFiles(process.env.USER_HORIZON_IMAGE ||
       { name: "wide-ridge.png", mimeType: "image/png", buffer: Buffer.from(widePhoto, "base64") });
-    await page.waitForFunction(() => document.getElementById("horizon-input-status").textContent.includes("邊界提案"));
+    await page.waitForFunction(() => document.getElementById("horizon-input-status").textContent.includes("橘線是擷取的山稜"));
     assert(await initialEditor.evaluate(cv => cv.height < 105));
     fs.mkdirSync("test-results", { recursive: true });
     await page.locator(".horizon-input").screenshot({ path: "test-results/wide-horizon-input.png" });
@@ -468,7 +472,7 @@ try {
     await page.locator('#dem-region-preset').selectOption('valles-ctx');
     await page.locator('#load-region').click();
     await page.waitForFunction(()=>window.__mission.state.siteId==='valles-ctx'&&!window.__mission.state.regionLoading);
-    assert.equal(await page.locator('.panel-heading h1').textContent(), '水手號峽谷');
+    assert.equal(await page.locator('.panel-heading h1').textContent(), '水手號谷');
     assert((await page.locator('.region-description').textContent()).includes('谷壁'));
     assert.equal(await inspect(()=>window.__mission.state.siteName),'Valles');
     assert.equal(await inspect(()=>window.__mission.state.showNavigationRisk),false);
@@ -476,7 +480,7 @@ try {
     await page.locator('#dem-region-preset').selectOption('gale');
     await page.locator('#load-region').click();
     await page.waitForFunction(()=>window.__mission.state.siteId==='gale'&&!window.__mission.state.regionLoading);
-    assert.equal(await page.locator('.panel-heading h1').textContent(), '蓋爾隕石坑');
+    assert.equal(await page.locator('.panel-heading h1').textContent(), '蓋爾撞擊坑');
     assert((await page.locator('.region-description').textContent()).includes('好奇號'));
     assert.equal(await inspect(()=>window.__mission.inspect().dem.schema),'mars-local-grid-v1');
     assert.equal(await inspect(()=>window.__mission.inspect().dem.source.sample_step_m),20);
@@ -501,7 +505,7 @@ try {
     await page.locator('#dem-region-preset').selectOption('jezero');
     await page.locator('#load-region').click();
     await page.waitForFunction(()=>window.__mission.state.siteId==='jezero');
-    assert.equal(await page.locator('.panel-heading h1').textContent(), '傑澤羅隕石坑');
+    assert.equal(await page.locator('.panel-heading h1').textContent(), '傑澤羅撞擊坑');
     assert((await page.locator('.region-description').textContent()).includes('三角洲'));
     assert.equal(await inspect(()=>window.__mission.inspect().dem.schema),'mars-local-grid-v1');
     assert.equal(await inspect(()=>window.__mission.state.geologyAvailable),true);
@@ -537,7 +541,7 @@ try {
       ctx.lineTo(700, 260); ctx.fill(); return cv.toDataURL().split(",")[1];
     });
     await page.locator("#horizon-photo").setInputFiles({ name: "ridge.png", mimeType: "image/png", buffer: Buffer.from(photo, "base64") });
-    await page.waitForFunction(() => document.getElementById("horizon-input-status").textContent.includes("邊界提案"));
+    await page.waitForFunction(() => document.getElementById("horizon-input-status").textContent.includes("橘線是擷取的山稜"));
     await page.locator(".horizon-input").screenshot({ path: "test-results/horizon-input.png" });
     const beforeExternal = await inspect(() => ({ ...window.__mission.state.estimate }));
     await page.locator("#horizon-match").click();
@@ -737,7 +741,7 @@ try {
     await page.locator("#malay-card").click();
     assert(
       await page
-        .getByText("NASA PDS 歷史紀錄 · 非人員位置／非樣本管端點")
+        .getByText("NASA PDS 記錄的是投放樣本時的車體位置。")
         .isVisible(),
     );
     await page.getByRole("button", { name: "圖層", exact: true }).click();

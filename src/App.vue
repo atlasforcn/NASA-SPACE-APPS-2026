@@ -139,10 +139,10 @@ if (import.meta.env.MODE === "test") window.__mission = mission;
       <p v-if="s.error" role="alert">{{ s.error }} <button @click="mission.boot">重試載入</button></p>
       <details class="project-about">
         <summary>關於這個計畫</summary>
-        <p>太空人從基地走到觀測點，眼前這段坡能不能走？途中如果迷了方向，能不能認出遠方的山頭？我們從這兩個問題開始做這張地圖。</p>
+        <p>太空人從基地走到觀測點，眼前這段坡能不能走？途中如果迷了方向，能不能認出遠方的山頭？</p>
         <p>我們把火星影像疊在高程地圖上，用 A* 找路、避開陡坡和禁行區。「山頂相儀」則把眼前的山稜和地圖算出的輪廓一一比對，找出可能的站位。</p>
         <p>在 Jezero 模擬任務，多走約 680 公尺，沿途最大坡度從 8.8° 降到 5.4°。拿好奇號的 Dingo Gap 實拍全景比對，第一個候選位置距已知站位 815 公尺。</p>
-        <p>下一步，我們想用更多已知拍攝位置的照片，試試機器學習能不能把山稜抓得更準，再用新照片量定位誤差。其他星球如果也有高程資料和能核對位置的照片，我們也想把地圖搬過去試試。</p>
+        <p>接下來，我們想用已知拍攝位置的照片測試機器學習能否更準確地辨認山稜，再用新照片測量定位誤差。其他星球如果也有高程資料和能核對位置的照片，我們也想把地圖搬過去試試。</p>
       </details>
     </div>
   </section>
@@ -198,8 +198,8 @@ if (import.meta.env.MODE === "test") window.__mission = mission;
               <p>{{ region.question || '這個區域的高地與低地在哪裡？' }}</p>
               <button :disabled="!s.ready || s.regionLoading" @click="showQuestionLayer">{{ s.globalView ? '查看全球高程' : s.siteId === 'jezero' && !s.regional ? '查看地質圖' : '查看坡度圖' }}</button>
             </template>
-            <p role="status">{{ s.pickingStart || s.pickingTarget ? s.routeStatus : s.hasStart ? '起始點已設定' : '從哪裡出發？' }}</p>
-            <button id="pick-start" :disabled="!s.ready || s.regionLoading" :aria-pressed="s.pickingStart" @click="mission.beginStart">{{ s.pickingStart ? '取消選起點' : s.hasStart ? '重選起始點' : '在地圖上點選起始點' }}</button>
+            <p role="status">{{ s.pickingStart || s.pickingTarget ? s.routeStatus : s.hasStart ? '已設定起點' : '從哪裡出發？' }}</p>
+            <button id="pick-start" :disabled="!s.ready || s.regionLoading" :aria-pressed="s.pickingStart" @click="mission.beginStart">{{ s.pickingStart ? '取消選起點' : s.hasStart ? '重選起點' : '在地圖選起點' }}</button>
             <button v-if="s.hasStart && s.tab === 'explore'" :aria-pressed="s.pickingTarget" @click="mission.beginTarget">{{ s.pickingTarget ? '取消選點' : '在地圖上選目的地' }}</button>
             <button v-if="s.hasStart && s.destination && s.tab === 'explore'" :disabled="s.regionLoading || s.navigationLoading || !!s.navigationError" @click="s.tab='mission'; mission.plan()">規劃這條路線 →</button>
           </section>

@@ -67,15 +67,14 @@ function extract() {
   const ctx = cv.getContext("2d"); ctx.drawImage(image, 0, 0, cv.width, cv.height);
   const small = extractHorizon(ctx.getImageData(0, 0, cv.width, cv.height));
   trace = Array.from({ length: 700 }, (_, x) => Number.isFinite(small[Math.min(349, Math.floor(x / 2))]) ? small[Math.min(349, Math.floor(x / 2))] * canvas.value.height / cv.height : null);
-  paint(); message.value = "已產生邊界提案。橘線追蹤天空／山體交界，無天空處保留缺口；雲或光照可能造成誤判，可直接描畫修正。";
+  paint(); message.value = "橘線是擷取的山稜。若偏離天空與山體的交界，可直接重畫。看不到天空的部分留白。";
 }
 function match() {
   try {
     const obs = observationFromTrace(trace, 700, canvas.value.height,
       { ...m.horizonOptions(), fov: Number(fov.value), pitch: Number(pitch.value), projection: projection.value });
-    m.matchHorizon(obs); message.value = s.hasStart
-      ? "正在比對目前估計位置附近的 DEM；候選與疊圖顯示於下方。"
-      : "未設定起點：正在搜尋目前載入的 DEM 區域；候選與疊圖顯示於下方。";
+    m.matchHorizon(obs);
+    message.value = "已送出輪廓，可在下方查看比對結果。";
   } catch (error) { message.value = error.message; }
 }
 onMounted(paint);
@@ -84,7 +83,7 @@ onBeforeUnmount(() => { loadToken++; image?.close(); });
 <template>
   <details class="horizon-input group" aria-label="手繪或照片定位">
     <summary>手繪／照片山稜線比對</summary>
-    <p class="hint">畫出山稜線，或上傳探測器照片轉成 2D 輪廓。照片只在本機處理。有起點時搜尋估計位置附近；沒有起點時搜尋目前載入的 DEM 區域，並非全火星辨識。</p>
+    <p class="hint">畫出山稜線，或上傳照片擷取輪廓。照片只在本機處理。</p>
     <div class="button-row">
       <button id="horizon-blank" @click="blank">空白手繪</button>
       <label>上傳照片<input id="horizon-photo" type="file" accept="image/*" @change="upload" /></label>
@@ -101,7 +100,7 @@ onBeforeUnmount(() => { loadToken++; image?.close(); });
       @pointerdown="start" @pointermove="draw" @pointerup="end" @pointercancel="end" @lostpointercapture="end" />
     <p v-if="!filename" class="hint">手繪時，中央虛線對應上方設定的俯仰角。</p>
     <p id="horizon-input-status" class="hint" role="status">{{ message }}</p>
-    <p id="horizon-search-scope" class="hint">{{ !s.ready ? "正在載入 DEM，完成後即可比對。" : s.regionLoading ? "正在切換地形區域，完成後即可比對。" : s.searching ? "正在比對；可使用「取消」停止搜尋。" : s.hasStart ? "搜尋範圍：目前估計位置附近。" : "未設定起點也可比對：將搜尋目前載入的 DEM 區域；設定大致起點可縮小範圍。" }}</p>
+    <p id="horizon-search-scope" class="hint">{{ !s.ready ? "正在載入 DEM，完成後即可比對。" : s.regionLoading ? "正在切換地形區域，完成後即可比對。" : s.searching ? "正在比對；可使用「取消」停止搜尋。" : s.hasStart ? "將搜尋估計位置附近。" : "未設起點，將搜尋目前載入的地形區域。" }}</p>
     <button id="horizon-match" class="primary" :disabled="!s.ready || s.searching || s.regionLoading" @click="match">比對 DEM 找回候選位置</button>
     <p class="hint">手繪與照片尚未校準定位可信度；結果只提供候選，不自動校正導航。視角狹窄、平坦山稜或相機角度有誤時，可能無法判定位置。</p>
   </details>

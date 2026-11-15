@@ -10,7 +10,7 @@ const m=inject(missionKey),s=m.state;
       <label>區域名稱<input id="no-go-name" v-model="s.noGoName" maxlength="80" placeholder="例如：鬆砂、岩塊密集區" /></label>
       <label>禁行半徑（m）<input id="no-go-radius" v-model.number="s.noGoRadius" type="number" min="10" max="100000" /></label>
       <button id="pick-no-go" :disabled="!s.ready || s.regionLoading" :aria-pressed="s.pickingNoGo" @click="m.beginNoGo">{{ s.pickingNoGo ? '取消標記' : '在地圖點選禁行區中心' }}</button>
-      <p v-if="s.pickingNoGo" role="status" class="hint">點選地圖設定中心，紅色虛線圈內全部禁行。這是人工判讀，不是自動影像辨識。</p>
+      <p v-if="s.pickingNoGo" role="status" class="hint">點選禁行區中心，紅色虛線圈內禁止通行。</p>
       <ul class="no-go-list"><li v-for="zone in s.noGoZones" :key="zone.id">{{ zone.name }} · 半徑 {{ m.fmt(zone.radius) }}<button :aria-label="`移除禁行區 ${zone.name}`" @click="m.removeNoGo(zone.id)">移除</button></li></ul>
       <p class="hint">人工禁行區會阻擋三種路線，包括起點或終點；跨區任務仍保留其地理位置。</p>
     </details>
@@ -22,7 +22,7 @@ const m=inject(missionKey),s=m.state;
         <label>風成沙地倍率<input id="nav-sand-factor" v-model.number="s.navigation.sandFactor" type="number" min="1" max="5" step="0.1" /></label>
         <label>崎嶇／坑緣等倍率<input id="nav-rock-factor" v-model.number="s.navigation.rockFactor" type="number" min="1" max="5" step="0.05" /></label>
       </div>
-      <p class="hint">依 Jezero 地質圖將風成單元映射為沙地；崎嶇、蝕刻上部、坑緣與噴出物等單元映射為較難通行材質。其餘已知單元倍率為 1。分類與倍率為示範設定，並非實測輪胎風險。</p>
+      <p class="hint">依 Jezero 地質圖將風成單元映射為沙地；崎嶇、蝕刻上部、坑緣與噴出物等單元映射為較難通行材質。其餘已知單元倍率為 1。倍率可自行調整，用來估算不同地表的行進耗電。</p>
       <label class="checkbox"><input id="nav-thermal" v-model="s.navigation.thermalEnabled" type="checkbox" />加入低熱慣量材質假設</label>
       <div v-if="s.navigation.thermalEnabled" class="field-pair">
         <label>低熱慣量門檻<input id="nav-thermal-threshold" v-model.number="s.navigation.thermalThreshold" type="number" min="0" max="1000" /></label>

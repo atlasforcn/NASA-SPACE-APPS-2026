@@ -1,10 +1,19 @@
 <script setup>
+import NavigationRiskKey from "./NavigationRiskKey.vue";
 import { inject, ref, computed, nextTick, onMounted, onUnmounted } from "vue";
 import { missionKey } from "../useMission";
 import LayerControls from './LayerControls.vue';
 const m = inject(missionKey),
   container = ref();
 const showMapHint = ref(true);
+const exceeded = computed(() => m.environment.checks.value.filter(check => check.overLimit.length));
+async function showReadings() {
+  await openLayers();
+  await nextTick();
+  const details = document.getElementById('environment-readings');
+  details.open = true;
+  details.querySelector('summary').focus();
+}
 function dismissMapHint() {
   if (!m.state.walk) showMapHint.value = false;
 }
@@ -62,6 +71,15 @@ onUnmounted(() => observer?.disconnect());
       橘色箭頭 · {{ m.state.externalHorizon ? '候選視線方位' : '視線方位' }} {{ Math.round(m.viewBearing.value) % 360 }}°
     </p>
     <p v-else-if="!m.state.walk && showMapHint">拖曳地圖，放大查看地形。</p>
+    <div class="station-hints" aria-live="polite" aria-atomic="true">
+      <template v-if="exceeded.length">
+        <small>歷史測站</small>
+        <button v-for="check in exceeded" :key="check.id" :data-check="check.id"
+          class="station-exceedance" type="button" aria-controls="environment-readings" @click="showReadings">
+          <b aria-hidden="true">!</b> {{ check.label }}超標
+        </button>
+      </template>
+    </div>
   </div>
   <details class="map-legend">
     <summary>地圖標示與顏色</summary>
@@ -72,10 +90,7 @@ onUnmounted(() => observer?.disconnect());
       <span><i class="legend-line red"></i>直線取樣超過坡度上限的路段</span>
       <span><i class="legend-line orange"></i>暫緩出發</span>
       <span><i class="assessment-marker"></i>判定依據的位置</span>
-      <template v-if="m.state.showNavigationRisk && !m.state.globalView">
-        <span><i class="risk-area red"></i>超出通行門檻或禁行區</span>
-        <span><i class="risk-area orange"></i>地形資料不足區</span>
-      </template>
+      <NavigationRiskKey v-if="m.state.showNavigationRisk && !m.state.globalView" />
       <span v-for="option in m.state.walk.alternatives" :key="option.id"><i class="legend-line" :class="{ dashed: m.state.walk.selectedAlternative !== option.id }" :style="{ color: option.color }"></i>{{ option.name }}{{ m.state.walk.selectedAlternative === option.id ? '（已選）' : '' }}</span>
     </div>
     <div v-else class="legend-grid">
@@ -86,8 +101,7 @@ onUnmounted(() => observer?.disconnect());
       <span><i class="legend-line red"></i>紅色線段：超出通行條件</span>
       <span><i class="legend-line orange"></i>橘色線：行進軌跡</span>
       <span><i class="legend-dot orange"></i>橘色圓點：模擬真值（開啟時）</span>
-      <span><i class="legend-dot red"></i>紅色區域：超出通行上限</span>
-      <span>黃色區域：地形資料不足</span>
+      <NavigationRiskKey />
       <span><i class="legend-ring"></i>圓環：定位候選，青色為首選</span>
     </div>
   </details>
@@ -106,6 +120,9 @@ onUnmounted(() => observer?.disconnect());
 </template>
 
 <style scoped>
+.station-hints:not(:empty) { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem .45rem; }
+.station-hints small { color: var(--muted); font-size: .7rem; }
+.station-hints button { pointer-events: auto; margin: 0; border: 0; padding: .25rem 0; background: transparent; font-size: .75rem; }
+.station-hints button:hover { text-decoration: underline; }
 .assessment-marker { width: 12px; height: 12px; flex-shrink: 0; border: 2px solid #17242a; border-radius: 50%; background: #d8ddd5; outline: 1px solid #a2b5b2; }
-.risk-area { width: 11px; height: 11px; flex-shrink: 0; background: currentColor; opacity: .8; }
 </style>
