@@ -104,7 +104,6 @@ const m = inject(missionKey),
       <p class="hint" id="horizon-hover" role="status">{{ s.horizonHover || "掃描後，移動滑鼠至快照可在地圖查看對應輪廓點；標示的是該方向仰角最高的地形點。" }}</p>
     </div>
     <div v-show="!s.walk || s.walk.at !== 'base'" class="localization-results">
-      <p v-if="!s.externalHorizon" class="hint">上下圖使用同一次掃描、同一個 120° 視窗，左右轉動會同步；深色區與曲線缺口表示無觀測。行進時保留掃描當下的視角，直到下一次掃描更新。畫面以仰角縮放，並非相機透視照片；定位仍比對完整掃描中的有效資料。60° 視角不足全周 50% 的校正門檻，顯示候選不代表定位成功。</p>
       <p id="match-msg" class="hint" role="status">{{ s.message }}</p>
       <ol id="candidates" aria-label="Top 3 定位候選">
         <li v-for="(v, i) in s.result?.candidates || []" :key="i">
@@ -128,9 +127,13 @@ const m = inject(missionKey),
         </button>
         <p class="hint">{{ s.bearing }}</p>
       </details>
-      <p class="notice">
-        教育概念驗證 · DEM 為真實資料；手繪／照片為使用者輸入，其餘觀測、車輛與漂移為模擬。
-      </p>
+      <details>
+        <summary>如何判讀掃描圖與定位結果</summary>
+        <p v-if="!s.externalHorizon" class="hint">上下圖使用同一次掃描、同一個 120° 視窗，左右轉動會同步；深色區與曲線缺口表示無觀測。行進時保留掃描當下的視角，直到下一次掃描更新。畫面以仰角縮放，並非相機透視照片；定位仍比對完整掃描中的有效資料。60° 視角不足全周 50% 的校正門檻，顯示候選不代表定位成功。</p>
+        <p class="notice">
+          教育概念驗證 · DEM 為真實資料；手繪／照片為使用者輸入，其餘觀測、車輛與漂移為模擬。
+        </p>
+      </details>
     </div>
   </section>
 </template>
