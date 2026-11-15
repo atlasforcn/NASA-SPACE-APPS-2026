@@ -116,8 +116,8 @@
     "disposition": "publish",
     "reason": "Real photo validation sources, protocol and current evidence limitations",
     "path": "docs/PHOTO-VALIDATION.md",
-    "bytes": 7037,
-    "sha256": "e3352aa0d144830cbdc7201d7da73fc7faeec322328d84ac409bf4105fff2fc3"
+    "bytes": 8220,
+    "sha256": "2216c943378df889867cd8ef6f3b51635a324b834d6e783cce9b3d8be311a6eb"
   },
   {
     "source": "data/gale/dem.json",
@@ -327,5 +327,29 @@
     "source": "docs/jezero-walk-return.jpg",
     "disposition": "repository",
     "reason": "Screenshot from the public Jezero walk for the README"
+  },
+  {
+    "source": "data/gale/dingo-gap/demo.json",
+    "disposition": "publish",
+    "reason": "Reviewed Sol 538–539 image traces and precomputed Gale horizon match with its NASA PLACES reference",
+    "path": "data/gale/dingo-gap/demo.json",
+    "bytes": 13153,
+    "sha256": "841b9c9594e0f511aa3b68e35b394a956ff66332a24275f14084bfb2e7c0574b"
+  },
+  {
+    "source": "data/gale/dingo-gap/map.webp",
+    "disposition": "publish",
+    "reason": "Georeferenced north-up crop of the existing Gale orbital mosaic showing the two Sol 538–539 locations",
+    "path": "data/gale/dingo-gap/map.webp",
+    "bytes": 17698,
+    "sha256": "3d9340633d38c390b1c5fe72310c7fa994ab41328640540a25c97ffaa9c8b576"
+  },
+  {
+    "source": "data/gale/dingo-gap/panorama.webp",
+    "disposition": "publish",
+    "reason": "Curiosity Sol 538–539 PDS Navcam mosaic used for the skyline trace, reduced for display with a grayscale gamma exponent of 0.5",
+    "path": "data/gale/dingo-gap/panorama.webp",
+    "bytes": 497342,
+    "sha256": "23a20ed57343b66ee9092f266412281f9ad857890deded357e83806041a02084"
   }
 ]
