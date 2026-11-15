@@ -4,6 +4,8 @@
 
 公開示範採用好奇號第 538–539 個火星日在 Dingo Gap 西側的左導航相機全景。每隔 3° 從照片標出可辨的山稜，保留 210° 的有效觀測。比對程式在同一個 9.5 × 9.5 公里搜尋區內評估位置與朝向，使用數值地形推算各處會看到的山形。排序完成後才以第 26 站、第 708 次行駛的 NASA 定位紀錄量距。[NASA 原始全景](https://science.nasa.gov/resource/sol-0539-left-navigation-camera-cylindrical-projection/) · [PDS PLACES 站位紀錄](https://planetarydata.jpl.nasa.gov/img/data/msl/msl_places/data_localizations/)
 
+你可以在照片定位頁重做這三個 6 公里地形視距的測試。選取全景會載入相機參數及可修改的手描山稜線。每次都搜尋相同的蓋爾地形區域；排序後再揭曉 NASA 紀錄，計算第一候選與拍攝站位的火星表面距離。下表的誤差來自預載山稜線。第 535 與第 538–539 火星日的兩個拍攝站位只相隔約 37 公尺。[開啟照片定位頁](https://atlasforcn.github.io/NASA-SPACE-APPS-2026/zh/#photo-matcher) · [NASA 第 38 火星日全景](https://science.nasa.gov/resource/sol-0038-left-navigation-camera-cylindrical-projection-3/) · [NASA 第 535 火星日全景](https://science.nasa.gov/resource/sol-0535-left-navigation-camera-cylindrical-projection/)
+
 | 全景 | 網站 6 公里視距首選誤差 | 離線 90 公里視距首選誤差 |
 | --- | ---: | ---: |
 | 第 38 天，確認方法 | 4,016 m | 1,449 m |

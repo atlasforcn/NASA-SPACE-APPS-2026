@@ -2,7 +2,6 @@ import {
   reactive,
   markRaw,
   shallowRef,
-  toRefs,
   computed,
   watch,
   onScopeDispose,
@@ -11,7 +10,7 @@ import {
 import L from "leaflet";
 import { createNavigationContext, createGeologyIndex } from './navigation-context.mjs';
 import { createNavigationOverlay } from "./navigation-overlay";
-import C from "../core.mjs";
+import C, { createTerrainCore } from "../core.mjs";
 import S from "../skyline.mjs";
 import P from "../planet.mjs";
 import { assessRouteSafety } from './route-safety.mjs';
@@ -28,6 +27,8 @@ function createUiId(prefix = "") {
   const bytes = crypto.getRandomValues(new Uint8Array(16));
   return prefix + Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
 }
+
+const galeProfile = { angleStep: 3, rayStep: 40, maxRange: 6000, cameraHeight: 1.7, curvature: true };
 
 export const missionKey = Symbol("mission");
 export const fmt = (m) =>
@@ -804,23 +805,25 @@ export function useMission() {
     state.status = "里程偏差已注入";
     render();
   }
-  function searchSkyline(obs, wholeRegion, { progress, complete, fail }) {
+  function searchSkyline(obs, wholeRegion, { progress, complete, fail }, grid = dem.value, terrain = C) {
+    const regional = grid.schema === "mars-region-grid-v1";
+    const spacing = terrain.demInfo()?.cellMeters || 40;
     const centre = { ...state.estimate },
-      range = state.regional ? Math.max(16000, cellMeters() * 4) : 1600,
+      range = regional ? Math.max(16000, spacing * 4) : 1600,
       bounds = wholeRegion ? {
-        minX: C.LIMIT.minX + 250, maxX: C.LIMIT.maxX - 250,
-        minY: C.LIMIT.minY + 250, maxY: C.LIMIT.maxY - 250,
+        minX: terrain.LIMIT.minX + 250, maxX: terrain.LIMIT.maxX - 250,
+        minY: terrain.LIMIT.minY + 250, maxY: terrain.LIMIT.maxY - 250,
       } : {
-        minX: Math.max(C.LIMIT.minX + 250, centre.x - range),
-        maxX: Math.min(C.LIMIT.maxX - 250, centre.x + range),
-        minY: Math.max(C.LIMIT.minY + 250, centre.y - range),
-        maxY: Math.min(C.LIMIT.maxY - 250, centre.y + range),
+        minX: Math.max(terrain.LIMIT.minX + 250, centre.x - range),
+        maxX: Math.min(terrain.LIMIT.maxX - 250, centre.x + range),
+        minY: Math.max(terrain.LIMIT.minY + 250, centre.y - range),
+        maxY: Math.min(terrain.LIMIT.maxY - 250, centre.y + range),
       };
     const options = wholeRegion
-      ? { coarseStep: Math.max(state.regional ? cellMeters() : 200,
+      ? { coarseStep: Math.max(regional ? spacing : 200,
           (bounds.maxX - bounds.minX) / 24, (bounds.maxY - bounds.minY) / 24),
-          candidateSeparation: state.regional ? cellMeters() * 2 : 180 }
-      : state.regional ? { coarseStep: cellMeters(), candidateSeparation: cellMeters() * 2 } : {};
+          candidateSeparation: regional ? spacing * 2 : 180 }
+      : regional ? { coarseStep: spacing, candidateSeparation: spacing * 2 } : {};
     const worker = new Worker(new URL("./skyline-worker.js", import.meta.url), { type: "module" });
     function dispose() {
       worker.onmessage = null;
@@ -835,7 +838,7 @@ export function useMission() {
       else complete(data.result);
     };
     try {
-      worker.postMessage({ dem: dem.value, observation: obs, bounds, options });
+      worker.postMessage({ dem: grid, observation: obs, bounds, options });
     } catch (error) {
       dispose();
       throw error;
@@ -965,10 +968,19 @@ export function useMission() {
     }
   }
   function createPhotoMatcher() {
-    const { ready, regionLoading, siteId, siteName, regional, error } = toRefs(state);
+    const sampleMode = shallowRef(false), sampleTerrain = shallowRef(null);
+    const sampleLoading = shallowRef(false);
+    const sampleController = new AbortController();
+    let pendingGale, terrainRequest = 0;
+    const frame = () => sampleMode.value && sampleTerrain.value ? sampleTerrain.value.core : C;
+    const grid = () => sampleMode.value ? sampleTerrain.value?.grid : dem.value;
     const photo = reactive({
-      ready, regionLoading, siteId, siteName, regional, error,
-      hasStart: computed(() => state.hasStart && !state.walk),
+      ready: computed(() => sampleMode.value ? !!sampleTerrain.value : state.ready),
+      regionLoading: computed(() => sampleMode.value ? sampleLoading.value : state.regionLoading),
+      error: computed(() => sampleMode.value ? '' : state.error),
+      siteId: computed(() => sampleMode.value ? 'gale' : state.siteId),
+      siteName: computed(() => sampleMode.value ? 'Gale' : state.siteName),
+      hasStart: computed(() => !sampleMode.value && state.hasStart && !state.walk),
       searching: false, status: '', progress: '', message: '', result: null,
     });
     let stopSearch, photoObservation;
@@ -979,6 +991,29 @@ export function useMission() {
       photo.searching = false;
       photo.status = '已取消搜尋';
       photo.progress = '';
+    }
+    async function setSampleTerrain(enabled) {
+      const request = ++terrainRequest;
+      cancelPhoto();
+      photo.result = null;
+      photoObservation = null;
+      sampleMode.value = enabled;
+      sampleLoading.value = false;
+      if (!enabled || sampleTerrain.value) return;
+      sampleLoading.value = true;
+      if (!pendingGale) {
+        pendingGale = json('data/gale/dem.json', { signal: sampleController.signal }).then(loaded => {
+          const core = createTerrainCore();
+          core.setDEM(loaded);
+          return { grid: loaded, core };
+        }).catch(error => { pendingGale = null; throw error; });
+      }
+      try {
+        const loaded = await pendingGale;
+        if (request === terrainRequest) sampleTerrain.value = loaded;
+      } finally {
+        if (request === terrainRequest) sampleLoading.value = false;
+      }
     }
     function matchHorizon(obs) {
       if (!photo.ready || photo.regionLoading) return;
@@ -1007,28 +1042,37 @@ export function useMission() {
             photo.result = result;
           },
           fail,
-        });
+        }, grid(), frame());
       } catch (error) {
         fail(error.message);
       }
     }
     watch(dem, () => {
+      if (sampleMode.value) return;
       cancelPhoto();
       photo.result = null;
       photoObservation = null;
     });
-    onScopeDispose(cancelPhoto);
+    onScopeDispose(() => {
+      ++terrainRequest;
+      sampleController.abort();
+      cancelPhoto();
+    });
     return {
-      state: photo, boot, terrainImage, cancel: cancelPhoto, matchHorizon,
-      horizonOptions: () => ({ ...profileOptions }),
-      paintHorizonCurve: (canvas, candidate) => paintHorizonCurve(canvas, candidate, photoObservation, 0),
+      state: photo, boot, cancel: cancelPhoto, matchHorizon, setSampleTerrain,
+      mapBounds: () => frame().LIMIT,
+      toLatLng: (x, y) => frame().localToLatLng(x, y),
+      toLocal: (lat, lng) => frame().latLngToLocal(lat, lng),
+      terrainImage: kind => terrainImage(kind, grid(), frame()),
+      horizonOptions: () => ({ ...(sampleMode.value ? galeProfile : profileOptions) }),
+      paintHorizonCurve: (canvas, candidate) => paintHorizonCurve(canvas, candidate, photoObservation, 0, frame()),
     };
   }
   function drawCurve(candidate) {
     displayedCandidate.value = candidate;
     paintHorizonCurve(curve.value, candidate);
   }
-  function paintHorizonCurve(cv, candidate, obs = observation, viewYaw = state.viewYaw) {
+  function paintHorizonCurve(cv, candidate, obs = observation, viewYaw = state.viewYaw, terrain = C) {
     if (!cv) return;
     const ctx = cv.getContext("2d"),
       w = cv.width,
@@ -1036,7 +1080,7 @@ export function useMission() {
     ctx.clearRect(0, 0, w, h);
     if (!obs) return;
     const view = S.viewport(obs, viewYaw),
-      p = candidate ? S.profile(candidate, obs.options) : null,
+      p = candidate ? S.profile(candidate, obs.options, terrain) : null,
       vals = obs.elevations
         .filter((v, i) => obs.valid[i] && Number.isFinite(v));
     if (!vals.length) return;
@@ -1288,22 +1332,22 @@ export function useMission() {
     ctx.beginPath(); ctx.arc(x, screenY(sample.elevation), 5, 0, Math.PI * 2); ctx.stroke();
     state.horizonHover = label;
   }
-  function terrainImage(kind) {
+  function terrainImage(kind, grid = dem.value, terrain = C) {
     const cv = document.createElement("canvas");
-    cv.width = Math.min(601, dem.value.width);
-    cv.height = Math.min(601, dem.value.height);
-    const finite = dem.value.heights.filter(Number.isFinite);
+    cv.width = Math.min(601, grid.width);
+    cv.height = Math.min(601, grid.height);
+    const finite = grid.heights.filter(Number.isFinite);
     const low = finite.reduce((a,b)=>Math.min(a,b),Infinity), high = finite.reduce((a,b)=>Math.max(a,b),-Infinity);
     const ctx = cv.getContext("2d"),
       img = ctx.createImageData(cv.width, cv.height);
     for (let j = 0; j < cv.height; j++)
       for (let i = 0; i < cv.width; i++) {
         const x =
-            C.LIMIT.minX + (i / (cv.width - 1)) * (C.LIMIT.maxX - C.LIMIT.minX),
+            terrain.LIMIT.minX + (i / (cv.width - 1)) * (terrain.LIMIT.maxX - terrain.LIMIT.minX),
           y =
-            C.LIMIT.maxY -
-            (j / (cv.height - 1)) * (C.LIMIT.maxY - C.LIMIT.minY),
-          z = kind === "slope" ? C.slopeDeg(x, y) : kind === "roughness" ? C.roughness(x,y) : C.elevation(x, y),
+            terrain.LIMIT.maxY -
+            (j / (cv.height - 1)) * (terrain.LIMIT.maxY - terrain.LIMIT.minY),
+          z = kind === "slope" ? terrain.slopeDeg(x, y) : kind === "roughness" ? terrain.roughness(x,y) : terrain.elevation(x, y),
           v =
             kind === "slope"
               ? C.clamp(z / 30, 0, 1)
@@ -1314,7 +1358,7 @@ export function useMission() {
         img.data[k + 2] = 130 - 50 * v;
         img.data[k + 3] = Number.isFinite(z) ? 210 : 0;
         if(kind === "hillshade") {
-          const h=cellMeters(), gx=(C.elevation(x+h,y)-C.elevation(x-h,y))/(2*h), gy=(C.elevation(x,y+h)-C.elevation(x,y-h))/(2*h);
+          const h=cellMeters(), gx=(terrain.elevation(x+h,y)-terrain.elevation(x-h,y))/(2*h), gy=(terrain.elevation(x,y+h)-terrain.elevation(x,y-h))/(2*h);
           const light=Math.max(0,(-gx*-.5-gy*.5+Math.SQRT1_2)/Math.hypot(gx,gy,1));
           img.data[k]=img.data[k+1]=img.data[k+2]=255*light;
           img.data[k+3]=Number.isFinite(light)?230:0;
@@ -2083,7 +2127,7 @@ export function useMission() {
       state.siteId="gale"; state.siteName="Gale"; state.geologyAvailable=false;
       geology=null; missionStart={x:0,y:0}; state.targets=[];
       state.lat=grid.origin.lat; state.lng=grid.origin.lng;
-      profileOptions={angleStep:3,rayStep:40,maxRange:6000,cameraHeight:1.7,curvature:true};
+      profileOptions = galeProfile;
       optical.setUrl(asset("data/gale/optical.png"));
       optical.setBounds([ll({x:C.LIMIT.minX,y:C.LIMIT.minY}),ll({x:C.LIMIT.maxX,y:C.LIMIT.maxY})]);
       refreshMission();

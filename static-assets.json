@@ -116,8 +116,8 @@
     "disposition": "publish",
     "reason": "Real photo validation sources, protocol and current evidence limitations",
     "path": "docs/PHOTO-VALIDATION.md",
-    "bytes": 8220,
-    "sha256": "2216c943378df889867cd8ef6f3b51635a324b834d6e783cce9b3d8be311a6eb"
+    "bytes": 8960,
+    "sha256": "588e02119f485be862dd0da9be080bb0d7bbae759de825745de00b05634134a8"
   },
   {
     "source": "data/gale/dem.json",
@@ -351,5 +351,29 @@
     "path": "data/gale/dingo-gap/panorama.webp",
     "bytes": 497342,
     "sha256": "23a20ed57343b66ee9092f266412281f9ad857890deded357e83806041a02084"
+  },
+  {
+    "source": "data/gale/navcam-sol-38.webp",
+    "disposition": "publish",
+    "reason": "Curiosity sol 38 NASA/JPL-Caltech navigation camera panorama, resized for the live photo-matching exercise",
+    "path": "data/gale/navcam-sol-38.webp",
+    "bytes": 191772,
+    "sha256": "ad7a72ae6a1ace6efde4cb7fb3ebe2b1f536642824a602b13f0cd75748b71316"
+  },
+  {
+    "source": "data/gale/navcam-sol-535.webp",
+    "disposition": "publish",
+    "reason": "Curiosity sol 535 NASA/JPL-Caltech navigation camera panorama, resized for the live photo-matching exercise",
+    "path": "data/gale/navcam-sol-535.webp",
+    "bytes": 284846,
+    "sha256": "facbe4d6c2e34ac3a61171f3e8f2b5c6ea4bc476f132cf9d74db537cc493003a"
+  },
+  {
+    "source": "data/gale/photo-samples.json",
+    "disposition": "publish",
+    "reason": "NASA image sources, measured photo skylines, camera geometry and independent PDS PLACES station records for the three live Gale photo matches",
+    "path": "data/gale/photo-samples.json",
+    "bytes": 17749,
+    "sha256": "3914ed04bc8ab32ad6a8d617b44d245fc16585c9bc9f83156a1c421dd4fb4505"
   }
 ]
