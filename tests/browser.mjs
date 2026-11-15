@@ -331,12 +331,16 @@ try {
     await page.locator('#dem-region-preset').selectOption('valles-ctx');
     await page.locator('#load-region').click();
     await page.waitForFunction(()=>window.__mission.state.siteId==='valles-ctx'&&!window.__mission.state.regionLoading);
+    assert.equal(await page.locator('.panel-heading h1').textContent(), '水手號峽谷');
+    assert((await page.locator('.region-description').textContent()).includes('谷壁'));
     assert.equal(await inspect(()=>window.__mission.state.siteName),'Valles');
     assert.equal(await inspect(()=>window.__mission.state.showNavigationRisk),false);
     await page.waitForFunction(()=>Array.from(document.images).some(i=>i.src.endsWith('/data/valles/optical.png')&&i.complete&&i.naturalWidth===501));
     await page.locator('#dem-region-preset').selectOption('gale');
     await page.locator('#load-region').click();
     await page.waitForFunction(()=>window.__mission.state.siteId==='gale'&&!window.__mission.state.regionLoading);
+    assert.equal(await page.locator('.panel-heading h1').textContent(), '蓋爾隕石坑');
+    assert((await page.locator('.region-description').textContent()).includes('好奇號'));
     assert.equal(await inspect(()=>window.__mission.inspect().dem.schema),'mars-local-grid-v1');
     assert.equal(await inspect(()=>window.__mission.inspect().dem.source.sample_step_m),20);
     assert.equal(await inspect(()=>window.__mission.state.regional),false);
@@ -359,6 +363,8 @@ try {
     await page.locator('#dem-region-preset').selectOption('jezero');
     await page.locator('#load-region').click();
     await page.waitForFunction(()=>window.__mission.state.siteId==='jezero');
+    assert.equal(await page.locator('.panel-heading h1').textContent(), '傑澤羅隕石坑');
+    assert((await page.locator('.region-description').textContent()).includes('三角洲'));
     assert.equal(await inspect(()=>window.__mission.inspect().dem.schema),'mars-local-grid-v1');
     assert.equal(await inspect(()=>window.__mission.state.geologyAvailable),true);
     assert(await inspect(()=>window.__mission.state.pois.some(p=>p.id==='butler')));
