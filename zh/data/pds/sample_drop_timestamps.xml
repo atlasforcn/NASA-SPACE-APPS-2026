@@ -1,0 +1,89 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<?xml-model href="https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1M00.sch" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1" xmlns:pds="http://pds.nasa.gov/pds4/pds/v1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pds.nasa.gov/pds4/pds/v1 https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1M00.xsd">
+  <Identification_Area>
+    <logical_identifier>urn:nasa:pds:mars2020_sample_depot_three_forks:data:sample_drop_timestamps</logical_identifier>
+    <version_id>1.0</version_id>
+    <title>Three Forks Depot - sample_drop_timestamps</title>
+    <information_model_version>1.22.0.0</information_model_version>
+    <product_class>Product_Observational</product_class>
+  </Identification_Area>
+  <Observation_Area>
+    <Time_Coordinates>
+      <start_date_time>2022-12-21T16:17:01.363Z</start_date_time>
+      <stop_date_time>2023-01-28T18:48:37.904Z</stop_date_time>
+    </Time_Coordinates>
+    <Investigation_Area>
+      <name>MARS 2020</name>
+      <type>Mission</type>
+      <Internal_Reference>
+        <lid_reference>urn:nasa:pds:context:investigation:mission.mars2020</lid_reference>
+        <reference_type>data_to_investigation</reference_type>
+        <comment>This is the PDS4 logical identifier for the Mars 2020 Perseverance mission context product.</comment>
+      </Internal_Reference>
+    </Investigation_Area>
+    <Observing_System>
+      <Observing_System_Component>
+        <name>Perseverance</name>
+        <type>Host</type>
+        <Internal_Reference>
+          <lid_reference>urn:nasa:pds:context:instrument_host:spacecraft.mars2020</lid_reference>
+          <reference_type>is_instrument_host</reference_type>
+          <comment>This is the PDS4 logical identifier for the Mars 2020 Perseverance spacecraft.</comment>
+        </Internal_Reference>
+      </Observing_System_Component>
+    </Observing_System>
+    <Target_Identification>
+      <name>Mars</name>
+      <type>Planet</type>
+      <Internal_Reference>
+        <lid_reference>urn:nasa:pds:context:target:planet.mars</lid_reference>
+        <reference_type>data_to_target</reference_type>
+        <comment>This is the PDS4 logical identifier for the planet Mars.</comment>
+      </Internal_Reference>
+    </Target_Identification>
+  </Observation_Area>
+  <File_Area_Observational>
+    <File>
+      <file_name>sample_drop_timestamps.csv</file_name>
+      <creation_date_time>2024-09-18</creation_date_time>
+    </File>
+    <Header>
+      <offset unit="byte">0</offset>
+      <object_length unit="byte">62</object_length>
+      <parsing_standard_id>PDS DSV 1</parsing_standard_id>
+    </Header>
+    <Table_Delimited>
+      <name>Three Forks Depot Sample Drop Times</name>
+      <offset unit="byte">62</offset>
+      <object_length unit="byte">477</object_length>
+      <parsing_standard_id>PDS DSV 1</parsing_standard_id>
+      <description>Timestamps during Three Forks Depot construction at which the location for each sample tube was marked as MARS_SURFACE.</description>
+      <records>10</records>
+      <record_delimiter>Carriage-Return Line-Feed</record_delimiter>
+      <field_delimiter>Comma</field_delimiter>
+      <Record_Delimited>
+        <fields>3</fields>
+        <groups>0</groups>
+        <Field_Delimited>
+          <name>Sample Designation</name>
+          <field_number>1</field_number>
+          <data_type>ASCII_String</data_type>
+          <description>Unique identifier for the sample.</description>
+        </Field_Delimited>
+        <Field_Delimited>
+          <name>Sample Name</name>
+          <field_number>2</field_number>
+          <data_type>ASCII_String</data_type>
+          <description>Short name for the sample.</description>
+        </Field_Delimited>
+        <Field_Delimited>
+          <name>MARS_SURFACE Timestamp (LMST)</name>
+          <field_number>3</field_number>
+          <data_type>ASCII_String</data_type>
+          <description>Local mean solar time at which the sample tube location was marked as MARS_SURFACE.</description>
+        </Field_Delimited>
+      </Record_Delimited>
+    </Table_Delimited>
+  </File_Area_Observational>
+</Product_Observational>

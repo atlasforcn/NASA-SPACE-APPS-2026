@@ -1,0 +1,19 @@
+{
+  "schema": "mars-global-mola-v1",
+  "source": "https://pds-geosciences.wustl.edu/mgs/mgs-m-mola-5-megdr-l3-v1/mgsl_300x/meg016/megt90n000eb.img",
+  "label": "https://pds-geosciences.wustl.edu/mgs/mgs-m-mola-5-megdr-l3-v1/mgsl_300x/meg016/megt90n000eb.lbl",
+  "source_sha256": "d18d9b9ab8c5516d02e157dd2cde0f1d0d160c21940e953ba22391269a545e7b",
+  "binary_sha256": "9fdb0ddd3db378678326f2f34ea2a8f9220ecd0a0bda3d51aa0d27ac0506cd17",
+  "width": 5760,
+  "height": 2880,
+  "pixelsPerDegree": 16,
+  "sampleType": "int16-little-endian",
+  "pixelCentre": "lon=(column+0.5)/16; lat=90-(row+0.5)/16",
+  "longitude": "positive East 0..360; cyclic",
+  "latitude": "planetocentric",
+  "verticalReference": "topography = planetary radius minus GMM3 areoid radius; metres",
+  "nativeEquatorialCellMeters": 3705,
+  "minimum": -8177,
+  "maximum": 21171,
+  "limitations": "Median binned topography with interpolated cells supplied by source. Not 20m terrain, not obstacle-scale navigation. Polar longitudes converge."
+}
