@@ -116,7 +116,7 @@ def build_stations():
         start=root.findtext('.//p:start_date_time',namespaces=ns),stop=root.findtext('.//p:stop_date_time',namespaces=ns),
         source=source,label_source=label_source,
         coordinate_source='https://ntrs.nasa.gov/api/citations/20230016428/downloads/Bell%20et%20al%202022sciadv.pdf',
-        note='Sol 1 著陸後定點觀測，標示於歷史著陸座標。數值是此檔有效樣本的算術平均，非整日或整區平均。')
+        note='Sol 1 observations at the historical landing coordinates. The value is the mean of valid samples in this file.')
     base='https://pds-ppi.igpp.ucla.edu/data/MSL-M-RAD-3-RDR-V1.0/DATA/SOL_00000_00089/'
     name='RAD_RDR_2012_220_02_25_0001_V00'
     raw,source=pds_source(base+name+'.TXT',name+'.txt')
@@ -132,7 +132,7 @@ def build_stations():
         value=sum(values)/len(values),min=min(values),max=max(values),count=len(values),unit='µGy/h (Si)',
         start='2012-08-07T02:25:43Z',stop=None,source=source,label_source=label_source,
         coordinate_source='https://doi.org/10.1002/2014JE004622',
-        note='Sol 1 歷史觀測，標記於 Bradbury Landing（約略座標）。原 RDR 的 ROVER_LAT/LON 為 0 佔位，未採用。數值為標籤指向的有效 B 偵測器吸收劑量率之算術平均；不是 mSv 劑量當量，也不是整區輻射圖。')
+        note='Sol 1 observations near Bradbury Landing. The source uses zero as a latitude and longitude placeholder. The value is the mean valid absorbed dose rate in detector B, measured in silicon.')
     return {'atmospheric':pressure,'radiation':radiation}
 
 if __name__=='__main__':

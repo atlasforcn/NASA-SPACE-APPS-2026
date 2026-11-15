@@ -6,8 +6,8 @@ function markerPosition(marker) {
 
 function distanceLabel(meters) {
   return meters >= 1000
-    ? (meters / 1000).toLocaleString('zh-TW', {maximumFractionDigits: 2}) + ' 公里'
-    : Math.round(meters).toLocaleString('zh-TW') + ' 公尺';
+    ? (meters / 1000).toLocaleString('en-US', {maximumFractionDigits: 2}) + ' km'
+    : Math.round(meters).toLocaleString('en-US') + ' m';
 }
 
 async function assertReportedDistance(label, point, truth) {

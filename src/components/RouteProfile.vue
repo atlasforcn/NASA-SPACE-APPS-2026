@@ -28,21 +28,21 @@ function toggleProfile() {
 </script>
 
 <template>
-  <section v-if="hasRoute || hasDirect || hasExpedition" ref="panel" class="map-profile" :class="{ 'is-open': expanded }" aria-label="路線高程剖面">
+  <section v-if="hasRoute || hasDirect || hasExpedition" ref="panel" class="map-profile" :class="{ 'is-open': expanded }" aria-label="Route elevation profile">
     <div class="profile-header">
       <h2>
         <button id="profile-toggle" type="button" :aria-expanded="expanded" aria-controls="profile-body" @click="toggleProfile">
-          路線高程剖面 <span>{{ expanded ? '收合 ▴' : '展開 ▾' }}</span>
+          Route elevation profile <span>{{ expanded ? 'Collapse ▴' : 'Expand ▾' }}</span>
         </button>
       </h2>
-      <button v-if="m.challengeRoute.value" id="map-route-challenge" type="button" aria-haspopup="dialog" @click="$emit('open-route-challenge', $event)">沿途自我定位 ↗</button>
+      <button v-if="m.challengeRoute.value" id="map-route-challenge" type="button" aria-haspopup="dialog" @click="$emit('open-route-challenge', $event)">Where am I on the route? ↗</button>
     </div>
     <div id="profile-body" v-show="expanded">
-      <label v-if="hasExpedition" class="profile-leg">路段
+      <label v-if="hasExpedition" class="profile-leg">Leg
         <select id="expedition-leg" v-model="s.profileIndex">
-          <option v-if="hasRoute || hasDirect" :value="-1">{{ hasRoute ? '目前路線' : '起終點直線' }}</option>
+          <option v-if="hasRoute || hasDirect" :value="-1">{{ hasRoute ? 'Current route' : 'Straight line between endpoints' }}</option>
           <option v-for="(leg, i) in s.expedition" :key="i" :value="i">
-            {{ leg.name }}{{ leg.reachable ? '' : '（不可達）' }}
+            {{ leg.name }}{{ leg.reachable ? '' : ' (unreachable)' }}
           </option>
         </select>
       </label>
@@ -50,24 +50,24 @@ function toggleProfile() {
         <canvas
           id="route-profile"
           :ref="el => (m.profileCanvas.value = el)"
-          width="360" height="120" role="img" aria-label="數值 DEM 路線高程剖面"
+          width="360" height="120" role="img" aria-label="Route elevation profile from the DEM"
           @pointermove="m.hoverProfile" @pointerdown="m.hoverProfile"
           @pointerleave="m.leaveProfile" @pointercancel="m.leaveProfile"
         ></canvas>
         <p v-if="s.profileHover" class="profile-reading profile-tooltip" role="status">{{ s.profileHover }}</p>
       </div>
-      <ul v-if="s.profileLegend.length" class="profile-legend" aria-label="剖面曲線">
+      <ul v-if="s.profileLegend.length" class="profile-legend" aria-label="Elevation profiles">
         <li v-for="item in s.profileLegend" :key="item.name"><i :class="{ dashed: item.baseline }" :style="{borderColor: item.color}"></i>{{ item.name }} · {{ item.length }}</li>
       </ul>
       <p v-if="!s.profileLegend.length" class="profile-reading" role="status">{{ s.profileInfo }}</p>
       <div class="profile-options">
-        <label v-if="canCompare" class="checkbox"><input type="checkbox" v-model="s.compareProfiles" />比較不同路線</label>
+        <label v-if="canCompare" class="checkbox"><input type="checkbox" v-model="s.compareProfiles" />Compare routes</label>
         <details id="profile-source">
-          <summary>剖面資料</summary>
+          <summary>Profile data</summary>
           <p>{{ s.profileInfo }}</p>
-          <p v-if="s.profileLegend.some(item => item.baseline)">黃色虛線取樣起點到終點的單程直線，不含中途停靠或返程。{{ s.directRoute?.reachable ? '' : '這條直線未通過目前的通行檢查。' }}</p>
-          <p>{{ s.regional ? 'MOLA 公里級地形，格距隨覆蓋範圍調整。' : s.siteId === 'gale' ? 'Gale 原生格距 1 m，本站 DEM 取樣 20 m。' : 'CTX 原生約 20 m，本站 DEM 取樣 40 m。' }}</p>
-          <p>移動游標或輕觸曲線，可在地圖查看對應位置。多條曲線共用距離與高程尺度。</p>
+          <p v-if="s.profileLegend.some(item => item.baseline)">The dashed yellow line samples a one-way straight line from start to destination, excluding stops and return travel. {{ s.directRoute?.reachable ? '' : 'This straight line fails the current terrain check.' }}</p>
+          <p>{{ s.regional ? 'Kilometer-scale MOLA terrain. Grid spacing varies with coverage.' : s.siteId === 'gale' ? 'Gale native spacing: 1 m. Demo DEM sampled at 20 m.' : 'CTX native spacing: about 20 m. Demo DEM sampled at 40 m.' }}</p>
+          <p>Hover over or tap a profile to locate the corresponding point on the map. All profiles share the same distance and elevation scales.</p>
         </details>
       </div>
     </div>

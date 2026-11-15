@@ -40,16 +40,16 @@ const esc = (s) =>
       ],
   );
 export const typeLabels = {
-  AA: "撞擊坑",
-  MO: "山體",
-  VA: "河谷",
-  CM: "峽谷",
-  PL: "低地平原",
-  PM: "高原",
-  FO: "槽溝",
-  TE: "大陸地形",
-  CH: "混沌地形",
-  UN: "沙丘區",
+  AA: "Impact crater",
+  MO: "Mountain",
+  VA: "Valley",
+  CM: "Canyon",
+  PL: "Lowland plain",
+  PM: "Plateau",
+  FO: "Trough",
+  TE: "Continental terrain",
+  CH: "Chaos terrain",
+  UN: "Dune field",
 };
 
 // Each mounted application owns its state and resources. Leaflet and large grids stay non-reactive.
@@ -74,7 +74,7 @@ export function useMission() {
     destination: "",
     pickingTarget: false,
     pickingStart: false,
-    straightStatus: "先選端點，再評估直線。",
+    straightStatus: "Select endpoints, then assess the direct route.",
     directRoute: null,
     routeOptions: null,
     selectedRoute: 'energy',
@@ -89,7 +89,7 @@ export function useMission() {
     navigationLoading: false, navigationError: '', navigationStatus: '',
     noGoZones: [], pickingNoGo: false, noGoRadius: 250, noGoName: '',
     route: null,
-    routeStatus: "選擇科學點並規劃路線",
+    routeStatus: "Select a science site and plan a route",
     running: false,
     scenario: "good",
     viewYaw: 0,
@@ -99,8 +99,8 @@ export function useMission() {
     continuousLocalization: true,
     localizationCount: 0,
     progress: "",
-    status: "尚未設定起點",
-    message: "請先在「任務」選擇起點，再進行導航與地平線定位。",
+    status: "Start location required",
+    message: "Select a start in Mission to use navigation and skyline matching.",
     result: null,
     truthVisible: false,
     evaluation: "",
@@ -116,16 +116,16 @@ export function useMission() {
     legend: "",
     units: [],
     source: "",
-    warning: "正在讀取真實火星資料…",
-    coords: "火星局部座標 · East / North",
+    warning: "Loading Mars data…",
+    coords: "Local Mars coordinates · East / North",
     mapTitle: "Jezero",
-    mapContext: "CTX 光學影像 · DEM 導航有效區",
+    mapContext: "CTX optical imagery · DEM navigation coverage",
     lat: 18.44,
     lng: 77.42,
     coordinateEditing: false,
     guidanceView: null,
     regionLoading: false,
-    regionStatus: "全球數值高程於首次進入總覽或建立任務時載入。",
+    regionStatus: "Global elevation data load the first time you open the overview or create a mission.",
     elevation: "",
     query: "",
     type: "",
@@ -137,7 +137,7 @@ export function useMission() {
     poi: null,
     drawMode: null,
     points: [],
-    drawStatus: "請先設定起點，再繪製路線。",
+    drawStatus: "Choose a start before drawing a route.",
     stations: [],
     expedition: [],
     expeditionStatus: "",
@@ -205,23 +205,23 @@ export function useMission() {
     ? displayedCandidate.value : captureMapPosition.value || state.estimate);
   let viewBearingMarker;
   const abort = new AbortController();
-  const routeNames = { shortest: "最短路線", safer: "較低風險路線", energy: "最低耗電路線" };
+  const routeNames = { shortest: "Shortest route", safer: "Lower-risk route", energy: "Lowest estimated energy use" };
   const currentRouteName = computed(() => state.route && state.route === state.routeOptions?.[state.selectedRoute]
-    ? routeNames[state.selectedRoute] : "目前路線");
+    ? routeNames[state.selectedRoute] : "Current route");
   const challengeRoute = computed(() => {
     if (!dem.value || !state.ready || state.regionLoading || !state.hasStart) return null;
     if (state.walk) {
       const alternative = state.walk.alternatives.find(option => option.id === state.walk.selectedAlternative);
-      return { name: alternative ? `基地到 A · ${alternative.name}` : "基地到 A · 直線",
-        startLabel: "基地", endLabel: "A", path: alternative?.path || [missionStart, state.walk.station] };
+      return { name: alternative ? `Base to A · ${alternative.name}` : "Base to A · direct route",
+        startLabel: "Base", endLabel: "A", path: alternative?.path || [missionStart, state.walk.station] };
     }
     if (state.profileIndex !== -1) {
       const leg = state.expedition[state.profileIndex];
       if (!leg?.reachable || leg.path.length < 2) return null;
-      return { name: leg.name, path: leg.path, startLabel: "起點", endLabel: "終點" };
+      return { name: leg.name, path: leg.path, startLabel: "Start ", endLabel: "End" };
     }
     if (!state.route?.reachable || state.route.path.length < 2) return null;
-    return { name: currentRouteName.value, path: state.route.path, startLabel: "起點", endLabel: "終點" };
+    return { name: currentRouteName.value, path: state.route.path, startLabel: "Start ", endLabel: "End" };
   });
   function createRouteChallenge() {
     const grid = dem.value;
@@ -234,7 +234,7 @@ export function useMission() {
   let navigationThermal = null, geologyIndex = [], navigationLoadToken = 0;
   let scienceToken = 0;
   const position = computed(() => {
-    if (!dem.value || !state.hasStart) return "尚未設定起點";
+    if (!dem.value || !state.hasStart) return "Start location required";
     const p = C.localToLatLng(state.estimate.x, state.estimate.y);
     return `${p.lat.toFixed(5)}°N / ${p.lng.toFixed(5)}°E`;
   });
@@ -302,15 +302,15 @@ export function useMission() {
   }
   const unitLabel = (f) =>
     unitStyle(f)?.label ||
-    String(f?.properties[geology?.renderer.field1] ?? "未知");
+    String(f?.properties[geology?.renderer.field1] ?? "Unknown");
   function resetDrawing() {
     stopDrawing();
     state.points = [];
     remove(preview);
     preview = null;
     state.drawStatus = state.hasStart
-      ? "從導航估計位置開始繪製，完成後檢查每一段。"
-      : "請先設定起點，再繪製路線。";
+      ? "Draw from the estimated navigation position, then check each segment."
+      : "Choose a start before drawing a route.";
   }
   function stop() {
     state.running = false;
@@ -337,8 +337,8 @@ export function useMission() {
     worker = null;
     state.searching = false;
     if (active) {
-      state.status = "搜尋已取消";
-      state.progress = "搜尋已停止";
+      state.status = "Search canceled";
+      state.progress = "Search stopped";
     }
   }
   function clearRoute() {
@@ -352,7 +352,7 @@ export function useMission() {
     state.routeOptions = null;
     state.directRoute = null;
     remove(idealLayer);
-    state.straightStatus = "請重新評估直線。";
+    state.straightStatus = "Reassess the direct route.";
     state.route = null;
     if (state.profileIndex === -1) state.profileIndex = state.expedition.findIndex(leg => leg.path.length > 1);
     remove(routeLayer);
@@ -410,19 +410,19 @@ export function useMission() {
     state.viewYaw = 0;
     candidateLayer?.clearLayers();
     trail?.setLatLngs([]);
-    state.status = "尚未定位";
+    state.status = "Position undetermined";
     state.progress = "";
     state.evaluation = "";
     state.message =
       kind === "good"
-        ? "完整 360° 模擬觀測；導航起始含里程偏差。"
-        : "60° 視角並遮擋 55%；觀測不足時保留導航估計。";
-    state.routeStatus = "選擇科學點並規劃路線";
+        ? "Full simulated 360° observation with initial odometry drift."
+        : "60° field of view with 55% obscured. The navigator retains its estimate if the observation is insufficient.";
+    state.routeStatus = "Select a science site and plan a route";
     if (!state.hasStart) {
-      state.status = "尚未設定起點";
-      state.message = "請先在「任務」選擇起點，再進行導航與地平線定位。";
-      state.routeStatus = "請先在地圖選擇起點，再選終點並規劃路線。";
-      state.drawStatus = "請先設定起點，再繪製路線。";
+      state.status = "Start location required";
+      state.message = "Select a start in Mission to use navigation and skyline matching.";
+      state.routeStatus = "Choose a start on the map, select an endpoint and plan a route.";
+      state.drawStatus = "Choose a start before drawing a route.";
     }
     drawCurve();
     render();
@@ -430,12 +430,12 @@ export function useMission() {
   function slopeValid() {
     const v = Number(state.slope);
     if (!Number.isFinite(v) || v < 1 || v > 45) {
-      state.routeStatus = "坡度上限須介於 1–45°";
+      state.routeStatus = "The slope limit must be between 1° and 45°";
       return false;
     }
     const roughness = Number(state.roughnessLimit);
     if (!Number.isFinite(roughness) || roughness < 0 || roughness > 1) {
-      state.routeStatus = '粗糙度上限須介於 0–1';
+      state.routeStatus = 'The roughness limit must be between 0 and 1';
       return false;
     }
     C.setSlopeLimit(v);
@@ -479,8 +479,8 @@ export function useMission() {
       C.setNavigationContext(createNavigationContext({options:state.navigation,zones:state.noGoZones,geologyIndex,thermal:navigationThermal,toGeo:(x,y)=>C.localToLatLng(x,y)}));
       state.navigationError='';
       state.navigationStatus = state.navigation.thermalEnabled
-        ? (navigationThermal ? '熱慣量已接入導航（原始格網約 7.4 km／格）；與地質取較高倍率，不重複相乘。' : '熱慣量導航資料尚未就緒。')
-        : '地質使用 Jezero 已接入圖幅；圖幅外採未知材質倍率。熱慣量修正未啟用。';
+        ? (navigationThermal ? 'Navigation uses thermal inertia from a grid of about 7.4 km per cell. The higher of the thermal and geologic multipliers applies.' : 'Thermal inertia data for navigation are still loading.')
+        : 'Geology uses mapped Jezero units and the unknown-material multiplier elsewhere. Thermal inertia adjustment is off.';
       syncNavigationRisk(true);
       redrawNoGoZones();
     } catch(error) { state.navigationError=error.message; }
@@ -498,18 +498,18 @@ export function useMission() {
       navigationThermal=loaded;
       rebuildNavigation();
     } catch(error) {
-      if(!disposed && token===navigationLoadToken) state.navigationError=`熱慣量導航資料載入失敗：${error.message}；請重試或關閉熱慣量修正。`;
+      if(!disposed && token===navigationLoadToken) state.navigationError=`Thermal inertia data failed to load: ${error.message}. Retry or disable the thermal inertia adjustment.`;
     } finally { if(!disposed && token===navigationLoadToken)state.navigationLoading=false; }
   }
   function beginNoGo() {
     if (state.pickingNoGo) { state.pickingNoGo=false; return; }
     if(!Number.isFinite(Number(state.noGoRadius)) || Number(state.noGoRadius)<10 || Number(state.noGoRadius)>100000) {
-      state.routeStatus='禁行區半徑須介於 10–100,000 m'; return;
+      state.routeStatus='Exclusion zone radius must be 10–100,000 m'; return;
     }
     stop(); cancel(); stopDrawing();
     state.pickingStart=false; state.pickingTarget=false;
     state.pickingNoGo=true;
-    state.routeStatus='點選禁行區中心，紅色虛線圈內禁止通行。';
+    state.routeStatus='Select the zone center. The area inside the dashed red circle is off limits.';
   }
   function removeNoGo(id) { state.noGoZones=state.noGoZones.filter(z=>z.id!==id); }
   async function startWalk() {
@@ -533,7 +533,7 @@ export function useMission() {
     state.pickingTarget = false;
     state.stopIds = [];
     state.planner.roundTrip = false;
-    state.status = '任務基地';
+    state.status = 'Mission base';
     state.showNavigationRisk = true;
     state.roughnessLimit = 1;
     state.layer = 'slope';
@@ -545,7 +545,7 @@ export function useMission() {
     filterNames();
     await nextTick();
     if (!state.walk) return;
-    state.routeStatus = '請檢查基地到 A 的路線。';
+    state.routeStatus = 'Check the route from the base to A.';
     drawScienceRoute();
     fitScienceRoutes();
     render();
@@ -578,14 +578,14 @@ export function useMission() {
     const evidence = focusDetour ? detour : assessment;
     if (!evidence?.point) return;
     if (evidence.segment) line(evidence.segment, {color:colors[evidence.verdict], weight:8});
-    const title = focusDetour ? '替代路線判定位置' : '基地到 A 的判定位置';
+    const title = focusDetour ? 'Assessed location on the alternative route' : 'Assessed segment on the route from the base to A';
     const point = evidence.point;
-    const endpoint = C.distance(point, station) < 0.01 ? '觀測點 A' : C.distance(point, missionStart) < 0.01 ? '任務基地' : '沿途取樣點';
+    const endpoint = C.distance(point, station) < 0.01 ? 'Observation Site A' : C.distance(point, missionStart) < 0.01 ? 'Mission base' : 'Sample point along the route';
     const product = C.terrainProduct(point.x, point.y);
     const slope = product ? C.slopeDeg(point.x, point.y) : NaN;
-    const measurement = Number.isFinite(slope) ? ` · 坡度 ${slope.toFixed(2)}°（上限 ${Number(state.slope)}°）` : ' · 坡度缺測';
-    const source = product ? product.coarse ? '公里級 MOLA' : 'Jezero 區域 DEM' : '缺少高程資料';
-    const location = focusDetour ? endpoint : `${endpoint} · 距基地 ${fmt(C.distance(missionStart,point))}`;
+    const measurement = Number.isFinite(slope) ? ` · Slope ${slope.toFixed(2)}° (limit ${Number(state.slope)}°)` : ' · Slope unavailable';
+    const source = product ? product.coarse ? 'Kilometer-scale MOLA' : 'Jezero regional DEM' : 'Missing elevation data';
+    const location = focusDetour ? endpoint : `${endpoint} · Distance from base ${fmt(C.distance(missionStart,point))}`;
     const popup = `<strong>${title}</strong><p>${location}${measurement}<br>${source}</p><p>${esc(evidence.reason)}</p>`;
     scienceEvidenceMarker = L.circleMarker(ll(evidence.point), {
       pane:'markerPane', className:'preflight-evidence', radius:8, color:'#17242a', weight:3,
@@ -611,8 +611,8 @@ export function useMission() {
     if (walk?.assessment?.verdict !== 'reroute' || state.navigationLoading || state.navigationError || !slopeValid()) return;
     const routes = [];
     for (const [id, name, color] of [
-      ['shortest', '較短繞行', '#83e5d2'],
-      ['safer', '較低風險繞行', '#b9b1ef'],
+      ['shortest', 'Shorter detour', '#83e5d2'],
+      ['safer', 'Lower-risk detour', '#b9b1ef'],
     ]) {
       const route = C.planPath(missionStart, walk.station, undefined, {mode:id});
       if (!route.reachable) continue;
@@ -653,7 +653,7 @@ export function useMission() {
   }
   function plan() {
     if (state.walk) return;
-    if (state.navigationLoading || state.navigationError) { state.routeStatus=state.navigationError || '正在載入導航資料，請稍候。'; return; }
+    if (state.navigationLoading || state.navigationError) { state.routeStatus=state.navigationError || 'Navigation data are loading.'; return; }
     if (!state.hasStart) return;
     if (state.regionLoading) return;
     stop();
@@ -695,13 +695,13 @@ export function useMission() {
       color: direct.invalidSegments.includes(i + 1) ? "#ff736e" : "#f2ed48",
       pane: "navigationRoute", weight: 3, dashArray: "7 6", interactive: false,
     }).addTo(idealLayer));
-    state.straightStatus = `理想直線 ${fmt(direct.length)} · 最大坡度 ${direct.maxSlope.toFixed(1)}° · ` +
-      (direct.reachable ? "通過 DEM 檢查" : `${unknown ? "缺測或越界。" : ""}${direct.maxSlope > Number(state.slope) ? "超過坡度上限。" : ""}`);
+    state.straightStatus = `Direct line ${fmt(direct.length)} · Maximum slope ${direct.maxSlope.toFixed(1)}° · ` +
+      (direct.reachable ? "Passed the DEM assessment" : `${unknown ? "Missing data or outside coverage." : ""}${direct.maxSlope > Number(state.slope) ? "Exceeds slope limit." : ""}`);
     state.continuousLocalization = true;
     render();
     state.routeStatus = result.reachable
-      ? `已建立${{safer:'較低風險',shortest:'最短',energy:'最低耗電'}[state.selectedRoute]}路線 · ${result.legs.length} 段${result.molaDistance ? ` · MOLA 粗略區段 ${fmt(result.molaDistance)}` : ''} · 可切換比較後行進`
-      : `無法抵達「${result.failedStop || goal.name}」，請調整停靠點或避險門檻。`;
+      ? `Built ${{safer:'Lower risk',shortest:'Shortest',energy:'Lowest energy'}[state.selectedRoute]} route · ${result.legs.length} segments${result.molaDistance ? ` · Coarse MOLA segment ${fmt(result.molaDistance)}` : ''} · Select a route to compare or drive`
+      : `Cannot reach “${result.failedStop || goal.name}”. Adjust the stops or terrain limits.`;
   }
   function selectRoute(key) {
     if (!state.routeOptions || !['shortest','safer','energy'].includes(key)) return;
@@ -713,7 +713,7 @@ export function useMission() {
     state.travelled = 0;
     trail.setLatLngs([ll(missionStart)]);
     installRoute(route, { preserveComparison: true });
-    state.routeStatus = route.reachable ? '已切換路線並返回規劃起點。' : '此方案無可達路線。';
+    state.routeStatus = route.reachable ? 'Route switched. The rover is back at the planning start.' : 'No route is available for this option.';
     nextTick(drawProfile);
     render();
   }
@@ -749,7 +749,7 @@ export function useMission() {
         next = { x: state.truth.x + dx, y: state.truth.y + dy };
       if (!C.segmentSafe(state.truth, next)) {
         stop();
-        state.routeStatus = "模擬器地面碰撞檢查停止行進；請重新定位。";
+        state.routeStatus = "The simulator stopped the traverse after a ground collision. Check the position again.";
         return;
       }
       state.truth = { ...next, heading: yaw };
@@ -768,9 +768,9 @@ export function useMission() {
     }
     if (waypoint >= path.length - 1) {
       stop();
-      state.routeStatus = "導航估計已抵達路線終點；可掃描地平線檢查漂移。";
+      state.routeStatus = "The estimated navigation position reached the endpoint. Scan the skyline to check for drift.";
     } else {
-      if (!state.searching) state.status = "里程推估／等待地平線更新";
+      if (!state.searching) state.status = "Dead reckoning / awaiting skyline update";
       if (state.continuousLocalization && !state.searching &&
           state.travelled - lastScanDistance >= (state.regional ? 4000 : 250))
         scan(true);
@@ -802,7 +802,7 @@ export function useMission() {
       heading: C.modDeg(state.truth.heading + 24),
     };
     clearRoute();
-    state.status = "里程偏差已注入";
+    state.status = "Odometry drift added";
     render();
   }
   function scan(continuous = false, suppliedObservation = null) {
@@ -853,20 +853,20 @@ export function useMission() {
       type: "module",
     });
     state.searching = true;
-    state.status = continuous ? "行進中／地平線搜尋中" : "搜尋中";
+    state.status = continuous ? "Driving / searching the skyline" : "Searching";
     state.message =
-      suppliedObservation ? "使用手繪／照片角度輪廓搜尋 DEM 候選；不自動套用校正。" : "輸入只有地平線曲線與估計位置周邊搜尋區；模擬真值不傳入定位器。";
+      suppliedObservation ? "The tracker matches the drawn or photographed skyline to DEM candidates. Review candidates before correcting the position." : "The tracker receives the skyline and a search area around the estimated position. Simulation ground truth is withheld from the tracker.";
     const fail = (message) => {
       if (id !== job) return;
       cancel();
-      state.status = "未能定位";
-      state.message = "搜尋失敗：" + message;
+      state.status = "Position unresolved";
+      state.message = "Search failed: " + message;
     };
     worker.onerror = (e) => fail(e.message);
     worker.onmessage = ({ data }) => {
       if (data.id !== job) return;
       if (data.type === "progress") {
-        state.progress = `搜尋 ${Math.round(data.value * 100)}%`;
+        state.progress = `Search ${Math.round(data.value * 100)}%`;
         return;
       }
       if (data.type === "error") return fail(data.message);
@@ -875,10 +875,10 @@ export function useMission() {
       worker = null;
       state.searching = false;
       state.result = result;
-      state.status = { good: "定位良好", uncertain: "不確定", lost: "未能定位" }[
+      state.status = { good: "Good position fix", uncertain: "Uncertain", lost: "Position unresolved" }[
         result.status
       ];
-      state.progress = `完成 · ${((performance.now() - start) / 1000).toFixed(1)} 秒`;
+      state.progress = `Complete · ${((performance.now() - start) / 1000).toFixed(1)} s`;
       const before = C.distance(state.truth, state.estimate);
       result.candidates.forEach((v, i) => {
         L.circleMarker(ll(v), {
@@ -887,7 +887,7 @@ export function useMission() {
           fillOpacity: 0.15,
         })
           .addTo(candidateLayer)
-          .bindTooltip("候選 " + (i + 1));
+          .bindTooltip("Candidate " + (i + 1));
         const ray = state.regional ? 4000 : 140;
         L.polyline(
           [
@@ -903,9 +903,9 @@ export function useMission() {
       const best = result.candidates[0];
       drawCurve(best);
       if (suppliedObservation) {
-        state.status = "外部輪廓候選";
-        state.message = `${result.reason}；手繪／照片比對僅提供候選，請核對橘色輸入與青色 DEM 輪廓及相機設定。未套用位置校正。`;
-        state.evaluation = "外部觀測沒有模擬真值可評估。";
+        state.status = "External skyline candidate";
+        state.message = `${result.reason}. Compare the orange input with the cyan DEM skyline and check the camera settings. No correction applied.`;
+        state.evaluation = "External observations have no simulation ground truth for evaluation.";
       } else if (result.status === "good" && best) {
         captureMapPosition.value = best;
         // Search describes the capture instant; carry intervening odometry forward.
@@ -928,18 +928,18 @@ export function useMission() {
             installRoute(remaining, { preserveComparison: true });
             if (!remaining.reachable) {
               stop();
-              state.routeStatus = "定位後無可通行路線，已停止行進。";
+              state.routeStatus = "No passable route remains after the position fix. Traverse stopped.";
             }
           }
         }
         trail.addLatLng(ll(state.estimate));
         state.message = result.reason + (continuous
-          ? "；已補回搜尋期間位移，已更新剩餘路線。"
-          : "；已套用校正，請重新規劃後繼續。");
-        state.evaluation = `校正前 ${fmt(before)} → 校正後 ${fmt(C.distance(state.truth, state.estimate))}；同 DEM 模擬評估`;
+          ? ". Motion during the search is included and the remaining route has been updated."
+          : ". Correction applied. Replan the route to continue.");
+        state.evaluation = `Before correction ${fmt(before)} → after correction ${fmt(C.distance(state.truth, state.estimate))}. Evaluated in the same DEM.`;
       } else {
-        state.message = result.reason + "；保留原估計，請增加視角後再掃描。";
-        state.evaluation = "已保留原估計位置。";
+        state.message = result.reason + ". Original estimate retained. Widen the field of view and rescan.";
+        state.evaluation = "Original position estimate retained.";
       }
       render();
     };
@@ -977,7 +977,7 @@ export function useMission() {
     ctx.fillStyle = "#c9d5d5";
     ctx.font = "12px system-ui";
     ctx.fillText(
-      `觀測（橘）／候選（青） · 同上方 120° · 仰角 ${lo.toFixed(1)}–${hi.toFixed(1)}°`,
+      `Observation (orange) / candidate (cyan) · same 120° view as above · elevation angle ${lo.toFixed(1)}–${hi.toFixed(1)}°`,
       12,
       18,
     );
@@ -1113,7 +1113,7 @@ export function useMission() {
       const outside = Math.abs(delta) > 60;
       const x = C.clamp((delta / 120 + 0.5) * W, 12, W - 12);
       const y = C.clamp(screenY(angle), 65, H - 32);
-      const text = `${outside ? (delta < 0 ? '◀ ' : '▶ ') : ''}${marker.name} · ${fmt(distance)}${outside ? ' · 地圖投影／視野外' : hidden ? ' · 地圖投影／不可見' : ''}`;
+      const text = `${outside ? (delta < 0 ? '◀ ' : '▶ ') : ''}${marker.name} · ${fmt(distance)}${outside ? ' · Map projection / outside field of view' : hidden ? ' · Map projection / hidden' : ''}`;
       ctx.font = `${selected ? 'bold ' : ''}12px system-ui`;
       const width = Math.min(W - 16, ctx.measureText(text).width + 16);
       const left = C.clamp(x - width / 2, 8, W - width - 8);
@@ -1141,7 +1141,7 @@ export function useMission() {
     }
     ctx.fillStyle = "#fff0d6";
     ctx.font = "13px system-ui";
-    ctx.fillText(state.externalHorizon ? `使用者輪廓 · 相對視角 ${state.viewYaw.toFixed(0)}° · 深色區無觀測` : `${observation ? '掃描快照' : '掃描前預覽'} · 朝向 ${heading.toFixed(0)}° · 深色區無觀測`, 12, 22);
+    ctx.fillText(state.externalHorizon ? `Input skyline · relative bearing ${state.viewYaw.toFixed(0)}° · dark areas have no observations` : `${observation ? 'Scan snapshot' : 'Preview before scan'} · Heading ${heading.toFixed(0)}° · dark areas have no observations`, 12, 22);
   }
   function syncViewBearing() {
     const bearing = viewBearing.value;
@@ -1183,7 +1183,7 @@ export function useMission() {
     render();
   }
   function hoverHorizon(event) {
-    if (state.externalHorizon) { state.horizonHover = "外部輪廓尚未確定拍攝位置，請查看地圖候選與青色 DEM 疊圖。"; return; }
+    if (state.externalHorizon) { state.horizonHover = "The camera position is unknown. Compare the map candidates with the cyan DEM overlay."; return; }
     if (!panoramaFrame?.captured || !map || !horizonHoverLayer) return;
     const cv = panorama.value, rect = cv.getBoundingClientRect();
     const fraction = C.clamp((event.clientX - rect.left) / rect.width, 0, 1);
@@ -1193,13 +1193,13 @@ export function useMission() {
     const { pose, obs, view, screenY } = panoramaFrame, sample = view[column];
     hoveredHorizonIndex = column;
     if (!sample.valid) {
-      state.horizonHover = "此方向無有效觀測，無法標示輪廓點。";
+      state.horizonHover = "No valid observation in this direction. Choose another skyline point.";
       return;
     }
     const bearing = C.modDeg(pose.heading + obs.angles[sample.index]);
     const point = S.horizonPoint(pose, bearing, obs.options);
     if (!point) return;
-    const label = `輪廓點 · 方位 ${bearing.toFixed(0)}° · 距掃描位置 ${fmt(point.distance)} · 高程 ${point.z.toFixed(0)} m`;
+    const label = `Skyline point · bearing ${bearing.toFixed(0)}° · distance from scan position ${fmt(point.distance)} · Elevation ${point.z.toFixed(0)} m`;
     L.polyline([ll(pose), ll(point)], {
       color: '#ffb477', weight: 2, dashArray: '5 5', interactive: false,
     }).addTo(horizonHoverLayer);
@@ -1262,12 +1262,12 @@ export function useMission() {
   function stationPopup(meta) {
     const hints = environment.checks.value.flatMap(check => check.overLimit
       .filter(station => station.lat === meta.lat && station.lng === meta.lng)
-      .map(station => `<p class="station-exceedance"><b aria-hidden="true">!</b> ${esc(check.label)}超標 · ${esc(station.station)}（${esc(station.period)}）<br>${esc(station.reading)} ${esc(station.value)} ${esc(check.unit)}，上限 ${esc(check.limit)} ${esc(check.unit)}</p>`));
-    return `<strong>${esc(meta.name)}</strong><p>測站平均 ${esc(meta.value.toFixed(2))} ${esc(meta.unit)}</p>${hints.join('')}<p>${esc(meta.note)}</p>`;
+      .map(station => `<p class="station-exceedance"><b aria-hidden="true">!</b> ${esc(check.label)} above limit · ${esc(station.station)} (${esc(station.period)})<br>${esc(station.reading)} ${esc(station.value)} ${esc(check.unit)}, limit ${esc(check.limit)} ${esc(check.unit)}</p>`));
+    return `<strong>${esc(meta.name)}</strong><p>Station mean ${esc(meta.value.toFixed(2))} ${esc(meta.unit)}</p>${hints.join('')}<p>${esc(meta.note)}</p>`;
   }
   async function setScienceLayer(kind, token) {
     const scienceOverlay = L.layerGroup().addTo(analysis);
-    const record = reactive({ overlay: markRaw(scienceOverlay), meta: null, values: null, loading: true, status: '正在載入離線科學資料…', range: null });
+    const record = reactive({ overlay: markRaw(scienceOverlay), meta: null, values: null, loading: true, status: 'Loading offline science data…', range: null });
     state.scienceLayers[kind] = record;
     const layerPane = analysisPane(kind);
     try {
@@ -1287,12 +1287,12 @@ export function useMission() {
             pane: layerPane, opacity: style.opacity / 100, className: 'science-raster', interactive: false,
           });
           overlay.on('error', () => {
-            if (token === scienceToken) record.status = '科學疊圖影像載入失敗，請重試。';
+            if (token === scienceToken) record.status = 'Science overlay image failed to load. Try again.';
           });
           overlay.addTo(scienceOverlay);
         }
-        if (state.layer === kind) state.legend = `${meta.title} · ${min} 至 ${max} ${meta.unit} · 缺值透明；色階外數值截色`;
-        record.status = `已疊加下載格網 · ${360/meta.width}°／格；放大不增加原始解析度。`;
+        if (state.layer === kind) state.legend = `${meta.title} · ${min} to ${max} ${meta.unit} · Missing values are transparent. Values outside the scale use the endpoint colors.`;
+        record.status = `Downloaded grid displayed · ${360/meta.width}°/cell. Zooming preserves native resolution.`;
       } else {
         for (const offset of [-360,0,360]) {
           L.circleMarker([meta.lat, meta.lng+offset], { pane: layerPane, radius: 9, color: '#ffe09a', weight: 2, opacity: style.opacity / 100, fillColor: kind === 'radiation' ? '#d24132' : '#2ab4b4', fillOpacity: style.opacity / 100 })
@@ -1300,14 +1300,14 @@ export function useMission() {
             .bindPopup(() => stationPopup(meta))
             .addTo(scienceOverlay);
         }
-        if (state.layer === kind) state.legend = `${meta.name} · ${meta.value.toFixed(2)} ${meta.unit} · 歷史測站，非整區格網`;
-        record.status = '已疊加實際觀測測站；可查看測站位置與原表。';
+        if (state.layer === kind) state.legend = `${meta.name} · ${meta.value.toFixed(2)} ${meta.unit} · Historical station observation`;
+        record.status = 'Observation station displayed. Inspect its location and original records.';
       }
       estimateMarker?.bringToFront();
     } catch (error) {
       if (token !== scienceToken || disposed) return;
-      record.status = `科學圖層載入失敗：${error.message}`;
-      if (state.layer === kind) state.legend = '此圖層未載入；可重試。';
+      record.status = `Science layer failed to load: ${error.message}`;
+      if (state.layer === kind) state.legend = 'Layer unavailable. Retry loading.';
     } finally {
       if (token === scienceToken && !disposed) record.loading = false;
     }
@@ -1327,19 +1327,19 @@ export function useMission() {
     const pane = analysisPane(kind);
     const opacity = (state.layerStyles[kind]?.opacity ?? 65) / 100;
     if (scienceLayerIds.includes(kind)) {
-      state.legend = '正在載入科學疊圖…';
+      state.legend = 'Loading science overlay…';
       setScienceLayer(kind, token);
       return;
     }
     if (state.globalView && ['none', 'terrain'].includes(kind)) {
       state.legend = kind === 'terrain' || !state.optical
-        ? 'MOLA 全球高程與地形陰影 · −8,200 至 21,800 m；游標讀取 16 ppd 數值高程'
-        : 'USGS Viking 歷史影像拼圖，每像素約 10.4 公里。';
+        ? 'MOLA global elevation and shaded relief · −8,200 to 21,800 m. Cursor reads the 16 ppd elevation grid.'
+        : 'USGS Viking historical image mosaic, about 10.4 km/pixel.';
       return;
     }
     if (kind === "geology") {
       if (state.regional || !state.geologyAvailable) {
-        state.legend = "此區尚無已接入的地質單元圖；不套用 Jezero 地質分類。";
+        state.legend = "No geologic unit map is available for this region. Jezero classifications apply only in Jezero.";
         return;
       }
       const seen = new Set();
@@ -1380,11 +1380,11 @@ export function useMission() {
               fillOpacity: opacity,
             })
               .bindTooltip(
-                `${v.toFixed(1)} ${kind === "slope" ? "°" : "m"} · MOLA 衍生`,
+                `${v.toFixed(1)} ${kind === "slope" ? "°" : "m"} · Derived from MOLA`,
               )
               .addTo(regionalLayer);
           }
-        state.legend = "MOLA 區域取樣點；無法解析近距離障礙物。";
+        state.legend = "Regional MOLA sample. Local obstacles fall below this resolution.";
       } else {
         L.imageOverlay(terrainImage(kind), bounds, {
           opacity,
@@ -1392,14 +1392,14 @@ export function useMission() {
         }).addTo(analysis);
         state.legend =
           kind === "slope"
-            ? "0–30° 坡度 · DEM 衍生；缺值透明"
-            : kind === "hillshade" ? "模擬光源來自西北方，高度角 45°。" : kind === "roughness" ? "DEM 衍生粗糙度指標 0–1；非車輪尺度實測" : "依目前 DEM 最小／最大高程縮放色階";
+            ? "0–30° slope · derived from DEM. Missing data are transparent."
+            : kind === "hillshade" ? "Simulated sunlight from the northwest at 45° elevation." : kind === "roughness" ? "DEM-derived roughness index, 0–1. Wheel-scale roughness requires local measurements." : "Color scale spans the minimum and maximum elevations in the current DEM";
       }
     } else
       state.legend = state.regional
-        ? (state.optical ? "USGS Viking 歷史影像拼圖，每像素約 10.4 公里。" : "MOLA 全球地形陰影 · 16 ppd，赤道約 3.7 km/格")
-        : !state.optical ? "光學影像關閉 · 背景為 MOLA 全球地形陰影"
-        : state.siteId === "gale" ? "USGS HiRISE 正射影像 · 展示約 6.67 m/pixel；約 51.5% 彩色，其餘灰階補足，非地質分區" : "CTX 光學影像 · 原生約 5 m；擴區完整影像展示約 20 m/pixel";
+        ? (state.optical ? "USGS Viking historical image mosaic, about 10.4 km/pixel." : "MOLA global shaded relief · 16 ppd, about 3.7 km/cell at the equator")
+        : !state.optical ? "Optical imagery off · global MOLA shaded relief"
+        : state.siteId === "gale" ? "USGS HiRISE orthoimage · about 6.67 m/pixel. About 51.5% uses color imagery, with grayscale elsewhere." : "CTX optical imagery · about 5 m native resolution. Full image displayed at about 20 m/pixel.";
     estimateMarker.bringToFront();
   }
   function stopDrawing() {
@@ -1427,7 +1427,7 @@ export function useMission() {
         interactive: false,
       }).addTo(preview),
     );
-    state.drawStatus = `已繪製 ${state.points.length} 個點；起點為導航估計位置。`;
+    state.drawStatus = `Drew ${state.points.length} points from the estimated navigation position.`;
   }
   function beginDrawing(mode) {
     state.pickingNoGo=false;
@@ -1445,7 +1445,7 @@ export function useMission() {
     state.points = [{ x: state.estimate.x, y: state.estimate.y }];
     if (mode === "freehand") map.dragging.disable();
     map.doubleClickZoom.disable();
-    state.routeStatus = "自訂路線編輯中，尚未檢查通行狀態。";
+    state.routeStatus = "Editing custom route. Passability assessment pending.";
     drawPreview();
   }
   function append(p) {
@@ -1490,9 +1490,9 @@ export function useMission() {
     installRoute(route);
     if (revealProfile !== false) state.profileRevision++;
     state.routeStatus = route.reachable
-      ? `自訂路線可通行 · 最大坡度 ${route.maxSlope.toFixed(1)}°`
-      : `自訂路線含 ${route.invalidSegments.length} 段超坡、缺測或越界區段（紅色），禁止行進。`;
-    state.drawStatus = `${route.path.length} 個點 · ${fmt(route.length)} · ${route.reachable ? "通過" : "未通過"} DEM 檢查`;
+      ? `Custom route passable · maximum slope ${route.maxSlope.toFixed(1)}°`
+      : `Custom route contains ${route.invalidSegments.length} segments above the slope limit, missing data or outside coverage (red). Traverse disabled.`;
+    state.drawStatus = `${route.path.length} points · ${fmt(route.length)} · ${route.reachable ? "Passed" : "Failed"} DEM assessment`;
   }
   function undo() {
     if (state.points.length < 2) return;
@@ -1509,7 +1509,7 @@ export function useMission() {
   function selectPoi(p) {
     if (state.walk) {
       L.popup().setLatLng(ll(p)).setContent('<strong>'+esc(p.name)+'</strong><p>'+
-        (p.id === 'base' ? '模擬任務的出發點。' : '模擬任務的觀測點。')+'</p>').openOn(map);
+        (p.id === 'base' ? 'Starting point for the simulated mission.' : 'Observation site for the simulated mission.')+'</p>').openOn(map);
       return;
     }
     state.poi = p;
@@ -1519,7 +1519,7 @@ export function useMission() {
     L.popup()
       .setLatLng(ll(p))
       .setContent(
-        `<strong>${esc(p.name)}</strong><p>${esc(p.kind)}</p><p>${esc(p.status || p.science || "")}</p><p>${r.unknown ? "缺測／未知" : r.blocked ? "超過導航避險門檻" : "DEM 可通行"} · 高程 ${C.elevation(p.x, p.y).toFixed(1)} m</p><p>${esc(unitLabel(unitAt(p)))}</p>`,
+        `<strong>${esc(p.name)}</strong><p>${esc(p.kind)}</p><p>${esc(p.status || p.science || "")}</p><p>${r.unknown ? "Missing / unknown" : r.blocked ? "Exceeds navigation limits" : "Passable in the DEM"} · Elevation ${C.elevation(p.x, p.y).toFixed(1)} m</p><p>${esc(unitLabel(unitAt(p)))}</p>`,
       )
       .openOn(map);
   }
@@ -1532,8 +1532,8 @@ export function useMission() {
     resetDrawing();
     state.pickingTarget = !state.pickingTarget;
     state.routeStatus = state.pickingTarget
-      ? "請在地圖選取位置；局部 DEM 有效處優先，近區域越界處合併使用 MOLA。"
-      : "已取消新增目的地。";
+      ? "Select a map location. The local DEM takes priority, with MOLA filling nearby gaps beyond its boundary."
+      : "Destination entry canceled.";
   }
   async function coverTarget(geo) {
     if (inDem(geo)) {
@@ -1543,13 +1543,13 @@ export function useMission() {
     if (!state.regional) {
       const p=C.latLngToLocal(geo.lat,geo.lng);
       if(!Number.isFinite(p.x)||!Number.isFinite(p.y)||Math.hypot(p.x,p.y)>200000){
-        state.regionStatus="此位置距離局部 DEM 超過 200 km；請建立獨立的 MOLA 區域任務。";
+        state.regionStatus="This location is more than 200 km from the local DEM. Create a separate regional MOLA mission.";
         state.routeStatus=state.regionStatus;
         return false;
       }
       if(state.regionLoading)return false;
       state.regionLoading=true;
-      state.regionStatus="載入 MOLA 數值高程，與目前局部 DEM 合併導航…";
+      state.regionStatus="Loading MOLA elevations to extend navigation beyond the local DEM…";
       try{
         const planet=await loadPlanet();
         const localCenter=C.localToLatLng(0,0);
@@ -1558,11 +1558,11 @@ export function useMission() {
         const extent={minX:Math.min(C.LIMIT.minX,p.x-8000),maxX:Math.max(C.LIMIT.maxX,p.x+8000),minY:Math.min(C.LIMIT.minY,p.y-8000),maxY:Math.max(C.LIMIT.maxY,p.y+8000)};
         C.setMolaFallback((x,y)=>{const q=C.localToLatLng(x,y);return planet.sample(q.lat,q.lng)+offset;},extent,4000);
         bounds=[ll({x:extent.minX,y:extent.minY}),ll({x:extent.maxX,y:extent.maxY})];
-        state.regionStatus="局部 DEM 與 MOLA 已合併：局部 DEM 優先，缺測或越界處採用公里級 MOLA；MOLA 區段無法評估小型障礙。";
+        state.regionStatus="Combined coverage ready. Local DEM data take priority. Kilometer-scale MOLA fills gaps and extends coverage beyond the local DEM. Small obstacles remain unresolved in MOLA segments.";
         state.routeStatus=state.regionStatus;
         scope();
         return !C.risk(p.x,p.y).unknown;
-      }catch(e){state.regionStatus="MOLA 載入失敗："+e.message;state.routeStatus=state.regionStatus;return false;}
+      }catch(e){state.regionStatus="MOLA failed to load: "+e.message;state.routeStatus=state.regionStatus;return false;}
       finally{state.regionLoading=false;}
     }
     if (state.regionLoading) return false;
@@ -1580,7 +1580,7 @@ export function useMission() {
     const origin = P.coverageOrigin(points);
     stop(); cancel();
     state.regionLoading = true;
-    state.regionStatus = "正在擴大 MOLA 覆蓋範圍，保留起點與目的地…";
+    state.regionStatus = "Expanding MOLA coverage and keeping the start and destinations…";
     try {
       const planet = await loadPlanet();
       if (disposed || token !== regionToken) return false;
@@ -1596,7 +1596,7 @@ export function useMission() {
       refreshMission();
       // refreshMission resets custom destinations; restore them in the new frame afterwards.
       state.hasStart = hasStart;
-      state.targets = targets.map(t => ({...t,...C.latLngToLocal(t.lat,t.lng),unit:"MOLA 區域地形"}));
+      state.targets = targets.map(t => ({...t,...C.latLngToLocal(t.lat,t.lng),unit:"Regional MOLA terrain"}));
       refreshPois();
       state.truth = {...truth,...C.latLngToLocal(truth.lat,truth.lng)};
       state.estimate = {...estimate,...C.latLngToLocal(estimate.lat,estimate.lng)};
@@ -1613,11 +1613,11 @@ export function useMission() {
       state.targetName = name;
       state.pickingStart = pickingStart;
       state.pickingTarget = pickingTarget;
-      state.regionStatus = `MOLA 覆蓋已擴大至 ${(grid.xMax-grid.xMin)/1000} × ${(grid.yMax-grid.yMin)/1000} km · 格距 ${grid.source.sample_step_m/1000} km；遠距規劃為粗略模擬。`;
+      state.regionStatus = `MOLA coverage expanded to ${(grid.xMax-grid.xMin)/1000} × ${(grid.yMax-grid.yMin)/1000} km · grid spacing ${grid.source.sample_step_m/1000} km. Long-distance planning is a coarse simulation.`;
       render();
       return true;
     } catch(e) {
-      state.regionStatus = "MOLA 擴大失敗：" + e.message + "；請重新選點重試。";
+      state.regionStatus = "MOLA expansion failed: " + e.message + ". Select a point and try again.";
       return false;
     } finally {
       if(token===regionToken) state.regionLoading = false;
@@ -1628,22 +1628,22 @@ export function useMission() {
     const id = 'custom-named-' + encodeURIComponent(place.name);
     const previousDestination = state.destination;
     const slope = state.slope, roughness = state.roughnessLimit;
-    state.namedTargetStatus = `正在加入「${place.zh || place.name}」…`;
+    state.namedTargetStatus = `Adding “${place.zh || place.name}”…`;
     if (!state.targets.some(t => t.id === id)) {
       if (!(await coverTarget({lat:place.lat,lng:place.lng}))) {
-        state.namedTargetStatus = `加入失敗：${state.regionStatus}`;
+        state.namedTargetStatus = `Failed to add: ${state.regionStatus}`;
         return;
       }
       state.slope = slope;
       state.roughnessLimit = roughness;
       const point = C.latLngToLocal(place.lat,place.lng);
       if (!C.validDEMPoint(point.x,point.y)) {
-        state.namedTargetStatus = '此地名中心缺少高程資料，無法加入；可在附近另選目的地。';
+        state.namedTargetStatus = 'The named location’s center lacks elevation data. Choose a nearby destination.';
         return;
       }
       state.targets.push({...point,id,name:place.zh || place.name,officialName:place.name,
-        source:place.url,lat:place.lat,lng:place.lng,kind:place.kind || 'IAU 正式地名目錄中心',
-        unit:state.regional ? 'MOLA 區域地形' : unitLabel(unitAt(point))});
+        source:place.url,lat:place.lat,lng:place.lng,kind:place.kind || 'Center of the officially named IAU feature',
+        unit:state.regional ? 'Regional MOLA terrain' : unitLabel(unitAt(point))});
     }
     stop(); cancel(); clearRoute();
     if (mode === 'stop') {
@@ -1656,22 +1656,22 @@ export function useMission() {
     state.pickingTarget = false;
     state.pickingStart = false;
     refreshPois();
-    state.namedTargetStatus = `已將「${place.zh || place.name}」${mode === 'stop' ? '加入停靠順序' : '設為終點'}。`;
+    state.namedTargetStatus = `Added “${place.zh || place.name}” ${mode === 'stop' ? 'to the stop sequence' : 'as the destination'}.`;
     state.routeStatus = state.namedTargetStatus;
     state.tab = 'mission'; state.panelOpen = true;
   }
   function addTarget(p) {
     if (!state.pickingTarget) return;
     if (!C.validDEMPoint(p.x, p.y)) {
-      state.routeStatus = "此位置超出有效高程範圍，請在區域內重新選點。";
+      state.routeStatus = "This location is outside elevation coverage. Choose a point within the region.";
       return;
     }
     const target = {
       ...p,
       id: createUiId("custom-"),
-      name: state.targetName.trim() || "自訂目的地 " + (state.targets.length + 1),
-      unit: state.regional ? "MOLA 區域地形" : unitLabel(unitAt(p)),
-      kind: "使用者自訂目的地",
+      name: state.targetName.trim() || "Custom destination " + (state.targets.length + 1),
+      unit: state.regional ? "Regional MOLA terrain" : unitLabel(unitAt(p)),
+      kind: "User-defined destination",
     };
     stop();
     clearRoute();
@@ -1681,7 +1681,7 @@ export function useMission() {
     state.pickingTarget = false;
     state.targetName = "";
     refreshPois();
-    state.routeStatus = `已新增「${target.name}」，可規劃路線檢查是否可達。`;
+    state.routeStatus = `Added “${target.name}”. Build a route to check access.`;
   }
   function removeTarget() {
     const id = state.destination;
@@ -1692,7 +1692,7 @@ export function useMission() {
     if (state.poi?.id === id) state.poi = null;
     state.destination = state.targets[0]?.id || "";
     refreshPois();
-    state.routeStatus = "已刪除目的地，請選擇或新增目的地。";
+    state.routeStatus = "Destination removed. Select or add a destination.";
   }
   function refreshPois() {
     poiLayer.clearLayers();
@@ -1700,8 +1700,8 @@ export function useMission() {
       ...C.latLngToLocal(18.4446, 77.4509),
       id: "butler",
       name: "Octavia E. Butler Landing",
-      kind: "NASA 命名歷史著陸點（非即時車輛位置）",
-      status: "座標依 Bell et al. 2022；NASA 任務團隊命名。",
+      kind: "NASA-named historical landing site",
+      status: "Coordinates from Bell et al. (2022). Named by the NASA mission team.",
       source:
         "https://science.nasa.gov/resource/welcome-to-octavia-e-butler-landing/",
     };
@@ -1709,11 +1709,11 @@ export function useMission() {
       ...(state.regional || state.siteId !== "jezero" ? [] : [landing]),
       ...C.FEATURES.map((p) => ({
         ...p,
-        kind: "DEM 自動候選峰（非正式地名）",
+        kind: "DEM-generated candidate peak (unofficial name)",
       })),
     ];
     const markers = state.walk
-      ? [{...missionStart, id:'base', name:'任務基地', kind:'示範任務起點'}, state.walk.station]
+      ? [{...missionStart, id:'base', name:'Mission base', kind:'Demo mission start'}, state.walk.station]
       : [...state.pois, ...state.targets.filter(p => p.id.startsWith("custom-"))];
     for (const p of markers)
       L.circleMarker(ll(p), {
@@ -1806,24 +1806,24 @@ export function useMission() {
     syncNavigationRisk();
     state.mapTitle = isLocal
       ? state.regional
-        ? `MOLA 區域 / ${dem.value.origin.lat.toFixed(2)}°, ${dem.value.origin.lng.toFixed(2)}°`
+        ? `MOLA region / ${dem.value.origin.lat.toFixed(2)}°, ${dem.value.origin.lng.toFixed(2)}°`
         : `${state.siteName} / ${C.LAT0.toFixed(2)}°, ${C.LON0.toFixed(2)}°`
-      : "火星全球總覽";
+      : "Mars global overview";
     state.mapContext = isLocal
       ? state.regional
-        ? (inDem(c) ? `MOLA 格距 ${fmt(cellMeters())} · 未校準定位` : "視野中心超出任務 DEM · 選點與路線將自動擴大覆蓋")
-        : `${state.siteName} 正射影像 · 導航高程以 DEM 優先，必要時採 MOLA`
-      : `${state.optical && !state.layers.includes('terrain') ? "Viking 全球光學影像" : "MOLA 全球高程"} · 可建立區域任務`;
+        ? (inDem(c) ? `MOLA grid spacing ${fmt(cellMeters())} · Uncalibrated position` : "View center outside mission DEM · selecting a point or route will expand coverage")
+        : `${state.siteName} Orthoimage · navigation uses DEM elevations first, with MOLA as needed`
+      : `${state.optical && !state.layers.includes('terrain') ? "Viking global imagery" : "MOLA global elevation"} · Create a regional mission`;
   }
   async function overviewHeights() {
-    if (!planet) state.elevation = '正在載入全球數值高程…';
+    if (!planet) state.elevation = 'Loading global elevation data…';
     try {
       const grid = await loadPlanet();
       if (disposed || !state.globalView) return;
       const center = map.getCenter();
-      state.elevation = `視野中心高程 ${grid.sample(center.lat, center.lng).toFixed(1)} m · MOLA 16 ppd`;
+      state.elevation = `Elevation at view center ${grid.sample(center.lat, center.lng).toFixed(1)} m · MOLA 16 ppd`;
     } catch (error) {
-      if (!disposed && state.globalView) state.elevation = `全球高程載入失敗：${error.message}；再次點擊全覽可重試`;
+      if (!disposed && state.globalView) state.elevation = `Global elevation data failed to load: ${error.message}. Select the overview again to retry.`;
     }
   }
   function overview() {
@@ -1850,7 +1850,7 @@ export function useMission() {
       pendingPlanet = Promise.all([
         json("data/mola16.json", { signal: abort.signal }),
         fetch(asset("data/mola16.bin"), { signal: abort.signal }).then((r) => {
-          if (!r.ok) throw Error("全球 MOLA 數值資料缺失");
+          if (!r.ok) throw Error("Global MOLA elevation data missing");
           return r.arrayBuffer();
         }),
       ])
@@ -1910,11 +1910,11 @@ export function useMission() {
       expeditionLayer?.addTo(map);
     }
     state.warning = state.regional
-      ? "全球真實 MOLA 高程 · 區域規劃 · 非障礙物尺度導航"
-      : `真實 ${state.siteName} DEM · ${dem.value.width}×${dem.value.height} · 觀測為模擬`;
+      ? "Global MOLA elevations · regional planning at kilometer scale"
+      : `Measured ${state.siteName} DEM · ${dem.value.width}×${dem.value.height} · Simulated observation`;
     state.source = state.regional
-      ? `NASA PDS MOLA 16 ppd，來源含插值；球面方位等距投影。SHA-256 ${dem.value.source.original_sha256}`
-      : state.siteId === "gale" ? "USGS Gale 合併 DEM：原生格距 1 m，本站取樣 20 m；混合來源不代表全域 1 m 精度。HiRISE 彩色正射影像展示 6.67 m；尚無 Gale 地質分類。未獨立評估配準精度。" : state.siteId === "valles-ctx" ? `USGS Valles CTX DTM：單組立體影像原生約 20 m，本站 20×20 km 取樣 40 m；有效格點 ${(100*dem.value.source.valid_fraction).toFixed(1)}%，缺值不外推。來源窗 SHA-256 ${dem.value.source.sampled_window_sha256}。` : `USGS CTX DEM 原生 20 m，30×30 km 取樣 40 m；正射影像顯示完整原檔範圍、約 20 m／像素。地質 Sun & Stack 2020，1:75,000。取樣窗 SHA-256 ${dem.value.source.sampled_window_sha256}；未獨立估計配準誤差。`;
+      ? `NASA PDS MOLA 16 ppd, including interpolated values. Spherical azimuthal equidistant projection. SHA-256 ${dem.value.source.original_sha256}`
+      : state.siteId === "gale" ? "USGS Gale merged DEM. Native grid spacing is 1 m, sampled here at 20 m. Accuracy varies across source datasets. HiRISE color imagery is displayed at 6.67 m/pixel. Gale geology is unavailable. Registration accuracy was not independently assessed." : state.siteId === "valles-ctx" ? `USGS Valles CTX DTM. Stereo imagery has about 20 m native spacing. This 20 × 20 km window is sampled at 40 m. Valid cells: ${(100*dem.value.source.valid_fraction).toFixed(1)}%. Missing cells are transparent. Source window SHA-256 ${dem.value.source.sampled_window_sha256}.` : `USGS CTX DEM. Native spacing is 20 m. The 30 × 30 km DEM is sampled at 40 m. The full orthoimage is displayed at about 20 m/pixel. Geology: Sun & Stack (2020), 1:75,000. Sample window SHA-256 ${dem.value.source.sampled_window_sha256}. Registration error was not independently assessed.`;
     scope();
   }
   async function startRegion() {
@@ -1927,7 +1927,7 @@ export function useMission() {
       !Number.isFinite(lng) ||
       Math.abs(lng) > 180
     ) {
-      state.regionStatus = "緯度須在 −90 至 90，經度須在 −180 至 180。";
+      state.regionStatus = "Latitude must be between −90 and 90 and longitude between −180 and 180.";
       return;
     }
     if (!slopeValid()) return;
@@ -1935,7 +1935,7 @@ export function useMission() {
     stop();
     cancel();
     state.regionLoading = true;
-    state.regionStatus = "讀取全球 MOLA 數值高程（約 33 MB，首次載入）…";
+    state.regionStatus = "Loading global MOLA elevations (about 33 MB on first load)…";
     try {
       const p = await loadPlanet();
       if (disposed || token !== regionToken) return;
@@ -1953,13 +1953,13 @@ export function useMission() {
       state.estimate = { x: 650, y: -520, heading: 69 };
       state.targets = [];
       refreshMission();
-      state.regionStatus = `已建立 512×512 km 區域任務 · 中心高程 ${p.sample(lat, lng).toFixed(0)} m。定位候選未校準，不自動校正；極區顯示會變形。`;
-      state.routeStatus = "請先選擇起點，並新增目的地，再規劃路線。";
+      state.regionStatus = `Created a 512 × 512 km regional mission · center elevation ${p.sample(lat, lng).toFixed(0)} m. Candidate confidence is uncalibrated. Corrections require review. The map distorts near the poles.`;
+      state.routeStatus = "Choose a start and add a destination before planning a route.";
       return true;
     } catch (e) {
       if (!disposed && token === regionToken)
         state.regionStatus =
-          "區域載入失敗：" + e.message + "；可再次點擊建立任務重試。";
+          "Region failed to load: " + e.message + ". Select Create mission to retry.";
     } finally {
       if (token === regionToken) state.regionLoading = false;
     }
@@ -1969,7 +1969,7 @@ export function useMission() {
     const token=++regionToken;
     stop(); cancel();
     state.regionLoading=true;
-    state.regionStatus="載入 Valles CTX DEM 與正射影像…";
+    state.regionStatus="Loading the Valles CTX DEM and orthoimage…";
     try {
       const [grid]=await Promise.all([
         json("data/valles/dem.json",{signal:abort.signal}),
@@ -1977,7 +1977,7 @@ export function useMission() {
         new Promise((resolve,reject)=>{
           const image=new Image();
           image.onload=resolve;
-          image.onerror=()=>reject(Error("Valles 正射影像檔無法載入"));
+          image.onerror=()=>reject(Error("Valles orthoimage failed to load"));
           image.src=asset("data/valles/optical.png");
         }),
       ]);
@@ -1993,9 +1993,9 @@ export function useMission() {
       optical.setUrl(asset("data/valles/optical.png"));
       optical.setBounds([ll({x:C.LIMIT.minX,y:C.LIMIT.minY}),ll({x:C.LIMIT.maxX,y:C.LIMIT.maxY})]);
       refreshMission();
-      state.regionStatus="Valles 20×20 km · CTX 正射影像已載入；DEM 40 m 取樣，空白處為缺值。可在圖層中開啟避險標示。";
+      state.regionStatus="Valles 20 × 20 km · CTX orthoimage loaded. DEM samples are 40 m apart. Blank areas lack data. Show avoidance markers in Layers.";
     } catch(e) {
-      if(!disposed && token===regionToken) state.regionStatus="Valles 載入失敗："+e.message+"；可重試。";
+      if(!disposed && token===regionToken) state.regionStatus="Valles failed to load: "+e.message+". Try again.";
     } finally { if(token===regionToken) state.regionLoading=false; }
   }
   async function startGale() {
@@ -2003,7 +2003,7 @@ export function useMission() {
     const token=++regionToken;
     stop(); cancel();
     state.regionLoading=true;
-    state.regionStatus="載入 Gale 高解析 DEM 與正射影像來源…";
+    state.regionStatus="Loading the Gale DEM and orthoimage…";
     try {
       const [grid] = await Promise.all([json("data/gale/dem.json",{signal:abort.signal}),json("data/gale/optical-source.json",{signal:abort.signal})]);
       if(disposed || token!==regionToken) return;
@@ -2017,9 +2017,9 @@ export function useMission() {
       optical.setUrl(asset("data/gale/optical.png"));
       optical.setBounds([ll({x:C.LIMIT.minX,y:C.LIMIT.minY}),ll({x:C.LIMIT.maxX,y:C.LIMIT.maxY})]);
       refreshMission();
-      state.regionStatus="Gale 10×10 km · DEM 20 m 取樣 · 正射影像約 6.67 m/pixel；請在「任務」選擇起點；非好奇號實際位置。";
+      state.regionStatus="Gale 10 × 10 km · DEM spacing 20 m · orthoimage about 6.67 m/pixel. Select a simulated start in Mission.";
     } catch(e) {
-      if(!disposed && token===regionToken) state.regionStatus="Gale 載入失敗："+e.message+"；可重試。";
+      if(!disposed && token===regionToken) state.regionStatus="Gale failed to load: "+e.message+". Try again.";
     } finally { if(token===regionToken) state.regionLoading=false; }
   }
   function restore() {
@@ -2049,8 +2049,8 @@ export function useMission() {
       ),
       r = C.refinePose(a.pairs, state.estimate);
     state.bearing = r.ok
-      ? `模擬方位解算 E ${r.x.toFixed(0)} / N ${r.y.toFixed(0)}，朝向 ${r.heading.toFixed(1)}°，RMS ${r.rmsDeg.toFixed(3)}°；未套用導航估計。`
-      : "有效地標不足或未收斂。";
+      ? `Simulated bearing fix E ${r.x.toFixed(0)} / N ${r.y.toFixed(0)}, heading ${r.heading.toFixed(1)}°, RMS ${r.rmsDeg.toFixed(3)}°. Navigation estimate unchanged.`
+      : "Too few valid landmarks or the solution did not converge.";
   }
   function clearExpedition() {
     remove(expeditionLayer);
@@ -2074,7 +2074,7 @@ export function useMission() {
     const start = { ...missionStart },
       end = C.latLngToLocal(18.45262651, 77.40775601),
       points = [start, end, start],
-      names = ["規劃起點 → Three Forks", "Three Forks → 返回"];
+      names = ["Starting point → Three Forks", "Three Forks → return"];
     state.expedition = names.map((name, i) => ({
       ...C.planPath(points[i], points[i + 1]),
       name,
@@ -2089,15 +2089,15 @@ export function useMission() {
           dashArray: i === 1 ? "8 6" : null,
         })
           .addTo(expeditionLayer)
-          .bindTooltip("假想人員路線 · " + leg.name)
+          .bindTooltip("Simulated crew route · " + leg.name)
           .on("click", () => {
             state.profileIndex = i;
             drawProfile();
           });
     });
     state.expeditionStatus = state.expedition.every((l) => l.reachable)
-      ? `往返路線 ${fmt(state.expedition.reduce((sum, l) => sum + l.length, 0))} · 非真實毅力號軌跡`
-      : "部分路段不可達，勿視為可通行。";
+      ? `Round trip ${fmt(state.expedition.reduce((sum, l) => sum + l.length, 0))} · Simulated traverse`
+      : "Some segments are unreachable.";
     state.profileIndex = state.expedition.findIndex(leg => leg.path.length > 1);
     if (state.profileIndex !== -1) state.profileRevision++;
     nextTick(drawProfile);
@@ -2158,10 +2158,10 @@ export function useMission() {
     }
     const direct = state.directRoute?.path;
     if (direct?.length > 1 && (state.profileIndex === -1 || state.compareProfiles)) {
-      routes.push({ name: "起終點直線", path: [direct[0], direct.at(-1)], baseline: true });
+      routes.push({ name: "Straight line between endpoints", path: [direct[0], direct.at(-1)], baseline: true });
     }
     if (!routes.length) {
-      state.profileInfo = "請先建立一般路線、手繪路線或 Three Forks 往返路線，以顯示高程剖面。";
+      state.profileInfo = "Build a planned route, draw a custom route or create a Three Forks round trip to show its elevation profile.";
       return;
     }
 
@@ -2181,7 +2181,7 @@ export function useMission() {
       }
     }
     if (!Number.isFinite(lo)) {
-      state.profileInfo = "沿線缺少有效 DEM 高程，無法繪製剖面。";
+      state.profileInfo = "Too few valid DEM elevations along the route to draw a profile.";
       return;
     }
     const longest = Math.max(...profileSeries.map(v => v.length), 1);
@@ -2190,7 +2190,7 @@ export function useMission() {
       name: v.name, color: v.color, length: fmt(v.length), baseline: v.baseline,
     }));
     const primary = profileSeries[0];
-    state.profileInfo = `${primary.name} · ${state.regional ? "MOLA" : state.siteName} DEM · ${fmt(primary.length)} · 最大格網坡度 ${primary.maxSlope.toFixed(1)}° · 缺值 ${primary.missing}。高程取自 DEM，取樣間距最多 ${Math.ceil(primary.step)} 公尺。`;
+    state.profileInfo = `${primary.name} · ${state.regional ? "MOLA" : state.siteName} DEM · ${fmt(primary.length)} · Maximum grid slope ${primary.maxSlope.toFixed(1)}° · missing ${primary.missing}. Elevations come from the DEM, sampled at intervals of up to ${Math.ceil(primary.step)} m away.`;
     paintProfile();
   }
   function paintProfile() {
@@ -2235,10 +2235,10 @@ export function useMission() {
     const distance = Math.max(0, Math.min(1, (px - 12) / (cv.width - 24))) * profileScale.longest;
     const hits = profileSeries.filter(v => distance <= v.length).map(v => ({ ...v,
       point: v.samples.reduce((a, b) => Math.abs(a.distance - distance) < Math.abs(b.distance - distance) ? a : b) }));
-    state.profileHover = hits.map(v => `${v.name} · ${fmt(v.point.distance)} · 高程 ${Number.isFinite(v.point.z) ? v.point.z.toFixed(1) + " m" : "缺測"}`).join("；");
+    state.profileHover = hits.map(v => `${v.name} · ${fmt(v.point.distance)} · Elevation ${Number.isFinite(v.point.z) ? v.point.z.toFixed(1) + " m" : "Missing"}`).join(". ");
     if (hits.length && map) {
       profileMarker = L.layerGroup(hits.map(v => L.circleMarker(ll(v.point), { radius: 7, color: v.color, fillOpacity: 1 })
-        .bindTooltip(`${esc(v.name)} · ${Number.isFinite(v.point.z) ? v.point.z.toFixed(1) + " m" : "缺測"}`))).addTo(map);
+        .bindTooltip(`${esc(v.name)} · ${Number.isFinite(v.point.z) ? v.point.z.toFixed(1) + " m" : "Missing"}`))).addTo(map);
     }
     const ctx = cv.getContext("2d");
     ctx.strokeStyle = "#ffffff";
@@ -2266,7 +2266,7 @@ export function useMission() {
           state.tab = "mission";
           state.panelOpen = true;
         });
-    state.expeditionStatus = `已串接 ${data.features.length} 筆 PDS 歷史紀錄。`;
+    state.expeditionStatus = `Linked ${data.features.length} historical PDS records.`;
   }
   async function mount(container) {
     map = L.map(container, {
@@ -2305,11 +2305,11 @@ export function useMission() {
       radius: 8,
       color: "#9af0e0",
       fillOpacity: 1,
-    }).bindTooltip("導航估計位置");
+    }).bindTooltip("Estimated navigation position");
     truthMarker = L.circleMarker([18.44, 77.42], {
       radius: 6,
       color: "#ffad72",
-    }).bindTooltip("模擬真值（評估用）");
+    }).bindTooltip("Simulation ground truth (evaluation)");
     trail = L.polyline([], { color: "#eeb584", weight: 2 }).addTo(map);
     map.on("mousemove", (e) => {
       const p = local(e),
@@ -2317,22 +2317,22 @@ export function useMission() {
         z = Number.isFinite(localZ)
           ? localZ
           : planet?.sample(e.latlng.lat, e.latlng.lng),
-        height = Number.isFinite(z) ? `高度 ${z.toFixed(1)} m` : "高度：無資料";
+        height = Number.isFinite(z) ? `Elevation ${z.toFixed(1)} m` : "Elevation unavailable";
       state.coords = `${e.latlng.lat.toFixed(5)}°N ${e.latlng.lng.toFixed(5)}°E · ${height} · ${unitLabel(unitAt(p))}`;
       const scienceValue = sampleScienceGrid(state.scienceMeta, state.scienceLayers[state.layer]?.values, e.latlng.lat, e.latlng.lng);
       if (scienceValue !== null) state.coords += ` · ${scienceValue.toFixed(3)} ${state.scienceMeta.unit}`;
-      else if (state.scienceMeta?.kind === 'raster') state.coords += ' · 科學格網：無資料';
+      else if (state.scienceMeta?.kind === 'raster') state.coords += ' · Science grid: no data';
       const nav=C.navigationAt(p.x,p.y);
-      if(nav.reasons.length) state.coords += ` · ${nav.reasons.join("；")}`;
+      if(nav.reasons.length) state.coords += ` · ${nav.reasons.join(". ")}`;
       state.elevation = Number.isFinite(z)
-        ? `游標高程 ${z.toFixed(1)} m · ${Number.isFinite(localZ) && !state.regional ? state.siteName + " DEM" : "MOLA 16 ppd · 無法判定局部粗糙度"}`
-        : "游標高程：無資料";
+        ? `Cursor elevation ${z.toFixed(1)} m · ${Number.isFinite(localZ) && !state.regional ? state.siteName + " DEM" : "MOLA 16 ppd · local roughness unresolved"}`
+        : "Cursor elevation unavailable";
     });
     map.on("click", async (e) => {
       if(state.pickingNoGo) {
         const radius=Number(state.noGoRadius);
-        if(!Number.isFinite(radius)||radius<10||radius>100000||Math.abs(e.latlng.lat)>90){state.routeStatus='禁行區半徑須介於 10–100,000 m';return;}
-        state.noGoZones.push({id:createUiId(),name:state.noGoName.trim()||`人工禁行區 ${state.noGoZones.length+1}`,lat:e.latlng.lat,lng:((e.latlng.lng+180)%360+360)%360-180,radius});
+        if(!Number.isFinite(radius)||radius<10||radius>100000||Math.abs(e.latlng.lat)>90){state.routeStatus='Exclusion zone radius must be 10–100,000 m';return;}
+        state.noGoZones.push({id:createUiId(),name:state.noGoName.trim()||`Marked exclusion zone ${state.noGoZones.length+1}`,lat:e.latlng.lat,lng:((e.latlng.lng+180)%360+360)%360-180,radius});
         state.pickingNoGo=false; state.noGoName='';
         return;
       }
@@ -2344,7 +2344,7 @@ export function useMission() {
         }
         const p = local(e);
         if (!C.validDEMPoint(p.x, p.y) || C.risk(p.x, p.y).blocked) {
-          state.routeStatus = "請選有高程資料且符合坡度與粗糙度門檻的起點。";
+          state.routeStatus = "Choose a start with valid elevation data within the slope and roughness limits.";
           return;
         }
         missionStart = { ...p };
@@ -2353,9 +2353,9 @@ export function useMission() {
         state.pickingStart = false;
         state.truth = { ...p, heading: 45 };
         state.estimate = { ...p, heading: 45 };
-        state.message = "導航位置已設為所選起點；行進後可用地平線檢查與校正偏差。";
+        state.message = "Navigation position set to the selected start. Scan the skyline during the traverse to check and correct drift.";
         trail.setLatLngs([ll(p)]);
-        state.routeStatus = "起點已設定，請選終點並建立路線。";
+        state.routeStatus = "Start set. Select an endpoint and build a route.";
         render();
       }
       else if (state.pickingTarget) {
@@ -2459,7 +2459,7 @@ export function useMission() {
           { opacity: 1, className: 'local-dem-image' },
         ).addTo(map);
         optical.on("error", () => {
-          state.warning = "正射影像裁切載入失敗；地圖不可視為影像底圖。";
+          state.warning = "Orthoimage crop failed to load. The imagery basemap is unavailable.";
         });
         globalBase = L.layerGroup().addTo(map);
         for (const offset of [-360, 0, 360])
@@ -2473,15 +2473,15 @@ export function useMission() {
           )
             .addTo(globalBase)
             .on("error", () => {
-              state.namesError = "全球底圖載入失敗，請重新載入。";
+              state.namesError = "Global basemap failed to load. Reload to retry.";
             });
       }
       state.entries = [...names.entries, {
         name: 'Octavia E. Butler Landing', lat: 18.4446, lng: 77.4509,
-        eastLongitude: 77.4509, type: '歷史著陸點', code: 'LANDING', diameterKm: 0,
-        featured: true, kind: 'NASA 命名歷史著陸點（非 IAU 正式地名）',
-        description: '毅力號火星車的歷史著陸位置，非即時車輛位置。',
-        origin: 'NASA 任務團隊以作家 Octavia E. Butler 命名。',
+        eastLongitude: 77.4509, type: 'Historical landing site', code: 'LANDING', diameterKm: 0,
+        featured: true, kind: 'NASA-named historical landing site (unofficial IAU name)',
+        description: 'Historical landing location of the Perseverance rover.',
+        origin: 'The NASA mission team named this site for author Octavia E. Butler.',
         url: 'https://science.nasa.gov/resource/welcome-to-octavia-e-butler-landing/',
       }];
       filterNames();
@@ -2491,7 +2491,7 @@ export function useMission() {
     } catch (e) {
       if (!disposed) {
         console.error(e);
-        state.error = "資料載入失敗：" + e.message;
+        state.error = "Data failed to load: " + e.message;
         state.warning = state.error;
       }
     } finally {
@@ -2540,7 +2540,7 @@ export function useMission() {
       clearRoute();
       if (state.expedition.length) clearExpedition();
       syncNavigationRisk(true);
-      state.routeStatus = "避險門檻已變更；請重新規劃。";
+      state.routeStatus = "Terrain limits changed. Replan the route.";
       if (state.points.length >= 2 && !state.drawMode) finishDrawing(false);
     },
   );
@@ -2550,9 +2550,9 @@ export function useMission() {
       stop();
       cancel();
       state.result = null;
-      state.status = "觀測設定已變更";
-      state.message = state.hasStart ? "保留導航估計；請重新掃描。" : "請先在「任務」選擇起點。";
-      if (!state.hasStart) state.status = "尚未設定起點";
+      state.status = "Observation settings changed";
+      state.message = state.hasStart ? "Navigation estimate retained. Scan again." : "Select a start in Mission first.";
+      if (!state.hasStart) state.status = "Start location required";
       observation = null;
       state.externalHorizon = false;
       observationPose.value = null;
@@ -2569,7 +2569,7 @@ export function useMission() {
     rebuildNavigation();
     if(state.navigation.thermalEnabled && !navigationThermal) loadNavigationThermal();
     else {navigationLoadToken++;state.navigationLoading=false;}
-    state.routeStatus='導航資料或人工禁行區已變更，請重新規劃。';
+    state.routeStatus='Navigation data or exclusion zones changed. Replan the route.';
   });
   watch(() => state.continuousLocalization, (enabled) => {
     cancel();
@@ -2579,14 +2579,14 @@ export function useMission() {
     state.directRoute, state.walk?.alternatives, state.walk?.selectedAlternative], drawProfile);
   watch(() => [JSON.stringify(state.planner), state.stopIds.join('|')], () => {
     stop(); clearRoute();
-    state.routeStatus = '規劃假設或停靠順序已變更，請重新建立路線。';
+    state.routeStatus = 'Planning assumptions or stop order changed. Build the route again.';
   });
   watch(() => state.targets.map(t => t.id).join('|'), () => {
     state.stopIds = state.stopIds.filter(id => state.targets.some(t => t.id === id));
   });
   watch(() => state.destination, () => {
     stop(); clearRoute();
-    state.routeStatus = '目的地已變更，請建立路線。';
+    state.routeStatus = 'Destination changed. Build a route.';
   });
   watch(profileCanvas, drawProfile);
   watch([viewBearing, viewMapPosition, () => state.localizationOpen, () => state.globalView], syncViewBearing);
@@ -2690,7 +2690,7 @@ export function useMission() {
       stop(); cancel(); resetDrawing();
       state.pickingTarget = false;
       state.pickingStart = !state.pickingStart;
-      state.routeStatus = state.pickingStart ? "請在地圖選起點；局部 DEM 有效處優先，近區域越界處合併使用 MOLA。" : "已取消選起點。";
+      state.routeStatus = state.pickingStart ? "Select a start on the map. The local DEM takes priority, with MOLA filling nearby gaps beyond its boundary." : "Start selection canceled.";
     },
     beginTarget,
     removeTarget,

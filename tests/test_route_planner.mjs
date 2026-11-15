@@ -3,7 +3,7 @@ import C from '../core.mjs';
 import { energyStep, segmentEnergy } from '../energy-model.mjs';
 import { buildItinerary, measureRoute } from '../src/routePlanner.mjs';
 C.clearDEM(); C.setSlopeLimit(24);
-const start = {x:-1400,y:-820}, stop = {x:-1000,y:-700,name:'採樣點'}, goal = {x:2200,y:780,name:'終點'};
+const start = {x:-1400,y:-820}, stop = {x:-1000,y:-700,name:'Sampling site'}, goal = {x:2200,y:780,name:'End'};
 const options = {speedKmh:3,riskWeight:2,highSlope:5,roundTrip:true,stopMinutes:20,budgetHours:8};
 const plan = buildItinerary(start,[stop,goal],options);
 for (const route of Object.values(plan)) {
@@ -26,9 +26,9 @@ const fast=measureRoute(plan.shortest.path,{speedKmh:6});
 assert(Math.abs(fast.hours*2-plan.shortest.hours)<1e-8);
 const tiny=buildItinerary(start,[goal],{...options,budgetHours:0.01});
 assert(tiny.shortest.marginHours<0);
-const blocked=buildItinerary(start,[{x:50000,y:50000,name:'越界'}],options);
+const blocked=buildItinerary(start,[{x:50000,y:50000,name:'Outside coverage'}],options);
 assert(!blocked.shortest.reachable && !blocked.safer.reachable);
-assert.equal(blocked.shortest.failedStop,'越界');
+assert.equal(blocked.shortest.failedStop,'Outside coverage');
 assert.throws(()=>buildItinerary(start,[goal],{speedKmh:0}));
 assert.throws(()=>buildItinerary(start,[goal],{budgetHours:NaN}));
 console.log('Dual objective routes, safety, ordered stops, return leg, walking times, budgets and failure handling passed');
@@ -45,7 +45,7 @@ for (const p of [{x:-4000,y:0},{x:4000,y:0},{x:0,y:-4000},{x:0,y:4000},{x:-4000,
   assert(!C.risk(p.x,p.y).unknown, 'Valid DEM edges should have a one-sided terrain estimate');
 assert(C.risk(4001,0).unknown, 'Outside the DEM remains unknown');
 C.setSlopeLimit(24); C.setRoughnessLimit(1);
-const a = {x:-3000,y:0}, b = {x:3000,y:0,name:'粗糙地形後方'};
+const a = {x:-3000,y:0}, b = {x:3000,y:0,name:'Beyond rough terrain'};
 assert(C.segmentSafe(a,b));
 const baseline = buildItinerary(a,[b],options).shortest;
 C.setRoughnessLimit(0.2);
@@ -58,7 +58,7 @@ for (const route of Object.values(detours)) {
   assert(route.path.every(p=>C.risk(p.x,p.y).rough<=0.2));
   assert(route.length>baseline.length);
 }
-const rejected = buildItinerary(a,[{x:0,y:0,name:'危險區內'}],options);
+const rejected = buildItinerary(a,[{x:0,y:0,name:'Inside hazard'}],options);
 assert(!rejected.shortest.reachable && !rejected.safer.reachable);
 assert.throws(()=>C.setRoughnessLimit(NaN));
 assert.throws(()=>C.setRoughnessLimit(-0.1));

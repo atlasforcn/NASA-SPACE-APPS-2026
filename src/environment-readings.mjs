@@ -5,17 +5,17 @@ import { temperatureHistory } from './layer-guidance.mjs';
 
 const rad = manifest.datasets.radiation;
 const sensors = [
-  { id: 'temperature', label: '氣溫', unit: '°C', min: -273.15, stations: temperatureHistory },
-  { id: 'radiation', label: '輻射', unit: rad.unit, min: 0, stations: [{
+  { id: 'temperature', label: 'Air temperature', unit: '°C', min: -273.15, stations: temperatureHistory },
+  { id: 'radiation', label: 'Radiation', unit: rad.unit, min: 0, stations: [{
     lat: rad.lat, lng: rad.lng, station: 'Gale · ' + rad.name, period: rad.start.slice(0, 10),
-    reading: rad.count + ' 筆樣本中的最高矽吸收劑量率', value: rad.max, url: rad.label_source.url,
+    reading: rad.count + ' samples, maximum silicon absorbed dose rate', value: rad.max, url: rad.label_source.url,
   }] },
 ];
 
 export function useEnvironmentReadings(s, dem) {
   const limits = reactive({ temperature: -20, radiation: 9 });
   const loading = computed(() => !s.ready || s.regionLoading || !dem.value);
-  const area = computed(() => s.globalView ? '目前地圖視窗' : '目前任務區');
+  const area = computed(() => s.globalView ? 'Current map view' : 'Current mission region');
 
   function includesStation(station) {
     if (s.globalView) {

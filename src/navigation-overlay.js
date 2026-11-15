@@ -28,5 +28,5 @@ export function createNavigationOverlay(map) {
       return tile;
     },
   });
-  return new RiskGrid({pane: 'navigationRisk', tileSize: 256, updateWhenIdle: true, keepBuffer: 1, attribution: '導航遮罩：DEM 坡度／粗糙度／缺測'});
+  return new RiskGrid({pane: 'navigationRisk', tileSize: 256, updateWhenIdle: true, keepBuffer: 1, attribution: 'Navigation mask: DEM slope, roughness and missing data'});
 }

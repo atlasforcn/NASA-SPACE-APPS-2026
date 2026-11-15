@@ -29,12 +29,12 @@ export function assessRouteSafety(path, { slopeLimit = 15, roughnessLimit = 1 } 
     steepSections: [], steepDistance: 0
   };
   if (!Array.isArray(path) || path.length < 2 || !path.every(finitePoint)) {
-    result.reason = '請先選取基地與 A 站，建立要檢查的路段。';
+    result.reason = 'Select the base and Site A to define the segment to assess.';
     return result;
   }
   if (!Number.isFinite(slopeLimit) || slopeLimit < 1 || slopeLimit > 45 ||
       !Number.isFinite(roughnessLimit) || roughnessLimit < 0 || roughnessLimit > 1) {
-    result.reason = '請確認坡度上限介於 1–45°，粗糙度上限介於 0–1，再檢查路線。';
+    result.reason = 'Set a slope limit of 1–45° and a roughness limit of 0–1, then check the route.';
     return result;
   }
   const focus = {};
@@ -93,7 +93,7 @@ export function assessRouteSafety(path, { slopeLimit = 15, roughnessLimit = 1 } 
     }
   }
   if (!result.length) {
-    result.reason = '基地與 A 站重合，請選取不同的位置再檢查路線。';
+    result.reason = 'The base and Site A coincide. Select different locations and check again.';
     return result;
   }
   result.noGoCrossed = Boolean(focus.zone);
@@ -102,33 +102,33 @@ export function assessRouteSafety(path, { slopeLimit = 15, roughnessLimit = 1 } 
   }
   // A new line between the same fixed endpoints cannot resolve a hazard at either end.
   const endpoints = [
-    { name: '基地', point: result.samples[0], segment: result.samples.slice(0, 2), advice: '請另選出發點。' },
-    { name: 'A 站', point: result.samples.at(-1), segment: result.samples.slice(-2), advice: '請另選觀測點。' }
+    { name: 'Base', point: result.samples[0], segment: result.samples.slice(0, 2), advice: 'Choose a different starting point.' },
+    { name: 'Site A', point: result.samples.at(-1), segment: result.samples.slice(-2), advice: 'Choose a different observation site.' }
   ];
   for (const { name, point, segment, advice } of endpoints) {
     const { x, y } = point;
     if (C.navigationAt(x, y).blocked) {
       result.noGoCrossed = true;
-      return conclude('hold', `${name}位於人工禁行區內。${advice}`, { point, segment });
+      return conclude('hold', `${name} is inside a marked exclusion zone. ${advice}`, { point, segment });
     }
     if (!productAt(x, y)) continue;
     const { slope, rough } = C.risk(x, y);
     if (slope > slopeLimit) {
-      return conclude('hold', `${name}坡度 ${slope.toFixed(2)}°，超過上限 ${slopeLimit}°。${advice}`, { point, segment });
+      return conclude('hold', `${name} slope ${slope.toFixed(2)}°, above the limit of ${slopeLimit}°. ${advice}`, { point, segment });
     }
     if (rough > roughnessLimit) {
-      return conclude('hold', `${name}粗糙度 ${rough.toFixed(3)}，超過上限 ${roughnessLimit}。${advice}`, { point, segment });
+      return conclude('hold', `${name} roughness ${rough.toFixed(3)}, above the limit of ${roughnessLimit}. ${advice}`, { point, segment });
     }
   }
-  if (focus.zone) return conclude('reroute', '路線穿越已標示的人工禁行區。請繞開標記的路段，再檢查新路線。', focus.zone);
+  if (focus.zone) return conclude('reroute', 'The route crosses a marked exclusion zone. Detour around the marked segment and check the new route.', focus.zone);
   if (result.maxSlope > slopeLimit) {
-    return conclude('reroute', `取樣點的最大坡度 ${result.maxSlope.toFixed(2)}° 超過 ${slopeLimit}° 上限。請繞開此坡段。`, focus.slope);
+    return conclude('reroute', `The maximum sampled slope of ${result.maxSlope.toFixed(2)}° exceeds the ${slopeLimit}° limit. Detour around this slope.`, focus.slope);
   }
   if (result.maxRoughness > roughnessLimit) {
-    return conclude('reroute', `取樣點的地形粗糙度超過 ${roughnessLimit} 上限。請改走起伏較小的路段。`, focus.roughness);
+    return conclude('reroute', `Sampled terrain roughness exceeds the ${roughnessLimit} limit. Choose a smoother segment.`, focus.roughness);
   }
-  if (focus.missing) return conclude('hold', '部分路段缺少高程資料。請補齊地形資料，或改走有資料覆蓋的路線。', focus.missing);
-  if (focus.derivative) return conclude('hold', '部分取樣點缺少可計算坡度或粗糙度的鄰近高程。請補查該段地形。', focus.derivative);
-  if (focus.coarse) return conclude('hold', '部分路段只有公里級 MOLA 高程，無法評估局部粗糙度。請取得較細的地形資料後再決定。', focus.coarse);
-  return conclude('go', '沿線取樣坡度與粗糙度均在設定上限內，路線避開已標示的禁行區。依現有地形資料，可規劃前往 A 站。', focus.slope);
+  if (focus.missing) return conclude('hold', 'Some segments lack elevation data. Obtain terrain data or choose a route with coverage.', focus.missing);
+  if (focus.derivative) return conclude('hold', 'Some samples lack the neighboring elevations needed to calculate slope or roughness. Check terrain coverage on this segment.', focus.derivative);
+  if (focus.coarse) return conclude('hold', 'Some segments have only kilometer-scale MOLA elevations. Finer terrain data are needed to assess local roughness.', focus.coarse);
+  return conclude('go', 'Sampled slope and roughness stay within the limits, and the route avoids marked exclusion zones. The terrain data support proceeding to Site A.', focus.slope);
 }

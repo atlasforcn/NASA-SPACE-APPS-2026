@@ -31,8 +31,8 @@ function contains(p, polygon) {
 }
 export function validateNavigationOptions(o) {
   for (const key of ['sandFactor','rockFactor','unknownFactor','thermalFactor'])
-    if (!Number.isFinite(o[key]) || o[key]<1 || o[key]>5) throw Error('材質耗電倍率須介於 1–5');
-  if (!Number.isFinite(o.thermalThreshold)||o.thermalThreshold<0||o.thermalThreshold>1000) throw Error('熱慣量門檻須介於 0–1000');
+    if (!Number.isFinite(o[key]) || o[key]<1 || o[key]>5) throw Error('The surface energy multiplier must be between 1 and 5');
+  if (!Number.isFinite(o.thermalThreshold)||o.thermalThreshold<0||o.thermalThreshold>1000) throw Error('The thermal inertia threshold must be between 0 and 1000');
 }
 export function createNavigationContext({options, zones=[], geologyIndex=[], thermal=null, toGeo}) {
   validateNavigationOptions(options);
@@ -40,7 +40,7 @@ export function createNavigationContext({options, zones=[], geologyIndex=[], the
   function sample(x,y) {
     const geo=toGeo(x,y), reasons=[];
     const zone=exclusions.find(z=>geoDistance(z,geo)<=z.radius);
-    if(zone) return {blocked:true,factor:1,reasons:[`人工禁行區：${zone.name}`],unknown:false};
+    if(zone) return {blocked:true,factor:1,reasons:[`Marked exclusion zone: ${zone.name}`],unknown:false};
     let factor=1, evidence=false;
     if(o.geologyEnabled) {
       // Published geology coordinates always use the original Jezero frame.
@@ -51,7 +51,7 @@ export function createNavigationContext({options, zones=[], geologyIndex=[], the
         const material=String(unit.unit)==='7'?'sand':['9','10','11','12','13'].includes(String(unit.unit))?'rock':'neutral';
         const f=material==='sand'?o.sandFactor:material==='rock'?o.rockFactor:1;
         factor=Math.max(factor,f);
-        if(f>1) reasons.push(`地質示範：${unit.name} ×${f}`);
+        if(f>1) reasons.push(`Geology demo: ${unit.name} ×${f}`);
       }
     }
     if(o.thermalEnabled) {
@@ -60,12 +60,12 @@ export function createNavigationContext({options, zones=[], geologyIndex=[], the
         evidence=true;
         if(value<o.thermalThreshold) {
           factor=Math.max(factor,o.thermalFactor);
-          reasons.push(`低熱慣量材質假設 ×${o.thermalFactor}`);
+          reasons.push(`Low thermal inertia material assumption × ${o.thermalFactor}`);
         }
       }
     }
     const unknown=(o.geologyEnabled||o.thermalEnabled)&&!evidence;
-    if(unknown) { factor=Math.max(factor,o.unknownFactor); reasons.push(`材質資料不足 ×${o.unknownFactor}`); }
+    if(unknown) { factor=Math.max(factor,o.unknownFactor); reasons.push(`Insufficient material data × ${o.unknownFactor}`); }
     return {blocked:false,factor,reasons,unknown};
   }
   function segmentBlocked(a,b) {

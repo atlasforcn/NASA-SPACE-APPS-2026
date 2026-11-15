@@ -7,11 +7,11 @@ const m = inject(missionKey),
 <template>
   <section class="group">
     <p class="eyebrow">Three Forks</p>
-    <h2>重訪樣本存放區</h2>
+    <h2>Revisit the sample depot</h2>
     <p class="hint">
-      從所選起點模擬往返 Three Forks。黃色標記是毅力號投放樣本時的位置。
+      Plan a simulated round trip from your starting point to Three Forks. Yellow markers show where Perseverance stood when it dropped each sample.
     </p>
-    <p v-if="s.regional || s.siteId !== 'jezero'" class="hint">此區未提供 Three Forks 歷史樣本資料；請使用自訂目的地規劃路線。</p>
+    <p v-if="s.regional || s.siteId !== 'jezero'" class="hint">Three Forks sample records are available in Jezero. Choose a custom destination for this region.</p>
     <div class="button-row">
       <button
         id="expedition-plan"
@@ -19,7 +19,7 @@ const m = inject(missionKey),
         :disabled="!s.ready || !s.hasStart || s.regional || s.siteId !== 'jezero'"
         @click="m.planExpedition"
       >
-        建立往返路線</button
+        Build round trip</button
       ><button
         id="malay-card"
         :disabled="!s.stations.length"
@@ -29,7 +29,7 @@ const m = inject(missionKey),
           )
         "
       >
-        Malay NASA 紀錄
+        NASA record for Malay
       </button>
     </div>
     <p id="expedition-status" class="hint" role="status">
@@ -37,7 +37,7 @@ const m = inject(missionKey),
     </p>
     <article v-if="s.station" class="detail-card">
       <h3>{{ s.station.properties.name }}</h3>
-      <p>NASA PDS 記錄的是投放樣本時的車體位置。</p>
+      <p>NASA PDS records the rover position at the time of each sample drop.</p>
       <p>
         {{ s.station.properties["Sample Designation"] }} · Sol
         {{ s.station.properties["Dropoff Sol"] }}<br />Site
@@ -48,34 +48,34 @@ const m = inject(missionKey),
         {{ s.station.geometry.coordinates[1] }}°N /
         {{ s.station.geometry.coordinates[0] }}°E
       </p>
-      <p class="hint">火星行星中心緯度／東經；GeoJSON 順序為 [經度, 緯度]。</p>
+      <p class="hint">Planetocentric latitude and east longitude. GeoJSON stores longitude first.</p>
       <a
         :href="s.station.properties.sources.locations"
         target="_blank"
         rel="noopener noreferrer"
-        >NASA 位置 CSV（v{{ s.station.properties.versions.locations }}）</a
+        >NASA positions CSV (v{{ s.station.properties.versions.locations }})</a
       ><br /><a
         :href="s.station.properties.sources.events"
         target="_blank"
         rel="noopener noreferrer"
-        >NASA 投放事件 CSV（v{{ s.station.properties.versions.events }}）</a
+        >NASA drop events CSV (v{{ s.station.properties.versions.events }})</a
       ><br /><a :href="m.asset('data/pds/sample_tube_locations.csv')"
-        >離線位置原表</a
+        >Offline position table</a
       >
       ·
-      <a :href="m.asset('data/pds/sample_drop_timestamps.csv')">離線事件原表</a
+      <a :href="m.asset('data/pds/sample_drop_timestamps.csv')">Offline event table</a
       ><br /><a :href="m.asset('data/pds/sample_tube_locations.xml')"
-        >位置欄位定義</a
+        >Position field definitions</a
       >
       ·
-      <a :href="m.asset('data/pds/sample_drop_timestamps.xml')">事件欄位定義</a
+      <a :href="m.asset('data/pds/sample_drop_timestamps.xml')">Event field definitions</a
       ><br /><a
         href="https://pds-geosciences.wustl.edu/m2020/urn-nasa-pds-mars2020_sample_depot_three_forks/miscellaneous/depot/depot_mosaics.csv"
         target="_blank"
         rel="noopener noreferrer"
-        >歷史影像索引 ↗</a
+        >Historical image index ↗</a
       >
     </article>
-    <p class="hint">CTX 原生 20 m、衍生約 40 m DEM 無法判斷岩塊與腳下路況。</p>
+    <p class="hint">The native CTX grid is 20 m and the demo samples it at about 40 m. Rocks underfoot are below that scale.</p>
   </section>
 </template>
