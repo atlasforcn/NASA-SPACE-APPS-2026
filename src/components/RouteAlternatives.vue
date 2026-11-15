@@ -22,6 +22,7 @@ const rows = [
 <template>
   <section v-if="s.routeOptions" class="route-comparison" aria-label="三方案路線比較">
     <h3>比較並選擇行進方案</h3>
+    <p class="hint">黃線是起終點的直線，可以和三條規劃路線比較。</p>
     <div class="button-row">
       <button v-for="(label,key) in {energy:'最低耗電路線',shortest:'最短路線',safer:'較低風險路線'}" :id="`choose-${key}`" :key="key" :aria-pressed="s.selectedRoute === key" :disabled="!s.routeOptions[key].reachable" @click="m.selectRoute(key)">{{ s.selectedRoute === key ? '● ' : '' }}{{ label }}</button>
     </div>

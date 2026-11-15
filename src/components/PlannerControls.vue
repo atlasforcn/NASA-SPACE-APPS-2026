@@ -13,7 +13,7 @@ const chosenName = computed(() => s.entries.find(p => p.name === namedChoice.val
   <div class="planner-controls">
     <details id="settings-stops" class="planning-assumptions">
       <summary>中途停靠與地名搜尋</summary>
-      <p class="hint">先選一個目的地，加入中途停靠；最後選擇終點。系統會逐段搜尋路徑。</p>
+      <p class="hint">先加中途停靠點，最後選終點。</p>
       <label>搜尋地名與著陸點<input id="stop-named-search" v-model="namedQuery" type="search" placeholder="Olympus Mons、Jezero、Octavia E. Butler Landing…" @input="namedChoice = ''" /></label>
       <label>選擇奇觀<select id="stop-named-place" v-model="namedChoice" :disabled="s.regionLoading">
         <option value="">{{ namedMatches.length ? '請選擇奇觀' : '找不到地名，請調整搜尋文字' }}</option>
@@ -50,13 +50,13 @@ const chosenName = computed(() => s.entries.find(p => p.name === namedChoice.val
         <label>平地步速（km/h）<input id="walk-speed" v-model.number="s.planner.speedKmh" type="number" min="0.1" max="10" step="0.1" /></label>
         <label>時間預算（小時）<input id="time-budget" v-model.number="s.planner.budgetHours" type="number" min="0.1" step="0.5" /></label>
       </div>
+      <p class="hint">步行時間依地球步速和沿途坡度估算，總時間另加每站停留。</p>
       <div class="field-pair">
         <label>每站停留（分鐘）<input id="stop-minutes" v-model.number="s.planner.stopMinutes" type="number" min="0" step="5" /></label>
         <label>高坡度門檻（°）<input id="high-slope" v-model.number="s.planner.highSlope" type="number" min="0" max="45" /></label>
       </div>
       <label>地形風險權重 {{ s.planner.riskWeight }}<input id="risk-weight" v-model.number="s.planner.riskWeight" type="range" min="0" max="5" step="0.25" /></label>
       <label><input id="round-trip" v-model="s.planner.roundTrip" type="checkbox" /> 終點後規劃返回起點</label>
-      <p class="hint">最短路線以三維距離為目標；較低風險路線額外考慮 DEM 坡度、粗糙度與已啟用材質成本。三者均避開超坡、超粗糙度與缺測區。最低耗電路線以坡度耗電模型搜尋。時間採地球步行坡度模型估算，與車輛加速模擬分開；不代表火星 EVA 工程能力。</p>
     </details>
   </div>
 </template>

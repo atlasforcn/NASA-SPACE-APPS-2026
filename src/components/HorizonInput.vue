@@ -91,15 +91,15 @@ onBeforeUnmount(() => { loadToken++; image?.close(); });
       <button :disabled="!filename" @click="extract">重新擷取輪廓</button>
       <button id="horizon-clear" @click="clear">清除輪廓</button>
     </div>
-    <p v-if="filename" class="hint">{{ filename }}</p>
+    <p v-if="filename" class="hint">{{ filename }} · 請保持照片水平，依裁切後的畫面填寫水平視角。</p>
     <div class="button-row">
       <label>影像投影<select id="horizon-projection" v-model="projection"><option value="perspective">單張透視照片／手繪</option><option value="equirectangular">等距全景圖／手繪</option></select></label>
       <label>水平視角（°）<input id="horizon-fov" v-model.number="fov" type="number" min="10" :max="projection === 'perspective' ? 150 : 360" /></label>
       <label>相機俯仰角（°，向上為正）<input id="horizon-pitch" v-model.number="pitch" type="number" min="-60" max="60" step="0.1" /></label>
     </div>
-    <p class="hint">請依影像選擇透視或等距全景投影，並保持水平；寬幅照片可直接載入，不會自動判定投影或視角。水平視角須對應裁切後影像。預設 60°／0° 僅供調整，請依相機資料設定。手繪也使用相同角度尺度；畫布中央虛線代表相機俯仰角。</p>
     <canvas id="horizon-editor" ref="canvas" width="700" height="260" aria-label="可手繪及修正的山稜線畫布"
       @pointerdown="start" @pointermove="draw" @pointerup="end" @pointercancel="end" @lostpointercapture="end" />
+    <p v-if="!filename" class="hint">手繪時，中央虛線對應上方設定的俯仰角。</p>
     <p id="horizon-input-status" class="hint" role="status">{{ message }}</p>
     <p id="horizon-search-scope" class="hint">{{ !s.ready ? "正在載入 DEM，完成後即可比對。" : s.regionLoading ? "正在切換地形區域，完成後即可比對。" : s.searching ? "正在比對；可使用「取消」停止搜尋。" : s.hasStart ? "搜尋範圍：目前估計位置附近。" : "未設定起點也可比對：將搜尋目前載入的 DEM 區域；設定大致起點可縮小範圍。" }}</p>
     <button id="horizon-match" class="primary" :disabled="!s.ready || s.searching || s.regionLoading" @click="match">比對 DEM 找回候選位置</button>

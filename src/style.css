@@ -142,13 +142,6 @@ input[type="checkbox"] {
   letter-spacing: 0.16em;
   font-size: 20px;
 }
-.brand small {
-  display: block;
-  color: #8fa7a8;
-  font-size: 9px;
-  letter-spacing: 0.2em;
-  margin-top: 5px;
-}
 .mission-signal {
   display: flex;
   align-items: center;
@@ -695,9 +688,6 @@ details button {
   .brand-mark {
     width: 30px;
     height: 30px;
-  }
-  .brand small {
-    font-size: 8px;
   }
   .mission-signal {
     display: none;

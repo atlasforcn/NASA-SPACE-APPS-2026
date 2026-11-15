@@ -13,13 +13,13 @@ const sampled = computed(() => m.scienceValueAt(point.value));
 const value = (n, digits = 0) => Number.isFinite(n) ? n.toFixed(digits) : '無有效資料';
 const examples = [
   { id: 'optical', name: '光學', example: '地表影像、岩塊與可辨識地標', use: '與地形對照，協助辨識目的地周邊的地表特徵。' },
-  { id: 'thermal', name: '熱', example: '日夜地表溫度、熱慣量', use: '補充地表熱環境與活動時段的評估背景。' },
-  { id: 'spectral', name: '光譜', example: '礦物吸收特徵、含水礦物分布', use: '協助比較候選科學目標與採樣區域。' },
+  { id: 'thermal', name: '熱' },
+  { id: 'spectral', name: '光譜' },
   { id: 'terrain', name: '地形', example: '高程、坡度、地形陰影與粗糙度', use: '檢視地勢、視線遮蔽與路線坡度條件。' },
-  { id: 'geophysical', name: '地球物理', example: '重力、磁場、地下雷達剖面', use: '提供區域構造與地下環境的背景，需配合資料尺度解讀。' },
+  { id: 'geophysical', name: '地球物理' },
   { id: 'atmospheric', name: '大氣', example: '氣壓、風、塵埃與能見度', use: '補充觀測能見度與行進時段的環境資訊。' },
   { id: 'radiation', name: '輻射', example: '輻射劑量率、累積曝露', use: '提供停留時間與任務曝露評估的背景。' },
-  { id: 'chemical', name: '化學', example: '元素組成、鹽類與樣本分析', use: '補充採樣價值與地表材料的解讀。' },
+  { id: 'chemical', name: '化學' },
 ];
 const active = computed(() => examples.filter(e => e.id === (
   s.layer === 'none' ? 'optical' : ['slope', 'hillshade', 'roughness', 'geology'].includes(s.layer) ? 'terrain' : s.layer
@@ -83,7 +83,7 @@ const active = computed(() => examples.filter(e => e.id === (
           <p><a :href="meta.source.url" target="_blank" rel="noopener noreferrer">原始資料來源 ↗</a> · <a :href="m.asset('data/science/manifest.json')" target="_blank" rel="noopener noreferrer">座標、處理與 SHA-256 紀錄 ↗</a></p>
         </template>
       </template>
-      <p class="hint">{{ item.use }}</p>
+      <p v-if="item.use" class="hint">{{ item.use }}</p>
     </article>
     <p class="hint">熱圖可獨立顯示。熱慣量成本{{ s.navigation.thermalEnabled ? "已啟用" : "未啟用" }}，地質材質成本{{ s.navigation.geologyEnabled ? "已啟用" : "未啟用" }}。路線另使用地形與禁行區。歷史觀測不代表所選位置已完成安全評估。</p>
   </div>

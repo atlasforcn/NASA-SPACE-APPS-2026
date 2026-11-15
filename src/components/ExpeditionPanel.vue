@@ -6,7 +6,7 @@ const m = inject(missionKey),
 </script>
 <template>
   <section class="group">
-    <p class="eyebrow">MARSOPS / THREE FORKS</p>
+    <p class="eyebrow">Three Forks</p>
     <h2>重訪樣本存放區</h2>
     <p class="hint">
       假想人員考察：使用你選定的任務起點 → Three Forks → 返回。亮黃色站點為 NASA

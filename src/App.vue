@@ -102,7 +102,7 @@ if (import.meta.env.MODE === "test") window.__mission = mission;
         <path d="M9 22c5-2 8-2 12 0s7 2 10 0M12 14c3 1 5 1 8 0m-6 15c4-2 8-2 12 0" fill="none" stroke="#713f2e" stroke-linecap="round" stroke-width="2" />
         <path d="M5 31c8 5 22 6 31-1" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2" />
       </svg
-      ><span><strong>Journey to the Mars</strong><small>MARTIAN NAVIGATOR</small></span></a
+      ><strong>Journey to the Mars</strong></a
     >
     <div class="mission-signal">
       <i :class="{ busy: s.searching || s.loading }"></i
@@ -118,7 +118,7 @@ if (import.meta.env.MODE === "test") window.__mission = mission;
     <div class="mode-menu">
       <p class="eyebrow">Journey to the Mars</p><h1 id="mode-title" tabindex="-1">這次想怎麼探索火星？</h1>
       <button id="start-walk" :disabled="!s.ready || s.regionLoading" @click="enterWalk"><strong>Jezero 科學任務</strong><span>前往觀測站 A。找出直線上的陡坡，比較兩條繞行路線的距離與坡度。</span><b>{{ s.walk ? '繼續科學任務' : '開始路線檢查' }} →</b></button>
-      <button id="start-free" @click="enterFree"><strong>自由探索</strong><span>選一處隕石坑或峽谷，跟著當地問題讀圖。也可以自選起點和終點，再用山頂相儀找出自己的位置。</span><b>選擇探索區域 →</b></button>
+      <button id="start-free" @click="enterFree"><strong>自由探索</strong><span>自己選起點和終點，也可以用山頂相儀找位置。</span><b>選擇探索區域 →</b></button>
       <a id="curiosity-demo-entry" class="demo-entry" :href="demoHash" aria-haspopup="dialog" @click="openDemo">用好奇號實拍山稜找位置 <span aria-hidden="true">→</span></a>
       <p v-if="s.error" role="alert">{{ s.error }} <button @click="mission.boot">重試載入</button></p>
     </div>

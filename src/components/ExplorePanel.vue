@@ -1,10 +1,15 @@
 <script setup>
-import { inject, ref, watch } from "vue";
+import { computed, inject, ref, watch } from "vue";
 import { missionKey } from "../useMission";
 import regions from "../../regions.mjs";
 const m = inject(missionKey),
   s = m.state;
 const selectedRegion = ref('jezero');
+const showAllNames = ref(false);
+const filteringNames = computed(() => Boolean(s.query.trim() || s.type));
+const listedNames = computed(() => filteringNames.value || showAllNames.value
+  ? m.matches.value
+  : m.matches.value.filter(place => place.featured));
 watch(() => s.siteId, id => {
   if (regions.some(region => region.id === id)) selectedRegion.value = id;
 });
@@ -21,14 +26,11 @@ function selectRegion(event) {
 <template>
   <div>
     <section class="group">
-      <p class="eyebrow">01 / SELECT REGION</p>
       <h2>選擇探索區域</h2>
-      <p class="hint">切換區域後，可直接點選起始點，或打開圖層探索地形。</p>
       <label>DEM 區域快捷選擇<select id="dem-region-preset" v-model="selectedRegion" :disabled="!s.ready || s.regionLoading" @change="selectRegion">
-        <option v-for="r in regions" :key="r.id" :value="r.id">{{ r.title }} · {{ r.name }}</option>
+        <option v-for="r in regions" :key="r.id" :value="r.id">{{ r.title }} · {{ r.name }} · {{ r.cellMeters }} m／格</option>
       </select></label>
       <button id="load-region" class="primary wide" :disabled="!s.ready || s.regionLoading" @click="loadPreset">{{ s.regionLoading ? '正在載入地形…' : '載入所選區域 →' }}</button>
-      <p class="hint">僅列出具有局部正射影像的區域。Jezero：CTX DEM 30×30 km、40 m／格。Gale：20 m／格。Valles CTX：20×20 km、40 m／格。</p>
       <h3 class="subheading">自訂座標 / 全球 MOLA</h3>
       <p class="hint">自訂座標的區域格距至少 4 km，不代表高解析觀測。</p>
       <p class="hint">輸入中心座標建立任務；起點、目的地與繪製路線可跨區域，覆蓋範圍自動調整。</p>
@@ -88,12 +90,15 @@ function selectRegion(event) {
       <p id="named-count" class="hint">
         {{
           s.namesError ||
-          `${s.entries.length} 個地名與著陸點 · 符合 ${m.matches.value.length} 個 · 顯示 ${m.displayed.value.length} 個`
+          (filteringNames ? `找到 ${listedNames.length} 個地點` : showAllNames ? `全部 ${listedNames.length} 個地點` : `精選 ${listedNames.length} 個地點`)
         }}
       </p>
+      <button v-if="!filteringNames && s.entries.length" type="button" aria-controls="named-list" :aria-expanded="showAllNames" @click="showAllNames = !showAllNames">
+        {{ showAllNames ? "只看精選地點" : `顯示全部 ${s.entries.length} 個地點` }}
+      </button>
       <div id="named-list" class="list">
         <button
-          v-for="p in m.displayed.value"
+          v-for="p in listedNames"
           :key="p.name"
           @click="m.selectName(p)"
         >
