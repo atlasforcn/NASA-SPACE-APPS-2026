@@ -9,7 +9,7 @@ const m = inject(missionKey),
 <template>
   <div>
     <section class="group">
-      <h2>圖層設定</h2>
+      <h2 id="layer-settings-title" tabindex="-1">圖層設定</h2>
       <LayerControls />
       <div v-for="kind in s.layers.filter(id => ['terrain', 'slope', 'roughness', 'hillshade'].includes(id))" :key="kind" class="scale-legend">
         <strong>{{ { terrain: '高程', slope: '坡度', roughness: '粗糙度', hillshade: '地形陰影' }[kind] }}</strong>

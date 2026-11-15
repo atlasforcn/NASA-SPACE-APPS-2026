@@ -815,13 +815,14 @@ details button {
 .map-height { color: var(--mint); font-size: 11px; line-height: 1.5; }
 
 @media (max-width: 700px) {
-  .map-actions { top: 100px; }
+  .map-actions { top: 100px; pointer-events: none; }
+  .map-actions button { pointer-events: auto; }
   .map-actions.horizon-actions { top: 14px; }
   .horizon-actions .map-layer-status { display: contents; }
   .horizon-actions .map-layer-status > :not(button) { display: none; }
   .map-layer-status { width: min(210px, 55vw); gap: 4px; }
   .map-layer-status__detail { display: none; }
-  .map-layer-status .layer-controls { gap: 4px; }
+  .map-layer-status .layer-controls, .map-layer-status .map-height { display: none; }
 }
 
 /* Leave the lower map controls and the elevation chart in separate hit areas. */

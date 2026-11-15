@@ -1,5 +1,5 @@
 <script setup>
-import { inject, ref, computed, onMounted, onUnmounted } from "vue";
+import { inject, ref, computed, nextTick, onMounted, onUnmounted } from "vue";
 import { missionKey } from "../useMission";
 import LayerControls from './LayerControls.vue';
 const m = inject(missionKey),
@@ -28,9 +28,13 @@ const activeLayer = computed(() => {
     ? m.state.layers.map(id => labels[id] || id).join('、')
     : labels.none;
 });
-function openLayers() {
+async function openLayers() {
   m.state.tab = "layers";
   m.state.panelOpen = true;
+  if (window.matchMedia("(max-width: 700px)").matches) {
+    await nextTick();
+    document.getElementById("layer-settings-title")?.focus();
+  }
 }
 onMounted(() => {
   m.mount(container.value);
