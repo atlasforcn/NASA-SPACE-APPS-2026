@@ -7,6 +7,8 @@ Journey to the Mars 提供兩種探索火星地形的方式。
 
 [開啟可操作預覽](https://atlasforcn.github.io/NASA-SPACE-APPS-2026/)
 
+[NASA Space Apps 投稿資源與用途核對清單（50 筆）](SUBMISSION-REFERENCES.md)
+
 好奇號在 Dingo Gap 拍下的全景可以直接試看。先比對照片與地形的山稜，再揭曉 NASA 的拍攝站位。這一例使用最遠 90 公里的地形，算出的首選距紀錄站位 815 公尺。[開啟好奇號實拍定位示範](https://atlasforcn.github.io/NASA-SPACE-APPS-2026/#dingo-gap)
 
 ## 自由探索與定位
