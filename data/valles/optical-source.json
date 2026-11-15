@@ -1,0 +1,20 @@
+{
+  "url": "https://astrogeo-ard.s3-us-west-2.amazonaws.com/mars/mro/ctx/controlled/usgs/P22_009684_1699_XN_10S069W__B02_010396_1699_XN_10S069W/P22_009684_1699_XN_10S069W__B02_010396_1699_XN_10S069W_orthoimage.tif",
+  "stac_item": "https://stac.astrogeology.usgs.gov/api/collections/mro_ctx_controlled_usgs_dtms/items/P22_009684_1699_XN_10S069W__B02_010396_1699_XN_10S069W",
+  "source_crs_wkt": "PROJCS[\"Mars (2015) - Sphere / Ocentric / Equirectangular, clon = 0\",GEOGCS[\"Mars (2015) - Sphere / Ocentric\",DATUM[\"Mars (2015) - Sphere\",SPHEROID[\"Mars (2015) - Sphere\",3396190,0,AUTHORITY[\"IAU\",\"49900\"]],AUTHORITY[\"IAU\",\"49900\"]],PRIMEM[\"Reference Meridian\",0,AUTHORITY[\"IAU\",\"49900\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"IAU\",\"49900\"]],PROJECTION[\"Equirectangular\"],PARAMETER[\"standard_parallel_1\",0],PARAMETER[\"central_meridian\",0],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],AUTHORITY[\"IAU\",\"49910\"]]",
+  "native_pixel_size_m": [
+    20.042720719153497,
+    20.042720719153497
+  ],
+  "sample_step_m": 40,
+  "display_size": [
+    501,
+    501
+  ],
+  "valid_fraction": 0.9416854912928634,
+  "contrast_percentiles": [
+    1,
+    99
+  ],
+  "sampling": "bilinear reprojection; display only, not elevation"
+}

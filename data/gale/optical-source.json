@@ -1,0 +1,71 @@
+{
+  "url": "https://asc-pds-services.s3.us-west-2.amazonaws.com/mosaic/Mars/MSL/MSL_Gale_HiRISE-LRGB_78quads_sharp_cog.tif",
+  "etag": "\"adae62ea1be4cf769f7232a2a7dee80c-60\"",
+  "content_length": "1030625379",
+  "source_crs_wkt": "PROJCS[\"GCS_INTERPLANETARY,_MARS_2000_SPHERE\",GEOGCS[\"unknown\",DATUM[\"unnamed\",SPHEROID[\"unnamed\",3396190,0]],PRIMEM[\"Reference meridian\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]]],PROJECTION[\"Equirectangular\"],PARAMETER[\"standard_parallel_1\",0],PARAMETER[\"central_meridian\",0],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
+  "native_pixel_size_m": [
+    0.25,
+    0.25
+  ],
+  "source_transform": [
+    0.25,
+    0.0,
+    8140000.0,
+    0.0,
+    -0.25,
+    -270000.0
+  ],
+  "source_window": [
+    6793,
+    0,
+    29207,
+    28283
+  ],
+  "overview_url": null,
+  "overview_base_step_m": 0.25,
+  "sampling": "bilinear reprojection of source raster window; no colour-to-height conversion",
+  "sampled_window_sha256": "0cd9224f53ae220933b85da9634def5254d17422d6d30eab183b6970b7df38c6",
+  "display_size": [
+    1500,
+    1500
+  ],
+  "display_step_m": 6.666666666666667,
+  "bounds": [
+    -5000,
+    -5000,
+    5000,
+    5000
+  ],
+  "valid_fraction": 1.0,
+  "color_valid_fraction": 0.5149386666666667,
+  "gray_fallback": {
+    "url": "https://asc-pds-services.s3.us-west-2.amazonaws.com/mosaic/Mars/MSL/MSL_Gale_Orthophoto_Mosaic_25cm_v3.tif",
+    "etag": "\"4db8511cdf1b966eed386df01d11efa8-2904\"",
+    "content_length": "24356917625",
+    "source_crs_wkt": "PROJCS[\"Mars_Equirectangular_clon0\",GEOGCS[\"GCS_Mars_2000_Sphere\",DATUM[\"Mars_2000_(Sphere)\",SPHEROID[\"Mars_2000_Sphere_IAU_IAG\",3396190,0],AUTHORITY[\"ESRI\",\"106971\"]],PRIMEM[\"Reference_Meridian\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]]],PROJECTION[\"Equirectangular\"],PARAMETER[\"standard_parallel_1\",0],PARAMETER[\"central_meridian\",0],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
+    "native_pixel_size_m": [
+      0.25,
+      0.25
+    ],
+    "source_transform": [
+      0.25,
+      0.0,
+      8126248.0,
+      0.0,
+      -0.25,
+      -241164.0
+    ],
+    "source_window": [
+      15450,
+      25906,
+      10032,
+      10000
+    ],
+    "overview_url": "https://asc-pds-services.s3.us-west-2.amazonaws.com/mosaic/Mars/MSL/MSL_Gale_Orthophoto_Mosaic_25cm_v3.tif.ovr",
+    "overview_base_step_m": 1.0,
+    "sampling": "bilinear reprojection of source raster window; no colour-to-height conversion",
+    "sampled_window_sha256": "2949314fa7f44104ac1854b4ca914304f14fb6f7eebc952f0b4a55a01b9c766b"
+  },
+  "credit": "NASA/JPL-Caltech/MSSS/USGS/UArizona; color mosaic Timothy Parker and Fred Calef",
+  "limitations": "Sharpened and blended colour mosaic, display only; no independent registration assessment."
+}
