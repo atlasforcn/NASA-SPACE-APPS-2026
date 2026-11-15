@@ -87,6 +87,22 @@ try {
     await page.locator('#map').click({position: {x: box.width / 2, y: box.height / 2}});
     await page.waitForFunction(() => document.getElementById('scan').disabled === false);
   }
+  const bearingMarker = page.locator('#map .horizon-view-bearing');
+  const leftTurn = page.getByRole('button', {name: /左轉 30°/});
+  const rightTurn = page.getByRole('button', {name: /右轉 30°/});
+  async function assertMapBearing(expected) {
+    await bearingMarker.waitFor({state:'visible'});
+    const attribute = await bearingMarker.getAttribute('data-bearing');
+    assert.notEqual(attribute, null);
+    const bearing = Number(attribute);
+    assert(bearing >= 0 && bearing < 360, `Invalid map bearing ${bearing}`);
+    assert(Math.abs((bearing - expected + 540) % 360 - 180) < 0.01, `Map bearing ${bearing}, expected ${expected}`);
+  }
+  const screenBearing = () => bearingMarker.locator('svg').evaluate(svg => {
+    const transform = new DOMMatrixReadOnly(getComputedStyle(svg).transform);
+    return Math.atan2(transform.b, transform.a) * 180 / Math.PI;
+  });
+  const screenTurn = (before, after) => (after - before + 540) % 360 - 180;
   const layerInput = kind => page.locator(`.layer-controls:visible input[type="checkbox"][value="${kind}"]`);
   async function setLayer(kind) {
     const selected=page.locator('.layer-controls:visible input[type="checkbox"][value]:checked');
@@ -127,6 +143,34 @@ try {
       await page.evaluate(() => typeof window.__mission),
       "undefined",
     );
+    assert(await bearingMarker.isHidden());
+    await page.locator('#open-localization').click();
+    await assertMapBearing(45);
+    await page.setViewportSize({width:390, height:844});
+    await rightTurn.click();
+    await assertMapBearing(75);
+    await page.locator('#map').scrollIntoViewIfNeeded();
+    await page.waitForFunction(() => {
+      const bounds = document.querySelector('#map .horizon-view-bearing path')?.getBoundingClientRect();
+      if (!bounds?.width) return false;
+      const above = document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+      return !!above?.closest('#map');
+    }, null, {timeout:5000});
+    await leftTurn.click();
+    await page.setViewportSize({width:1600, height:1000});
+    await leftTurn.click();
+    await assertMapBearing(15);
+    const northeast = await screenBearing();
+    await leftTurn.click();
+    await assertMapBearing(345);
+    assert(screenTurn(northeast, await screenBearing()) < -10);
+    await page.locator('#close-localization').click();
+    assert(await bearingMarker.isHidden());
+    await page.locator('#open-localization').click();
+    await assertMapBearing(345);
+    await rightTurn.click();
+    await assertMapBearing(15);
+    assert(Math.abs(screenTurn(northeast, await screenBearing())) < 0.01);
     await scan();
     await page.waitForFunction(
       () =>
@@ -294,6 +338,7 @@ try {
     assert(await page.locator("#horizon-editor").isHidden());
     assert(await page.locator("#localization-tool").isHidden());
     await page.locator("#open-localization").click();
+    assert(await bearingMarker.isHidden());
     await page.locator(".horizon-input summary").click();
     // Drawing and uploads must also work before any mission start is chosen.
     assert(await page.locator("#horizon-match").isEnabled());
@@ -326,6 +371,16 @@ try {
     await page.waitForFunction(() => window.__mission.state.externalHorizon && !window.__mission.state.searching, null, { timeout: 120000 });
     assert.equal(await inspect(() => window.__mission.state.status), "外部輪廓候選");
     assert.equal(await inspect(() => window.__mission.state.hasStart), false);
+    const candidateHeadings = await inspect(() => window.__mission.state.result.candidates.map(c => c.heading));
+    if (candidateHeadings.length) {
+      await assertMapBearing(candidateHeadings[0]);
+      const index = candidateHeadings.length - 1;
+      await page.locator('#candidates button').nth(index).click();
+      await rightTurn.click();
+      await assertMapBearing(candidateHeadings[index] + 30);
+    } else {
+      assert(await bearingMarker.isHidden());
+    }
     assert.equal(await page.locator('#map path[stroke="#9af0e0"]').count(), 0);
     assert(await page.locator("#curve").evaluate(cv => cv.getContext("2d").getImageData(0, 0, cv.width, cv.height).data.some((v, i) => i % 4 === 3 && v)));
     await page.locator("#horizon-projection").selectOption("perspective");
@@ -455,20 +510,46 @@ try {
     const chartImages = () => page.evaluate(() =>
       ['panorama', 'curve'].map(id => document.getElementById(id).toDataURL()));
     const capturedCharts = await chartImages();
-    await inspect(() => window.__mission.turnView(30));
+    const capturedHeading = await inspect(() => window.__mission.state.truth.heading);
+    const estimateHeading = await inspect(() => window.__mission.state.estimate.heading);
+    const candidates = await page.locator('#candidates').innerText();
+    await assertMapBearing(capturedHeading);
+    const capturedScreenBearing = await screenBearing();
+    const capturedPosition = await bearingMarker.evaluate(marker => marker.style.transform);
+    await rightTurn.click();
+    await assertMapBearing(capturedHeading + 30);
+    assert(screenTurn(capturedScreenBearing, await screenBearing()) > 10);
     const rotatedCharts = await chartImages();
     assert.notEqual(rotatedCharts[0], capturedCharts[0]);
     assert.notEqual(rotatedCharts[1], capturedCharts[1]);
-    await inspect(() => window.__mission.turnView(-30));
+    await leftTurn.click();
+    await assertMapBearing(capturedHeading);
+    assert(Math.abs(screenTurn(capturedScreenBearing, await screenBearing())) < 0.01);
     assert.deepEqual(await chartImages(), capturedCharts);
-    // A new current rover position must not change either captured chart.
+    assert.equal(await inspect(() => window.__mission.state.truth.heading), capturedHeading);
+    assert.equal(await inspect(() => window.__mission.state.estimate.heading), estimateHeading);
+    assert.equal(await page.locator('#candidates').innerText(), candidates);
+    // The map and both charts describe the captured view even after the rover moves.
     await inspect(() => {
       window.__mission.state.truth.x += 100;
-      window.__mission.turnView(30);
+      window.__mission.state.truth.heading += 27;
     });
-    await inspect(() => window.__mission.turnView(-30));
+    await rightTurn.click();
+    await assertMapBearing(capturedHeading + 30);
+    assert.equal(await bearingMarker.evaluate(marker => marker.style.transform), capturedPosition);
+    await leftTurn.click();
     assert.deepEqual(await chartImages(), capturedCharts);
-    await inspect(() => { window.__mission.state.truth.x -= 100; });
+    await inspect(() => {
+      window.__mission.state.truth.x -= 100;
+      window.__mission.state.truth.heading -= 27;
+    });
+    const targetBearing = await inspect(() => {
+      const { truth, destination, targets } = window.__mission.state;
+      const target = targets.find(t => t.id === destination);
+      return (Math.atan2(target.x - truth.x, target.y - truth.y) * 180 / Math.PI + 360) % 360;
+    });
+    await page.getByRole('button', {name:'對準標記點'}).click();
+    await assertMapBearing(targetBearing);
     await page.locator("#plan").click();
     await page.locator("#simulate").click();
     await page.waitForFunction(() => window.__mission.state.localizationCount >= 2, {
@@ -508,6 +589,7 @@ try {
     await scan();
     await page.locator("#reset").click();
     await page.waitForTimeout(200);
+    await assertMapBearing(45);
     assert.equal(await inspect(() => window.__mission.state.result), null);
     await page.locator("#draw-points").click();
     await page.locator("#map").click({ position: { x: 800, y: 350 } });

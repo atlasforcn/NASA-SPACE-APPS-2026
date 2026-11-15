@@ -47,6 +47,9 @@ onUnmounted(() => observer?.disconnect());
   <div class="map-badge">
     <h2>{{ m.state.walk ? '基地 → 觀測點 A' : m.state.mapTitle }}</h2>
     <p v-if="m.state.pickingNoGo" role="status">點選地圖，設定禁行區中心。</p>
+    <p v-else-if="m.state.localizationOpen && !m.state.globalView && m.viewBearing.value !== null" aria-live="polite">
+      橘色箭頭 · {{ m.state.externalHorizon ? '候選視線方位' : '視線方位' }} {{ Math.round(m.viewBearing.value) % 360 }}°
+    </p>
     <p v-else-if="!m.state.walk">拖曳移動 · 滾輪縮放 · 在「任務」設定起終點</p>
   </div>
   <details class="map-legend">
@@ -77,7 +80,7 @@ onUnmounted(() => observer?.disconnect());
       <span><i class="legend-ring"></i>圓環：定位候選，青色為首選</span>
     </div>
   </details>
-  <div class="map-actions">
+  <div class="map-actions" :class="{ 'horizon-actions': m.state.localizationOpen }">
     <div v-if="m.state.tab !== 'layers' || !m.state.panelOpen" class="map-layer-status" aria-live="polite">
       <span class="map-layer-status__label">目前圖層</span>
       <strong>{{ activeLayer }}</strong>

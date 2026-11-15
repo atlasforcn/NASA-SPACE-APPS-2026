@@ -50,7 +50,7 @@ const m = inject(missionKey),
       <p class="position" id="position">{{ m.position.value }}</p>
       <p v-if="s.hasStart" class="hint">
         E {{ s.estimate.x.toFixed(0) }} m · N {{ s.estimate.y.toFixed(0) }} m ·
-        yaw {{ s.estimate.heading.toFixed(1) }}°
+        車體估計朝向 {{ s.estimate.heading.toFixed(1) }}°
       </p>
       <label class="checkbox"
         ><input
@@ -74,9 +74,9 @@ const m = inject(missionKey),
         <span>{{ s.externalHorizon ? "手繪／照片輪廓與 DEM 候選" : "DEM 模擬掃描視角" }}</span><span>輪廓視窗 / 120°</span>
       </div>
       <div class="button-row">
-        <button :disabled="!s.ready || !s.hasStart" @click="m.turnView(-30)">← 左轉 30°</button>
-        <button :disabled="!s.ready || !s.hasStart" @click="m.turnView(30)">右轉 30° →</button>
-        <button :disabled="!s.ready || !s.hasStart || (!s.poi && !s.destination)" @click="m.focusView">對準標記點</button>
+        <button :disabled="!s.ready || (!s.hasStart && !s.externalHorizon)" @click="m.turnView(-30)">← 左轉 30°</button>
+        <button :disabled="!s.ready || (!s.hasStart && !s.externalHorizon)" @click="m.turnView(30)">右轉 30° →</button>
+        <button :disabled="!s.ready || m.viewBearing.value === null || (!s.poi && !s.destination)" @click="m.focusView">對準標記點</button>
       </div>
       <p v-if="!s.externalHorizon" class="hint">標記為已知地圖位置的輔助投影，不參與地平線定位；虛線與空心點表示不可見或視野外，並非相機辨識結果。可點選地圖標記後對準。</p>
       <div class="chart-legend" aria-label="地平線圖例">
@@ -131,7 +131,7 @@ const m = inject(missionKey),
       </details>
       <details>
         <summary>如何判讀掃描圖與定位結果</summary>
-        <p v-if="!s.externalHorizon" class="hint">上下圖使用同一次掃描、同一個 120° 視窗，左右轉動會同步；深色區與曲線缺口表示無觀測。行進時保留掃描當下的視角，直到下一次掃描更新。畫面以仰角縮放，並非相機透視照片；定位仍比對完整掃描中的有效資料。60° 視角不足全周 50% 的校正門檻，顯示候選不代表定位成功。</p>
+        <p v-if="!s.externalHorizon" class="hint">地圖的橘色箭頭指向上下圖的 120° 視窗中央。轉動視窗時，箭頭以掃描位置的估計為中心旋轉。深色區與曲線缺口表示無觀測。行進時保留掃描當下的視角，直到下一次掃描更新。畫面以仰角縮放，並非相機透視照片；定位仍比對完整掃描中的有效資料。60° 視角不足全周 50% 的校正門檻，顯示候選不代表定位成功。</p>
         <p class="notice">
           教育概念驗證 · DEM 為真實資料；手繪／照片為使用者輸入，其餘觀測、車輛與漂移為模擬。
         </p>
