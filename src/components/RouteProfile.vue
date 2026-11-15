@@ -3,6 +3,7 @@ import { computed, inject, nextTick, ref, watch } from 'vue';
 import { missionKey } from '../useMission';
 
 const m = inject(missionKey), s = m.state;
+defineEmits(['open-route-challenge']);
 const panel = ref(null);
 const expanded = ref(true);
 const hasRoute = computed(() => s.route?.path?.length > 1);
@@ -28,11 +29,14 @@ function toggleProfile() {
 
 <template>
   <section v-if="hasRoute || hasDirect || hasExpedition" ref="panel" class="map-profile" :class="{ 'is-open': expanded }" aria-label="路線高程剖面">
-    <h2>
-      <button id="profile-toggle" type="button" :aria-expanded="expanded" aria-controls="profile-body" @click="toggleProfile">
-        路線高程剖面 <span>{{ expanded ? '收合 ▴' : '展開 ▾' }}</span>
-      </button>
-    </h2>
+    <div class="profile-header">
+      <h2>
+        <button id="profile-toggle" type="button" :aria-expanded="expanded" aria-controls="profile-body" @click="toggleProfile">
+          路線高程剖面 <span>{{ expanded ? '收合 ▴' : '展開 ▾' }}</span>
+        </button>
+      </h2>
+      <button v-if="m.challengeRoute.value" id="map-route-challenge" type="button" aria-haspopup="dialog" @click="$emit('open-route-challenge', $event)">沿途自我定位 ↗</button>
+    </div>
     <div id="profile-body" v-show="expanded">
       <label v-if="hasExpedition" class="profile-leg">路段
         <select id="expedition-leg" v-model="s.profileIndex">
@@ -85,7 +89,9 @@ function toggleProfile() {
   box-shadow: 0 5px 24px #07101455;
   overflow: hidden;
 }
-.map-profile h2 { flex-shrink: 0; }
+.profile-header { display: flex; align-items: stretch; flex-shrink: 0; background: #1a3036; }
+.profile-header h2 { flex: 1; }
+#map-route-challenge { margin: 4px; padding: 3px 8px; color: var(--mint); background: #203a39; border-color: #476662; font-size: 12px; }
 .map-profile:not(.is-open) { width: auto; }
 #profile-toggle {
   display: flex; align-items: center; justify-content: space-between; gap: 18px;

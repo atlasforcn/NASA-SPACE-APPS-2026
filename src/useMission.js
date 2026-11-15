@@ -15,6 +15,7 @@ import S from "../skyline.mjs";
 import P from "../planet.mjs";
 import { assessRouteSafety } from './route-safety.mjs';
 import { buildItinerary } from './routePlanner.mjs';
+import { makeRouteChallenge } from './route-location-challenge.mjs';
 import { asset, json } from "./asset";
 import { scienceLayerIds, createScienceLoader, scienceCell, sampleScienceGrid } from './science-layers.mjs';
 import { colorizeScienceGrid, rasterScales } from './science-style.mjs';
@@ -203,6 +204,30 @@ export function useMission() {
     ? displayedCandidate.value : captureMapPosition.value || state.estimate);
   let viewBearingMarker;
   const abort = new AbortController();
+  const routeNames = { shortest: "最短路線", safer: "較低風險路線", energy: "最低耗電路線" };
+  const currentRouteName = computed(() => state.route && state.route === state.routeOptions?.[state.selectedRoute]
+    ? routeNames[state.selectedRoute] : "目前路線");
+  const challengeRoute = computed(() => {
+    if (!dem.value || !state.ready || state.regionLoading || !state.hasStart) return null;
+    if (state.walk) {
+      const alternative = state.walk.alternatives.find(option => option.id === state.walk.selectedAlternative);
+      return { name: alternative ? `基地到 A · ${alternative.name}` : "基地到 A · 直線",
+        startLabel: "基地", endLabel: "A", path: alternative?.path || [missionStart, state.walk.station] };
+    }
+    if (state.profileIndex !== -1) {
+      const leg = state.expedition[state.profileIndex];
+      if (!leg?.reachable || leg.path.length < 2) return null;
+      return { name: leg.name, path: leg.path, startLabel: "起點", endLabel: "終點" };
+    }
+    if (!state.route?.reachable || state.route.path.length < 2) return null;
+    return { name: currentRouteName.value, path: state.route.path, startLabel: "起點", endLabel: "終點" };
+  });
+  function createRouteChallenge() {
+    const grid = dem.value;
+    return makeRouteChallenge({ grid, route: challengeRoute.value, profileOptions,
+      isCurrent: () => !disposed && dem.value === grid && !state.regionLoading,
+      lifetime: abort.signal });
+  }
   const scienceLoader = createScienceLoader(asset);
   let navigationThermal = null, geologyIndex = [], navigationLoadToken = 0;
   let scienceToken = 0;
@@ -2102,10 +2127,7 @@ export function useMission() {
     if (!cv) return;
     cv.getContext("2d").clearRect(0, 0, cv.width, cv.height);
 
-    const labels = { shortest: "最短路線", safer: "較低風險路線", energy: "最低耗電路線" };
-    const currentName = state.route && state.route === state.routeOptions?.[state.selectedRoute]
-      ? labels[state.selectedRoute] : "目前路線";
-    const current = state.route && { name: currentName, path: state.route.path };
+    const current = state.route && { name: currentRouteName.value, path: state.route.path };
     const selected = state.profileIndex === -1 ? current : state.expedition[state.profileIndex];
     const routes = [];
     if (state.walk) {
@@ -2117,7 +2139,7 @@ export function useMission() {
     if (selected?.path.length > 1) routes.push(selected);
     if (state.compareProfiles) {
       for (const [key, route] of Object.entries(state.routeOptions || {})) {
-        if (key !== state.selectedRoute && route.reachable) routes.push({ name: labels[key], path: route.path });
+        if (key !== state.selectedRoute && route.reachable) routes.push({ name: routeNames[key], path: route.path });
       }
       if (state.profileIndex !== -1 && current?.path.length > 1) routes.push(current);
       if (!state.regional) {
@@ -2573,6 +2595,7 @@ export function useMission() {
   return {
     state,
     dem,
+    challengeRoute, createRouteChallenge,
     viewBearing, openLocalization, closeLocalization, startWalk, checkScienceRoute, focusScienceEvidence, checkDetour, selectScienceAlternative,
     geologyAt: point => unitLabel(unitAt(point)),
     scienceAt: (point) => {

@@ -4,6 +4,7 @@ import { missionKey } from '../useMission';
 
 const m = inject(missionKey);
 const s = m.state;
+defineEmits(['open-route-challenge']);
 const verdictLabels = { go: '可前往', reroute: '建議改道', hold: '暫緩出發' };
 const alternatives = computed(() => s.walk?.alternatives ?? []);
 const selected = computed(() => alternatives.value.find(option => option.id === s.walk.selectedAlternative));
@@ -55,6 +56,9 @@ function measurement(value, digits, suffix = '') {
     </details>
     <button id="check-science-route" type="button" class="primary wide" :disabled="unavailable" @click="m.checkScienceRoute()">
       {{ s.walk.assessment ? '重新檢查基地到 A' : '檢查基地到 A 的路線' }}
+    </button>
+    <button v-if="m.challengeRoute.value" id="science-route-challenge" type="button" class="route-challenge-entry" aria-haspopup="dialog" @click="$emit('open-route-challenge', $event)">
+      看山稜，判斷我在路線上的哪裡 <span aria-hidden="true">↗</span>
     </button>
 
     <p v-if="s.navigationLoading || s.navigationError" class="hint" role="status">{{ s.navigationLoading ? '正在載入導航資料…' : s.navigationError }}</p>

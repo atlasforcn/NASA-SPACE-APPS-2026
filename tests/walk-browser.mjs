@@ -1,5 +1,15 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { verifyRouteLocation } from './route-location-browser.mjs';
+
+function assertOnRoute(point, path) {
+  const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+  assert(path.some((end, index) => {
+    if (index === 0) return false;
+    const start = path[index - 1];
+    return Math.abs(distance(start, point) + distance(point, end) - distance(start, end)) < 0.01;
+  }), 'The simulated observation must be sampled along the selected route');
+}
 
 export async function verifyWalk(page, url) {
   await page.goto(url);
@@ -49,6 +59,11 @@ export async function verifyWalk(page, url) {
   await page.waitForFunction(() => getComputedStyle(document.querySelector('#map .leaflet-popup')).opacity === '1');
   assert.deepEqual(await vehicle(), atBase);
 
+  const directObservation = await verifyRouteLocation(page, panel.locator('#science-route-challenge'));
+  const directPath = await page.evaluate(() => window.__mission.state.directRoute.path);
+  assertOnRoute(directObservation, directPath);
+  assert.deepEqual(await vehicle(), atBase);
+
   await findDetours.click();
   assert.equal(await choices.count(), 2);
   const routes = await page.evaluate(() => window.__mission.state.walk.alternatives.map(({ id, name, result }) => ({
@@ -76,6 +91,16 @@ export async function verifyWalk(page, url) {
   fs.mkdirSync('test-results', {recursive: true});
   await page.screenshot({path: 'test-results/jezero-preflight-desktop.png'});
   await page.setViewportSize({width: 390, height: 844});
+  const detourObservation = await verifyRouteLocation(page, page.locator('#map-route-challenge'), {
+    repeat: true, screenshot: 'test-results/route-location-science-mobile.png',
+  });
+  const activeDetour = await page.evaluate(() => {
+    const {alternatives, selectedAlternative} = window.__mission.state.walk;
+    return alternatives.find(route => route.id === selectedAlternative);
+  });
+  assert.equal(activeDetour.id, routes.at(-1).id);
+  assertOnRoute(detourObservation, activeDetour.path);
+  assert.deepEqual(await vehicle(), atBase);
   const slopeLimit = panel.locator('#science-slope-limit');
   if (await slopeLimit.isHidden()) await panel.locator('.limits summary').click();
   await slopeLimit.fill('1');

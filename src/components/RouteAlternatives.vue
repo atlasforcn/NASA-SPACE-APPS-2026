@@ -54,7 +54,7 @@ const rows = [
       </template>
     </details>
     <template v-if="s.routeOptions[s.selectedRoute].reachable">
-      <div class="button-row"><button aria-controls="localization-tool" @click="m.openLocalization">我現在在哪裡？用山頂相儀定位</button><button id="fit-plan" @click="m.fitRoute">顯示完整路線</button><button id="export-plan" @click="m.exportPlan">匯出任務 GeoJSON</button></div>
+      <div class="button-row"><button aria-controls="localization-tool" @click="m.openLocalization">用山頂相儀掃描車輛位置</button><button id="fit-plan" @click="m.fitRoute">顯示完整路線</button><button id="export-plan" @click="m.exportPlan">匯出任務 GeoJSON</button></div>
       <p class="hint">切換方案會回到規劃起點。</p>
     </template>
   </section>

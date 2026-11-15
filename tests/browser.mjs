@@ -1,5 +1,6 @@
 import { verifyWalk, verifyScienceOrder } from './walk-browser.mjs';
 import { verifyCuriosityLanding } from './curiosity-browser.mjs';
+import { verifyRouteLocation } from './route-location-browser.mjs';
 import { chromium } from "@playwright/test";
 import fs from "node:fs";
 import http from "node:http";
@@ -216,6 +217,7 @@ try {
     const chart = profile.locator('#route-profile');
     const profileToggle = profile.locator('#profile-toggle');
     assert(await profile.isHidden());
+    assert(await page.locator('#free-route-challenge').isHidden());
     assert(await page.locator('#slope-limit').isHidden());
     assert.equal(await page.locator('#mission-settings').getAttribute('open'), null);
     await page.locator("#plan").click();
@@ -235,6 +237,9 @@ try {
     await page.screenshot({path:'test-results/curiosity-demo-desktop.png'});
     await page.locator('#curiosity-close').click();
     await page.waitForFunction(() => document.activeElement?.id === 'open-curiosity-demo');
+    await verifyRouteLocation(page, page.locator('#free-route-challenge'), {
+      repeat: true, screenshot: 'test-results/route-location-free-desktop.png',
+    });
     assert.equal(await destination.inputValue(), originalId);
     assert.equal(await page.locator('#path-distance').innerText(), routeDistance);
     assert(await chart.isVisible());
@@ -323,6 +328,8 @@ try {
     assert(await page.locator('#simulate').isDisabled());
     await page.locator('#plan').click();
     assert((await page.locator('#route-status').textContent()).includes('無法抵達'));
+    assert(await page.locator('#free-route-challenge').isHidden());
+    assert(await page.locator('#map-route-challenge').isHidden());
     await page.locator('#task-navigation-risk').uncheck();
     await page.locator('#plan').click();
     assert(await page.locator('#simulate').isDisabled());

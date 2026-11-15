@@ -10,6 +10,7 @@ import TaskPanel from "./components/TaskPanel.vue";
 import LayersPanel from "./components/LayersPanel.vue";
 import LocalizationPanel from "./components/LocalizationPanel.vue";
 import CuriosityDemo from "./components/CuriosityDemo.vue";
+import RouteLocationChallenge from "./components/RouteLocationChallenge.vue";
 const mission = useMission(),
   { state: s } = mission;
 const mola = {
@@ -21,6 +22,21 @@ const choosing = ref(true);
 const demoHash = '#dingo-gap';
 const demoOpen = ref(window.location.hash === demoHash);
 let demoOpener = null;
+const challengeOpen = ref(false);
+let challengeOpener = null;
+
+function openRouteChallenge(event) {
+  if (!mission.challengeRoute.value) return;
+  challengeOpener = event.currentTarget;
+  challengeOpen.value = true;
+}
+async function closeRouteChallenge() {
+  challengeOpen.value = false;
+  await nextTick();
+  const target = challengeOpener?.isConnected ? challengeOpener : document.getElementById('region-title');
+  target?.focus({ preventScroll: true });
+  challengeOpener = null;
+}
 
 function openDemo(event) {
   if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
@@ -117,7 +133,7 @@ if (import.meta.env.MODE === "test") window.__mission = mission;
   <section v-if="choosing" class="mode-landing" :style="{'--landing-image': 'url(' + asset('data/jezero-extended/optical.png') + ')'}" aria-labelledby="mode-title">
     <div class="mode-menu">
       <p class="eyebrow">Journey to the Mars</p><h1 id="mode-title" tabindex="-1">這次想怎麼探索火星？</h1>
-      <button id="start-walk" :disabled="!s.ready || s.regionLoading" @click="enterWalk"><strong>Jezero 科學任務</strong><span>前往觀測站 A。找出直線上的陡坡，比較兩條繞行路線的距離與坡度。</span><b>{{ s.walk ? '繼續科學任務' : '開始路線檢查' }} →</b></button>
+      <button id="start-walk" :disabled="!s.ready || s.regionLoading" @click="enterWalk"><strong>Jezero 科學任務</strong><span>找出前往 A 站途中的陡坡，比較兩條繞行路線。選好路線後，也能看山稜判斷自己在哪裡。</span><b>{{ s.walk ? '繼續科學任務' : '開始路線檢查' }} →</b></button>
       <button id="start-free" @click="enterFree"><strong>自由探索</strong><span>自己選起點和終點，也可以用山頂相儀找位置。</span><b>選擇探索區域 →</b></button>
       <a id="curiosity-demo-entry" class="demo-entry" :href="demoHash" aria-haspopup="dialog" @click="openDemo">用好奇號實拍山稜找位置 <span aria-hidden="true">→</span></a>
       <p v-if="s.error" role="alert">{{ s.error }} <button @click="mission.boot">重試載入</button></p>
@@ -141,7 +157,7 @@ if (import.meta.env.MODE === "test") window.__mission = mission;
           <span>{{ s.mapContext }}</span><span>{{ s.coords }}</span>
         </div>
       </div>
-      <RouteProfile v-if="!choosing" />
+      <RouteProfile v-if="!choosing" @open-route-challenge="openRouteChallenge" />
     </section>
     <aside class="control-panel" aria-label="任務操作">
       <button
@@ -189,6 +205,7 @@ if (import.meta.env.MODE === "test") window.__mission = mission;
           </section>
           <ExplorePanel v-if="!s.walk" v-show="s.tab === 'explore'" /><TaskPanel
             v-show="s.tab === 'mission'"
+            @open-route-challenge="openRouteChallenge"
           /><LayersPanel v-show="s.tab === 'layers'" />
         </div>
       </div>
@@ -196,4 +213,5 @@ if (import.meta.env.MODE === "test") window.__mission = mission;
     <LocalizationPanel v-if="!s.walk" v-show="s.localizationOpen" @open-demo="openDemo" />
   </main>
   <CuriosityDemo v-if="demoOpen" @close="closeDemo" />
+  <RouteLocationChallenge v-if="challengeOpen" @close="closeRouteChallenge" />
 </template>

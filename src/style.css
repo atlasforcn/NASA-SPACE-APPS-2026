@@ -903,3 +903,4 @@ canvas.navigation-risk-tile {
 .region-actions { padding:12px 20px; border-bottom:1px solid var(--border); }
 .region-actions p { font-size:13px; margin-bottom:6px; }
 .region-actions button { margin:0 5px 6px 0; }
+.route-challenge-entry { display: flex; align-items: center; justify-content: space-between; gap: .5rem; width: 100%; margin-top: .55rem; text-align: start; color: var(--mint); border-color: #476662; }
