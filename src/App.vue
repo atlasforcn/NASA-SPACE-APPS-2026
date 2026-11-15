@@ -26,7 +26,7 @@ if (import.meta.env.MODE === "test") window.__mission = mission;
         <path d="M9 22c5-2 8-2 12 0s7 2 10 0M12 14c3 1 5 1 8 0m-6 15c4-2 8-2 12 0" fill="none" stroke="#713f2e" stroke-linecap="round" stroke-width="2" />
         <path d="M5 31c8 5 22 6 31-1" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2" />
       </svg
-      ><span><strong>山頂相儀</strong><small>MARTIAN NAVIGATOR</small></span></a
+      ><span><strong>Journey to the Mars</strong><small>MARTIAN NAVIGATOR</small></span></a
     >
     <div class="mission-signal">
       <i :class="{ busy: s.searching || s.loading }"></i
@@ -68,6 +68,7 @@ if (import.meta.env.MODE === "test") window.__mission = mission;
           <p class="hint">選擇區域 → 規劃路線 → 地平線定位</p>
           <p class="hint" role="status">{{ s.warning }}</p>
         </div>
+        <button v-if="!s.walk" id="start-walk" class="primary" :disabled="!s.ready || s.regionLoading || s.regional || s.siteId !== 'jezero'" @click="mission.startWalk">開始 Jezero 科學任務</button>
         <nav class="tabs" aria-label="控制面板分頁">
           <button
             v-for="tab in [

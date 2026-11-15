@@ -9,19 +9,26 @@ export function decodeScienceGrid(buffer, meta) {
 }
 
 // Nearest original downloaded cell. No spatial interpolation of coarse observations.
-export function sampleScienceGrid(meta, values, lat, lng) {
+export function scienceCell(meta, values, lat, lng) {
   if (!meta || meta.kind !== 'raster' || !values || !Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90) return null;
   const lon = ((lng + 180) % 360 + 360) % 360 - 180;
   const col = Math.min(meta.width - 1, Math.floor((lon + 180) / 360 * meta.width));
   const row = Math.min(meta.height - 1, Math.floor((90 - lat) / 180 * meta.height));
   const value = values[row * meta.width + col];
-  return Number.isFinite(value) ? value : null;
+  const dx = 360 / meta.width, dy = 180 / meta.height;
+  return { row, col, west: -180 + col * dx, east: -180 + (col+1) * dx,
+    north: 90-row*dy, south: 90-(row+1)*dy, value: Number.isFinite(value) ? value : null };
+}
+
+export function sampleScienceGrid(meta, values, lat, lng) {
+  return scienceCell(meta, values, lat, lng)?.value ?? null;
 }
 
 export function createScienceLoader(asset, fetcher = fetch) {
   let manifest;
   const cache = new Map();
-  async function load(key) {
+  const pending = new Map();
+  async function download(key) {
     if (!scienceLayerIds.includes(key)) throw Error('未知科學圖層');
     if (cache.has(key)) return cache.get(key);
     if (!manifest) {
@@ -39,6 +46,10 @@ export function createScienceLoader(asset, fetcher = fetch) {
     const result = { meta, values };
     cache.set(key, result);
     return result;
+  }
+  function load(key) {
+    if (!pending.has(key)) pending.set(key, download(key).finally(() => pending.delete(key)));
+    return pending.get(key);
   }
   return { load };
 }

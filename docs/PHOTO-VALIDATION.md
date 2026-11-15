@@ -49,3 +49,26 @@ reference: {x, y}（外部參考位置，僅搜尋結束後用於評分）
 先固定地形範圍、遮罩、標註規則、搜尋範圍、先驗誤差、模型及門檻；使用不同拍攝站位，保留不參與調整的測試組。比較先驗、單純里程估計與照片校正後的中位數／高分位位置誤差、改善比例、拒絕比例及錯誤校正比例。另測試錯誤區域、視角不足與粉塵遮擋。接受率須與接受後誤差一起報告，不能只挑最佳案例。
 
 只有測試組在考慮參考誤差後仍一致降低位置誤差，且錯誤校正受控，才能支持「在已測試條件下，真實照片地平線改善定位」。這仍不支持輪前避障、路線安全或火星所有地形適用。
+
+## 本次實拍篩選與逐筆結果
+
+[產品清單](photo-sites.json) 保存三個獨立站位的四個產品、下載網址、投影資訊及 PLACES 前後兩筆定位紀錄。定位表採 planetocentric latitude、east longitude。相機光心、姿態與地形配準的不確定性仍待查證；車身 yaw 不能直接用作相機方位。多 sol 全景須追到各曝光才能確認 site/drive，檔名與目錄標示的 Van Zyl 結束 sol 也不一致（64 與 63）。
+
+| 站位 | 產品 | 分組 | 實拍評估 |
+|---|---|---|---|
+| Butler Landing | 01.02 左眼自然色全景，sol 3、11 | 開發 | 缺逐曝光幾何、已複核的山稜與 DEM 遮罩，排除 |
+| Van Zyl | 03.02 左眼自然色全景，sol 53–63 | 開發 | 須先確認組圖時段、相機幾何與遠山覆蓋，排除 |
+| Horizon 2 | 05.02 左眼自然色全景，sol 114 | 保留站 | 缺人工複核輪廓與相機高，排除 |
+| Horizon 2 | ZL0_0114_0677061671，單張，site 4／drive 1062 | 同一保留站 | 缺單張標定後視角、有效輪廓與遠山遮罩，排除 |
+
+可計分 0 筆。沒有可報告的先驗／候選位置誤差或誤認率。保留站包含其所有裁切。重建清單：
+
+```sh
+curl -fL https://mastcamz.asu.edu/mastcam-zs-360-panorama-collection/ -o /tmp/panoramas.html
+curl -fL https://pds-geosciences.wustl.edu/m2020/urn-nasa-pds-mars2020_rover_places/data_localizations/best_interp.csv -o /tmp/places.csv
+python3 scripts/catalog-photo-sites.py /tmp/panoramas.html /tmp/places.csv > docs/photo-sites.json
+```
+
+評估前須固定每組的先驗、搜尋範圍、DEM 版本、相機高及射線設定。單張或裁切的已審查輸入可加 observation.fovMask，全周等間距逐方位記錄是否在視場內。有效遮罩另排除遮擋及 DEM 不支援的方向。評估器分別輸出有效角度、視場內有效比例、輪廓起伏、DEM 重疊、前兩候選分差與拒絕原因。沒有視場遮罩時視場內比例留空。headingSource 與外部相機 heading 同時存在才計方向誤差。原模擬門檻保持 50%，有限視角仍可留下候選供比較。
+
+以 720×360 的水平理想輪廓、3° 取樣重跑既有 perspective 轉換，60°、120°、150° 視場分別保留 19、39、50 個有效方位（全周 120 格的 15.8%、32.5%、41.7%）。與理想輪廓重疊率均為 100%，殘差為零，但缺乏山形起伏，三例均遭原分類器拒絕。執行 `node tests/test_photo_evaluation.mjs` 可重現此算法檢查。

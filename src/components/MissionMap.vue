@@ -68,7 +68,8 @@ onUnmounted(() => observer?.disconnect());
     <div v-if="m.state.tab !== 'layers' || !m.state.panelOpen" class="map-layer-status" aria-live="polite">
       <span class="map-layer-status__label">目前圖層</span>
       <strong>{{ activeLayer }}</strong>
-      <LayerControls compact />
+      <details v-if="m.state.walk"><summary>全部圖層</summary><LayerControls compact /></details>
+      <LayerControls v-else compact />
       <span class="map-height" role="status">{{ m.state.elevation || "移動游標查看高度" }}</span>
       <span v-if="m.state.legend" class="map-layer-status__detail">{{ m.state.legend }}</span>
       <button type="button" @click="openLayers">調整圖層 ↗</button>

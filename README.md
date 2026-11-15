@@ -1,6 +1,8 @@
-# 山頂相儀 · Vue 3＋Vite
+# Journey to the Mars
 
-火星導航靜態網站：地圖探索、圖層、路線規劃與行進、DEM 地平線定位，以及 Three Forks／NASA PDS 科學站。桌面採地圖優先介面，手機可收合操作面板。
+山頂相儀提供地平線輔助定位。網站支援地圖探索、圖層、路線規劃與行進、DEM 地平線定位，以及 Three Forks／NASA PDS 科學站。桌面採地圖優先介面，手機可收合操作面板。
+
+從 Jezero 首頁按「開始 Jezero 科學任務」。比較 A、B 的 USGS 地質單元與 TES 格網，再依往返時間選擇加訪 B 或只去 A。快轉到站後可記錄觀察、掃描或重掃，從當下估計返程，最後匯出 GeoJSON。各站預設工作 15 分鐘，基地不計停留。
 
 Jezero 的「行進中自動以地平線校正」預設開啟，於起步及每行進 250 m 擷取模擬地平線，在背景搜尋位置。可靠結果會補回搜尋期間的里程位移並校正導航估計，保留目前路線；觀測不足時保留里程推估。MOLA 每 4 km 更新實驗候選，可信度尚未校準，不套用位置校正。手動掃描仍會停止行進，Jezero 成功校正後需重新規劃。此功能為同 DEM 模擬概念驗證。
 
@@ -34,7 +36,7 @@ npm run preview
 
 「圖層 → 疊加資料」可疊加已下載的 TES 熱慣量、TES 橄欖石豐度、GMM-3 重力異常及 GRS 鐵濃度格網，並讀取游標／目的地的格網值；MEDA 氣壓與 RAD 吸收劑量以 Sol 1 歷史測站呈現。所有資料由本站靜態提供，保留缺值、格距、原表與來源雜湊。`scripts/prepare-science.py` 可重建 `data/science/`，來源與限制見 `docs/SOURCES.md`。這些科學觀測不改寫 DEM 路線成本。
 
-「探索」可載入 Jezero 30×30 km CTX 擴區、4×4 km HiRISE 局部、Gale 10×10 km 合併 DEM，以及 Valles Marineris 20×20 km CTX DTM。Jezero 擴區取樣 40 m；HiRISE 局部原生 1 m、取樣 5 m；Gale 原生 1 m、取樣 20 m；Valles CTX 取樣 40 m。來源及處理方式見 `docs/SOURCES.md`。
+「探索」可載入 Jezero 30×30 km CTX 擴區、Gale 10×10 km 合併 DEM，以及 Valles Marineris 20×20 km CTX DTM。Jezero 擴區取樣 40 m；Gale 原生 1 m、取樣 20 m；Valles CTX 取樣 40 m。來源及處理方式見 `docs/SOURCES.md`。
 
 - `src/`：Vue 元件、共用任務狀態與定位 Worker。
 - `core.mjs`、`planet.mjs`、`skyline.mjs`：網站與測試共用的計算核心。
@@ -48,7 +50,7 @@ npm run preview
 
 預設規劃假設為平地步速 3 km/h、每站停留 15 分鐘、時間預算 8 小時、高坡度標記 10°、通行坡度上限 15°（中等坡度情境）。粗糙度上限預設為 1（量尺最大值），因此初始規劃主要由坡度、缺測與人工禁行區限制；需要排除粗糙地形時，請降低粗糙度上限。地質材質成本預設啟用，熱慣量成本預設關閉。這些數值供情境比較，並非火星任務安全標準。
 
-DEM 快捷選擇提供 Jezero、Jezero CTX 擴區、Jezero HiRISE 局部、Gale 與 Valles CTX，另有 Elysium、Olympus、Hellas、Valles 的公里級 MOLA 快捷中心；自訂座標同樣使用全球 MOLA。執行 `node scripts/export-regions.mjs` 可輸出附來源的各中心 MOLA 數值區域格網。毅力號實景照片驗證的來源、阻礙與評估指令見 [實景驗證說明](docs/PHOTO-VALIDATION.md)；目前尚無真實照片定位改善的實測結論。
+DEM 快捷選擇提供 Jezero CTX 擴區、Gale 與 Valles CTX，另有 Elysium、Olympus、Hellas、Valles 的公里級 MOLA 快捷中心；自訂座標同樣使用全球 MOLA。執行 `node scripts/export-regions.mjs` 可輸出附來源的各中心 MOLA 數值區域格網。毅力號實景照片驗證的來源、阻礙與評估指令見 [實景驗證說明](docs/PHOTO-VALIDATION.md)；目前尚無真實照片定位改善的實測結論。
 
 圖層為真實資料，觀測、車輛與漂移為模擬。Jezero 展示格網約 40 m；全球 MOLA 來源赤道約 3.7 km，區域格網從 4 km 起隨任務範圍調整。跨洲路線使用局部球面投影近似，距離、方位與通行判斷不代表真實任務導航。全球定位候選未校準，不自動校正。15° 為展示門檻，DEM 無法保證腳下或車輪尺度安全。來源與精度限制見 `docs/SOURCES.md`。
 

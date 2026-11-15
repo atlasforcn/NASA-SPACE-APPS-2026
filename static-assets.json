@@ -28,8 +28,8 @@
     "disposition": "publish",
     "reason": "Website runtime, reference, source record or presentation",
     "path": "data/mission.json",
-    "bytes": 2001,
-    "sha256": "c035b3bda8cdba2725f0ef52389d647582eb7e7671648ebe52aab5719161bdbc"
+    "bytes": 2731,
+    "sha256": "250e58c1b91e595444d7ad8a64e25ab7d675c91ce132b4f40476fc40ef597847"
   },
   {
     "source": "data/mola16.bin",
@@ -116,8 +116,8 @@
     "disposition": "publish",
     "reason": "Real photo validation sources, protocol and current evidence limitations",
     "path": "docs/PHOTO-VALIDATION.md",
-    "bytes": 4544,
-    "sha256": "40799984338d88633315b8481a8fa3644ed2c20ea3f1525d8302b71558bc32ac"
+    "bytes": 7037,
+    "sha256": "e3352aa0d144830cbdc7201d7da73fc7faeec322328d84ac409bf4105fff2fc3"
   },
   {
     "source": "data/gale/dem.json",
@@ -310,5 +310,12 @@
     "path": "data/jezero-extended/optical-source.json",
     "bytes": 1388,
     "sha256": "dc5a7212cd7e0030c837a14271810114fef5987f9b5be61ef051cbd662556d95"
+  },
+  {
+    "source": "docs/photo-sites.json",
+    "path": "docs/photo-sites.json",
+    "disposition": "publish",
+    "bytes": 4947,
+    "sha256": "7c542b82b0f110bd246eb9d41e0d3c095f9f1945f7f20b39e7b18b418152bc6f"
   }
 ]

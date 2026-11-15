@@ -1,5 +1,6 @@
 import {
   reactive,
+  markRaw,
   shallowRef,
   computed,
   watch,
@@ -14,7 +15,7 @@ import S from "../skyline.mjs";
 import P from "../planet.mjs";
 import { buildItinerary } from './routePlanner.mjs';
 import { asset, json } from "./asset";
-import { scienceLayerIds, createScienceLoader, sampleScienceGrid } from './science-layers.mjs';
+import { scienceLayerIds, createScienceLoader, scienceCell, sampleScienceGrid } from './science-layers.mjs';
 import { colorizeScienceGrid, rasterScales } from './science-style.mjs';
 
 function createUiId(prefix = "") {
@@ -74,6 +75,7 @@ export function useMission() {
     routeOptions: null,
     selectedRoute: 'energy',
     stopIds: [],
+    walk: null,
     planner: { speedKmh: 3, riskWeight: 1, highSlope: 10, roundTrip: false, stopMinutes: 15, budgetHours: 8, uphillPenalty: 10, downhillSaving: 5 },
     targetName: "",
     slope: 15,
@@ -102,9 +104,10 @@ export function useMission() {
     layer: "none",
     layers: [],
     layerStyles: Object.fromEntries(['terrain', 'slope', 'hillshade', 'roughness', 'geology', ...scienceLayerIds].map(id => [id, { opacity: 65, palette: 'heat', min: rasterScales[id]?.[0], max: rasterScales[id]?.[1] }])),
-    scienceMeta: null,
-    scienceStatus: '',
-    scienceLoading: false,
+    scienceLayers: {},
+    get scienceMeta() { return this.scienceLayers[this.layer]?.meta; },
+    get scienceStatus() { return this.scienceLayers[this.layer]?.status || ''; },
+    get scienceLoading() { return !!this.scienceLayers[this.layer]?.loading; },
     optical: true,
     legend: "",
     units: [],
@@ -188,7 +191,7 @@ export function useMission() {
   const abort = new AbortController();
   const scienceLoader = createScienceLoader(asset);
   let navigationThermal = null, geologyIndex = [], navigationLoadToken = 0;
-  let scienceToken = 0, scienceGrid = null;
+  let scienceToken = 0;
   const position = computed(() => {
     if (!dem.value || !state.hasStart) return "尚未設定起點";
     const p = C.localToLatLng(state.estimate.x, state.estimate.y);
@@ -293,6 +296,14 @@ export function useMission() {
     routeLayer = null;
   }
   function reset(kind = state.scenario, { preserveTargets = false } = {}) {
+    if (state.walk) {
+      state.targets = state.targets.filter(t => !state.walk.stations.some(s => s.id === t.id));
+      state.walk = null;
+      state.stopIds = [];
+      state.planner.roundTrip = false;
+      state.hasStart = false;
+      if (poiLayer) refreshPois();
+    }
     state.pickingNoGo=false;
     if (!dem.value) return;
     stop();
@@ -371,10 +382,10 @@ export function useMission() {
     routeLayer = L.layerGroup().addTo(map);
     for (let i = 1; i < result.path.length; i++)
       L.polyline([ll(result.path[i - 1]), ll(result.path[i])], {
-        color: result.invalidSegments?.includes(i) ? "#ff736e" : C.heightSource(result.path[i].x,result.path[i].y)==='MOLA' ? "#e6b772" : "#8be4d0",
+        color: result.invalidSegments?.includes(i) ? "#ff736e" : C.terrainProduct(result.path[i].x,result.path[i].y)?.coarse ? "#e6b772" : "#8be4d0",
         weight: 4,
         pane: "navigationRoute",
-        dashArray: C.heightSource(result.path[i].x,result.path[i].y)==='MOLA' ? "7 5" : null,
+        dashArray: C.terrainProduct(result.path[i].x,result.path[i].y)?.coarse ? "7 5" : null,
       }).addTo(routeLayer);
   }
   function redrawNoGoZones() {
@@ -429,7 +440,77 @@ export function useMission() {
     state.routeStatus='請參照影像點選禁行區中心；半徑採火星公尺，不會自動辨識影像內容。';
   }
   function removeNoGo(id) { state.noGoZones=state.noGoZones.filter(z=>z.id!==id); }
+  async function startWalk() {
+    if (!state.ready || state.regionLoading || state.siteId !== 'jezero' || state.regional || state.walk) return;
+    reset();
+    const stations = snapshot.mission.targets.map(t => ({...t, note: '', outcome: '待觀察', scans: []}));
+    state.walk = {stations, station: stations[0], at: 'base', includeB: true, elapsed: 0, completedLegs: [], comparison: null};
+    missionStart = {...snapshot.mission.start};
+    state.hasStart = true;
+    state.targets.push(...stations);
+    state.planner.roundTrip = true;
+    state.stopIds = [stations[0].id];
+    state.destination = stations[1].id;
+    state.status = '基地起點已設定';
+    state.message = '抵達科學站後可使用山頂相儀掃描。';
+    state.selectedRoute = 'shortest';
+    state.layer = 'thermal';
+    state.tab = 'mission';
+    state.panelOpen = true;
+    refreshPois();
+    await nextTick();
+    if (!state.walk) return;
+    plan();
+    map.fitBounds(L.latLngBounds([ll(missionStart), ...stations.map(ll)]), {padding: [35,35], animate:false});
+  }
+  function focusWalkStation(station) {
+    state.walk.station = station;
+    map.panTo(ll(station), {animate:false});
+  }
+  function planWalkFromStation() {
+    const w = state.walk;
+    if (!w || w.at === 'base' || w.at === 'home') return;
+    if (state.navigationLoading || state.navigationError || !slopeValid()) { clearRoute(); return; }
+    stop(); cancel();
+    const [a,b] = w.stations;
+    const visitB = w.at === a.id && w.includeB;
+    const home = {...missionStart, name:'返回基地', returnLeg:true};
+    const work = w.stations.find(s => s.id === w.at);
+    const spent = w.elapsed + (work.outcome === '略過' ? 0 : work.stopMinutes/60);
+    try {
+      const options = {...state.planner, roundTrip:false};
+      const routes = buildItinerary(state.estimate, visitB ? [b,home] : [home], options);
+      for (const r of new Set(Object.values(routes))) if (r.reachable) r.marginHours -= spent;
+      installRoute(routes[state.selectedRoute]);
+      state.routeOptions = routes;
+      state.routeStatus = visitB ? '從目前估計加訪 B 並返程。' : '從目前估計返回基地。';
+    } catch (err) { clearRoute(); state.routeStatus = err.message; }
+  }
+  function advanceWalk() {
+    const w = state.walk, route = state.route;
+    if (!w || !route?.reachable || w.at === 'home') return;
+    const leg = route.legs[0], end = route.path[route.stopIndices[0]];
+    stop(); cancel();
+    const previous = w.stations.find(s => s.id === w.at);
+    if (previous && previous.outcome !== '略過') w.elapsed += previous.stopMinutes/60;
+    w.elapsed += leg.hours;
+    w.completedLegs.push({ ...leg, path: route.path.slice(0, route.stopIndices[0]+1).map(p => {
+      const {lat,lng} = C.localToLatLng(p.x,p.y);
+      return [lng,lat,C.elevation(p.x,p.y)];
+    }) });
+    state.travelled += leg.length;
+    const offset = {x:state.estimate.x-state.truth.x, y:state.estimate.y-state.truth.y};
+    state.estimate = {x:end.x, y:end.y, heading:state.estimate.heading};
+    state.truth = {x:end.x-offset.x, y:end.y-offset.y, heading:state.truth.heading};
+    trail.addLatLng(ll(end));
+    const station = w.stations.find(s => s.name === leg.name);
+    w.at = station?.id || 'home';
+    if (station) { focusWalkStation(station); planWalkFromStation(); }
+    else { state.routeStatus = '已返回基地。'; map.panTo(ll(end)); }
+    render();
+  }
   function plan() {
+    if (state.walk && state.walk.at !== 'base') return planWalkFromStation();
     if (state.navigationLoading || state.navigationError) { state.routeStatus=state.navigationError || '正在載入導航資料，請稍候。'; return; }
     if (!state.hasStart) return;
     if (state.regionLoading) return;
@@ -439,6 +520,7 @@ export function useMission() {
     if (!slopeValid()) return;
     const goal = state.targets.find((t) => t.id === state.destination);
     if (!goal) return;
+    if (state.walk) state.walk.comparison = null;
     state.truth = { ...missionStart, heading: 45 };
     state.estimate = { ...missionStart, heading: 45 };
     state.travelled = 0;
@@ -449,6 +531,14 @@ export function useMission() {
     try {
       const stops = state.stopIds.map(id => state.targets.find(t => t.id === id)).filter(Boolean);
       alternatives = buildItinerary(missionStart, [...stops, goal], state.planner);
+      if (state.walk) {
+        const [a,b] = state.walk.stations;
+        const options = {...state.planner,roundTrip:true};
+        state.walk.comparison = {
+          a: !state.walk.includeB ? alternatives : buildItinerary(missionStart,[a],options),
+          ab: state.walk.includeB ? alternatives : buildItinerary(missionStart,[a,b],options)
+        };
+      }
     } catch (error) {
       clearRoute();
       state.routeStatus = error.message;
@@ -480,6 +570,10 @@ export function useMission() {
   }
   function selectRoute(key) {
     if (!state.routeOptions || !['shortest','safer','energy'].includes(key)) return;
+    if (state.walk && state.walk.at !== 'base') {
+      state.selectedRoute = key;
+      return planWalkFromStation();
+    }
     stop(); cancel();
     const alternatives = state.routeOptions, direct = state.directRoute;
     state.selectedRoute = key;
@@ -678,6 +772,13 @@ export function useMission() {
       });
       const best = result.candidates[0];
       drawCurve(best);
+      if (state.walk) {
+        const station = state.walk.stations.find(s => s.id === state.walk.at);
+        station?.scans.push({source:suppliedObservation ? '照片／手繪候選':'同 DEM 模擬',
+          coverageDegrees:360*observation.valid.filter(Boolean).length/observation.valid.length,
+          scenario:suppliedObservation ? null : state.scenario,status:result.status,reason:result.reason,
+          updated:!suppliedObservation && !state.regional && result.status === 'good' && !!best});
+      }
       if (suppliedObservation) {
         state.status = "外部輪廓候選";
         state.message = `${result.reason}；手繪／照片比對僅提供候選，請核對橘色輸入與青色 DEM 輪廓及相機設定。未套用位置校正。`;
@@ -691,7 +792,8 @@ export function useMission() {
             ? state.estimate.heading - capturePose.heading : 0)),
         };
         state.localizationCount++;
-        if (!continuous) clearRoute();
+        if (!continuous && state.walk && state.walk.at !== 'base') planWalkFromStation();
+        else if (!continuous) clearRoute();
         else {
           const goal = state.targets.find(t => t.id === state.destination);
           if (goal) {
@@ -1004,57 +1106,62 @@ export function useMission() {
     ctx.putImageData(img, 0, 0);
     return cv.toDataURL();
   }
+  function analysisPane(kind) {
+    const pane = map.getPane('analysis-' + kind) || map.createPane('analysis-' + kind);
+    pane.style.zIndex = 401 + state.layers.indexOf(kind);
+    pane.style.pointerEvents = 'none';
+    return 'analysis-' + kind;
+  }
   async function setScienceLayer(kind, token) {
     const scienceOverlay = L.layerGroup().addTo(analysis);
-    state.scienceLoading = true;
-    state.scienceStatus = '正在載入離線科學資料…';
+    const record = reactive({ overlay: markRaw(scienceOverlay), meta: null, values: null, loading: true, status: '正在載入離線科學資料…', range: null });
+    state.scienceLayers[kind] = record;
+    const layerPane = analysisPane(kind);
     try {
       const loaded = await scienceLoader.load(kind);
       if (disposed || token !== scienceToken || !state.layers.includes(kind)) return;
       const meta = loaded.meta;
-      scienceGrid = loaded.values;
-      state.scienceMeta = meta;
+      record.values = loaded.values;
+      record.meta = meta;
       const style = state.layerStyles[kind];
       if (meta.kind === 'raster') {
-        const validRange = Number.isFinite(Number(style.min)) && Number.isFinite(Number(style.max)) && Number(style.min) < Number(style.max);
+        const validRange = Number.isFinite(style.min) && Number.isFinite(style.max) && style.min < style.max;
         const [min, max] = validRange ? [Number(style.min), Number(style.max)] : meta.scale;
+        record.range = [min, max];
         const url = colorizeScienceGrid(loaded.values, meta.width, meta.height, min, max, style.palette);
         for (const offset of [-360, 0, 360]) {
           const overlay = L.imageOverlay(url, [[-90,-180+offset],[90,180+offset]], {
-            opacity: style.opacity / 100, className: 'science-raster', interactive: false,
+            pane: layerPane, opacity: style.opacity / 100, className: 'science-raster', interactive: false,
           });
           overlay.on('error', () => {
-            if (token === scienceToken) state.scienceStatus = '科學疊圖影像載入失敗，請重試。';
+            if (token === scienceToken) record.status = '科學疊圖影像載入失敗，請重試。';
           });
           overlay.addTo(scienceOverlay);
         }
-        state.legend = `${meta.title} · ${min} 至 ${max} ${meta.unit} · 缺值透明；色階外數值截色`;
-        state.scienceStatus = `已疊加下載格網 · ${360/meta.width}°／格；放大不增加原始解析度。`;
+        if (state.layer === kind) state.legend = `${meta.title} · ${min} 至 ${max} ${meta.unit} · 缺值透明；色階外數值截色`;
+        record.status = `已疊加下載格網 · ${360/meta.width}°／格；放大不增加原始解析度。`;
       } else {
         for (const offset of [-360,0,360]) {
-          L.circleMarker([meta.lat, meta.lng+offset], { radius: 9, color: '#ffe09a', weight: 2, opacity: style.opacity / 100, fillColor: kind === 'radiation' ? '#d24132' : '#2ab4b4', fillOpacity: style.opacity / 100 })
+          L.circleMarker([meta.lat, meta.lng+offset], { pane: layerPane, radius: 9, color: '#ffe09a', weight: 2, opacity: style.opacity / 100, fillColor: kind === 'radiation' ? '#d24132' : '#2ab4b4', fillOpacity: style.opacity / 100 })
             .bindTooltip(esc(`${meta.name} · ${meta.value.toFixed(2)} ${meta.unit}`))
             .bindPopup(`<strong>${esc(meta.name)}</strong><p>${esc(meta.value.toFixed(2))} ${esc(meta.unit)}</p><p>${esc(meta.note)}</p>`)
             .addTo(scienceOverlay);
         }
-        state.legend = `${meta.name} · ${meta.value.toFixed(2)} ${meta.unit} · 歷史測站，非整區格網`;
-        state.scienceStatus = '已疊加實際觀測測站；可查看測站位置與原表。';
+        if (state.layer === kind) state.legend = `${meta.name} · ${meta.value.toFixed(2)} ${meta.unit} · 歷史測站，非整區格網`;
+        record.status = '已疊加實際觀測測站；可查看測站位置與原表。';
       }
       estimateMarker?.bringToFront();
     } catch (error) {
       if (token !== scienceToken || disposed) return;
-      state.scienceStatus = `科學圖層載入失敗：${error.message}`;
-      state.legend = '此圖層未載入；可重試。';
+      record.status = `科學圖層載入失敗：${error.message}`;
+      if (state.layer === kind) state.legend = '此圖層未載入；可重試。';
     } finally {
-      if (token === scienceToken && !disposed) state.scienceLoading = false;
+      if (token === scienceToken && !disposed) record.loading = false;
     }
   }
   function setLayer() {
     const token = ++scienceToken;
-    scienceGrid = null;
-    state.scienceMeta = null;
-    state.scienceStatus = '';
-    state.scienceLoading = false;
+    state.scienceLayers = {};
     if (!map || !dem.value) return;
     remove(analysis);
     analysis = L.layerGroup().addTo(map);
@@ -1064,6 +1171,7 @@ export function useMission() {
     if (!state.layers.length) renderLayer('none', token);
   }
   function renderLayer(kind, token) {
+    const pane = analysisPane(kind);
     const opacity = (state.layerStyles[kind]?.opacity ?? 65) / 100;
     if (scienceLayerIds.includes(kind)) {
       state.legend = '正在載入科學疊圖…';
@@ -1092,7 +1200,7 @@ export function useMission() {
           }
           return L.polygon(
             f.rings.map((r) => r.map(([x, y]) => ll({ x, y }))),
-            { color, weight: 1, opacity, fillOpacity: opacity * 0.85 },
+            { pane, color, weight: 1, opacity, fillOpacity: opacity * 0.85 },
           ).bindTooltip(esc(label));
         }),
       ).addTo(analysis);
@@ -1113,7 +1221,7 @@ export function useMission() {
                   ? C.clamp(v / 24, 0, 1)
                   : C.clamp((v + 8200) / 30000, 0, 1);
             L.circleMarker(ll(p), {
-              radius: 4,
+              pane, radius: 4,
               color: `hsl(${220 - f * 220} 65% 60%)`,
               weight: 0,
               fillOpacity: opacity,
@@ -1127,7 +1235,7 @@ export function useMission() {
       } else {
         L.imageOverlay(terrainImage(kind), bounds, {
           opacity,
-          className: 'local-dem-image',
+          pane, className: 'local-dem-image',
         }).addTo(analysis);
         state.legend =
           kind === "slope"
@@ -1246,7 +1354,8 @@ export function useMission() {
   }
   function selectPoi(p) {
     state.poi = p;
-    if (state.targets.some((t) => t.id === p.id)) state.destination = p.id;
+    if (state.walk?.stations.some(t => t.id === p.id)) focusWalkStation(p);
+    else if (state.targets.some((t) => t.id === p.id)) state.destination = p.id;
     map.panTo(ll(p));
     const r = C.risk(p.x, p.y);
     L.popup()
@@ -1445,14 +1554,14 @@ export function useMission() {
         kind: "DEM 自動候選峰（非正式地名）",
       })),
     ];
-    for (const p of [...state.pois, ...state.targets.filter((p) => p.id.startsWith("custom-"))])
+    for (const p of [...state.pois, ...state.targets.filter((p) => p.id.startsWith("custom-") || state.walk?.stations.some(t => t.id === p.id)), ...(state.walk ? [{...missionStart,id:"base",name:"任務基地",kind:"擬定人類任務"}] : [])])
       L.circleMarker(ll(p), {
         radius: p.id.startsWith("P") ? 4 : 6,
         color: "#f2ed48",
         fillOpacity: 0.8,
       })
         .addTo(poiLayer)
-        .bindTooltip(esc(p.name))
+        .bindTooltip(esc(p.name), { permanent: !!state.walk && (p.id === 'base' || state.walk.stations.some(t => t.id === p.id)), direction: 'top' })
         .on("click", () => selectPoi(p));
   }
   function filterNames() {
@@ -2021,13 +2130,13 @@ export function useMission() {
           : planet?.sample(e.latlng.lat, e.latlng.lng),
         height = Number.isFinite(z) ? `高度 ${z.toFixed(1)} m` : "高度：無資料";
       state.coords = `${e.latlng.lat.toFixed(5)}°N ${e.latlng.lng.toFixed(5)}°E · ${height} · ${unitLabel(unitAt(p))}`;
-      const scienceValue = sampleScienceGrid(state.scienceMeta, scienceGrid, e.latlng.lat, e.latlng.lng);
+      const scienceValue = sampleScienceGrid(state.scienceMeta, state.scienceLayers[state.layer]?.values, e.latlng.lat, e.latlng.lng);
       if (scienceValue !== null) state.coords += ` · ${scienceValue.toFixed(3)} ${state.scienceMeta.unit}`;
+      else if (state.scienceMeta?.kind === 'raster') state.coords += ' · 科學格網：無資料';
       const nav=C.navigationAt(p.x,p.y);
       if(nav.reasons.length) state.coords += ` · ${nav.reasons.join("；")}`;
-      else if (state.scienceMeta?.kind === 'raster') state.coords += ' · 科學格網：無資料';
       state.elevation = Number.isFinite(z)
-        ? `游標高程 ${z.toFixed(1)} m · ${Number.isFinite(localZ) && !state.regional ? state.siteName + " DEM" : "MOLA 16 ppd"}`
+        ? `游標高程 ${z.toFixed(1)} m · ${Number.isFinite(localZ) && !state.regional ? state.siteName + " DEM" : "MOLA 16 ppd · 無法判定局部粗糙度"}`
         : "游標高程：無資料";
     });
     map.on("click", async (e) => {
@@ -2270,6 +2379,16 @@ export function useMission() {
   watch(() => state.targets.map(t => t.id).join('|'), () => {
     state.stopIds = state.stopIds.filter(id => state.targets.some(t => t.id === id));
   });
+  watch(() => state.walk && [state.walk.includeB, ...state.walk.stations.map(s=>s.stopMinutes), state.walk.stations.find(s=>s.id===state.walk.at)?.outcome, JSON.stringify(state.planner)].join('|'), async (value, previous) => {
+    if (!value || !previous || !state.walk) return;
+    const w = state.walk;
+    if (w.at === 'base') {
+      state.stopIds = w.includeB ? [w.stations[0].id] : [];
+      state.destination = w.stations[w.includeB ? 1 : 0].id;
+      await nextTick();
+    }
+    if (state.walk === w) plan();
+  });
   watch(() => state.destination, () => {
     stop(); clearRoute();
     state.routeStatus = '目的地已變更，請建立路線。';
@@ -2295,6 +2414,7 @@ export function useMission() {
   return {
     state,
     dem,
+    startWalk, advanceWalk, focusWalkStation, planWalkFromStation,
     scienceAt: (point) => {
       if (!state.ready || state.regionLoading || !dem.value || !point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) return null;
       const geo = C.localToLatLng(point.x, point.y);
@@ -2304,7 +2424,8 @@ export function useMission() {
         unit: unit ? unitLabel(unit) : null, cellMeters: C.demInfo()?.cellMeters,
         source: dem.value.source?.url };
     },
-    scienceValueAt: (point) => sampleScienceGrid(state.scienceMeta, scienceGrid, point?.lat, point?.lng),
+    scienceCellAt: point => scienceCell(state.scienceMeta, state.scienceLayers[state.layer]?.values, point?.lat, point?.lng),
+    scienceValueAt: (point) => sampleScienceGrid(state.scienceMeta, state.scienceLayers[state.layer]?.values, point?.lat, point?.lng),
     retryScience: () => setLayer(),
     focusScience: () => {
       const meta = state.scienceMeta;
@@ -2358,7 +2479,17 @@ export function useMission() {
       const route = state.routeOptions?.[state.selectedRoute];
       if (!route?.reachable) return;
       const { path, ...metrics } = route;
-      const payload = { type: 'FeatureCollection', properties: { body: 'Mars', coordinates: 'Planetocentric east-positive longitude/latitude; not Earth WGS84', assumptions: {...state.planner}, slopeLimit: Number(state.slope), roughnessLimit: Number(state.roughnessLimit), navigation: {...state.navigation}, noGoZones: state.noGoZones.map(z=>({...z})), navigationModel: "User-defined material hypotheses; max geology/thermal factor; no calibrated vehicle model", navigationSources: {geology: state.navigation.geologyEnabled ? {source:snapshot?.geology?.source,sha256:snapshot?.geology?.raw_sha256} : null,thermal: state.navigation.thermalEnabled && navigationThermal ? {source:navigationThermal.meta.source.url,sha256:navigationThermal.meta.source.sha256,unit:navigationThermal.meta.unit,pixelsPerDegree:navigationThermal.meta.display_ppd} : null}, dem: C.demInfo(), warning: 'Prototype terrain planning; not operational navigation' }, features: [{ type: 'Feature', properties: { mode: state.selectedRoute, ...metrics }, geometry: { type: 'LineString', coordinates: path.map(p => { const ll = C.localToLatLng(p.x,p.y); return [ll.lng,ll.lat,C.elevation(p.x,p.y)]; }) } }] };
+      const payload = { type: 'FeatureCollection', properties: { stationRecords: state.walk?.stations, elapsedHours: state.walk?.elapsed, body: 'Mars', coordinates: 'Planetocentric east-positive longitude/latitude; not Earth WGS84', assumptions: {...state.planner}, slopeLimit: Number(state.slope), roughnessLimit: Number(state.roughnessLimit), navigation: {...state.navigation}, noGoZones: state.noGoZones.map(z=>({...z})), navigationModel: "User-defined material hypotheses; max geology/thermal factor; no calibrated vehicle model", navigationSources: {geology: state.navigation.geologyEnabled ? {source:snapshot?.geology?.source,sha256:snapshot?.geology?.raw_sha256} : null,thermal: state.navigation.thermalEnabled && navigationThermal ? {source:navigationThermal.meta.source.url,sha256:navigationThermal.meta.source.sha256,unit:navigationThermal.meta.unit,pixelsPerDegree:navigationThermal.meta.display_ppd} : null}, dem: C.demInfo(), warning: 'Prototype terrain planning; not operational navigation' }, features: [{ type: 'Feature', properties: { mode: state.selectedRoute, ...metrics }, geometry: { type: 'LineString', coordinates: path.map(p => { const ll = C.localToLatLng(p.x,p.y); return [ll.lng,ll.lat,C.elevation(p.x,p.y)]; }) } }] };
+      if (state.walk) {
+        if (state.walk.at === 'home') payload.features = [];
+        for (const {path:coordinates,...leg} of state.walk.completedLegs) {
+          payload.features.push({type:'Feature',properties:{...leg,status:'已行進'},geometry:{type:'LineString',coordinates}});
+        }
+        for (const station of state.walk.stations) {
+          const {lat,lng} = C.localToLatLng(station.x,station.y);
+          payload.features.push({type:'Feature',properties:{...station},geometry:{type:'Point',coordinates:[lng,lat]}});
+        }
+      }
       const url = URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)], {type:'application/geo+json'}));
       const link = document.createElement('a'); link.href=url; link.download='mars-mission.geojson'; link.click();
       setTimeout(() => URL.revokeObjectURL(url),1000);

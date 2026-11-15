@@ -3,10 +3,12 @@ import { inject } from 'vue';
 import { missionKey } from '../useMission';
 const m = inject(missionKey), s = m.state;
 const hours = value => `${value.toFixed(2)} h`;
-const rows = [
+const vehicleRows = [
   ['energy','估計耗電',v => `${(v/1000).toFixed(2)} 單位`],
   ['materialEnergy','材質增加耗電',v => `${(v/1000).toFixed(2)} 單位`],
   ['unknownMaterialDistance','材質未知路段',m.fmt],
+ ];
+const rows = [
   ['surface','三維路程',m.fmt],
   ['hours','步行時間',hours],
   ['gain','累積上升',m.fmt],
@@ -33,8 +35,11 @@ const rows = [
         </tbody>
       </table>
     </div>
+    <details><summary>車輛支援指標 · 估計耗電</summary><ul><li v-for="[key,label,format] in vehicleRows" :key="key">{{ label }} · {{ s.routeOptions[s.selectedRoute].reachable ? format(s.routeOptions[s.selectedRoute][key]) : '無可達路線' }}</li></ul></details>
     <p class="hint">風險為坡度、粗糙度與材質假設的模型指標，並非事故機率。不同目標可能得到相同路徑。1 耗電單位相當於平地行駛 1 km；只估計行進耗電，不含停留與設備用電。</p>
     <template v-if="s.routeOptions[s.selectedRoute].reachable">
+      <p v-if="s.routeOptions[s.selectedRoute].molaDistance">MOLA 公里級概觀 {{ m.fmt(s.routeOptions[s.selectedRoute].molaDistance) }}；此段無法評估局部粗糙度。</p>
+      <p v-if="s.routeOptions[s.selectedRoute].seamDistance">跨產品接縫 {{ m.fmt(s.routeOptions[s.selectedRoute].seamDistance) }} 缺少可比較高差。此段時間與耗電以水平距離估算，爬升僅計同來源部分。</p>
       <h3>導航成本原因</h3>
       <ul><li v-for="cause in s.routeOptions[s.selectedRoute].navigationReasons" :key="cause.reason">{{ cause.reason }} · {{ m.fmt(cause.distance) }}</li></ul>
       <p v-if="!s.routeOptions[s.selectedRoute].navigationReasons?.length" class="hint">此路線未增加材質成本；仍套用坡度耗電與禁行檢查。</p>

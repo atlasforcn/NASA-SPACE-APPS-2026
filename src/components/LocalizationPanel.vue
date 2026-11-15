@@ -7,10 +7,10 @@ const m = inject(missionKey),
 </script>
 <template>
   <section class="localization" aria-label="地平線定位">
-    <div class="localization-controls">
+    <details class="localization-controls" :open="!s.walk || s.walk.at !== 'base'"><summary>掃描與候選位置</summary>
       <p class="eyebrow">03 / HORIZON LOCALIZATION</p>
       <div class="section-title">
-        <h2>用地平線找回位置</h2>
+        <h2>山頂相儀 · 地平線定位</h2>
         <span id="localization-status" class="status-pill" role="status">{{
           s.status
         }}</span>
@@ -65,8 +65,8 @@ const m = inject(missionKey),
         </p>
         <p class="hint">{{ s.evaluation }}</p>
       </div>
-    </div>
-    <div class="horizon-charts">
+    </details>
+    <div v-show="!s.walk || s.walk.at !== 'base'" class="horizon-charts">
       <HorizonInput />
       <div class="chart-head">
         <span>{{ s.externalHorizon ? "手繪／照片輪廓與 DEM 候選" : "DEM 模擬掃描視角" }}</span><span>輪廓視窗 / 120°</span>
@@ -103,7 +103,7 @@ const m = inject(missionKey),
       ></canvas>
       <p class="hint" id="horizon-hover" role="status">{{ s.horizonHover || "掃描後，移動滑鼠至快照可在地圖查看對應輪廓點；標示的是該方向仰角最高的地形點。" }}</p>
     </div>
-    <div class="localization-results">
+    <div v-show="!s.walk || s.walk.at !== 'base'" class="localization-results">
       <p v-if="!s.externalHorizon" class="hint">上下圖使用同一次掃描、同一個 120° 視窗，左右轉動會同步；深色區與曲線缺口表示無觀測。行進時保留掃描當下的視角，直到下一次掃描更新。畫面以仰角縮放，並非相機透視照片；定位仍比對完整掃描中的有效資料。60° 視角不足全周 50% 的校正門檻，顯示候選不代表定位成功。</p>
       <p id="match-msg" class="hint" role="status">{{ s.message }}</p>
       <ol id="candidates" aria-label="Top 3 定位候選">
