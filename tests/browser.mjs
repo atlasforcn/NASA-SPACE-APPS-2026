@@ -1,4 +1,5 @@
 import { verifyWalk, verifyScienceOrder } from './walk-browser.mjs';
+import { verifyCuriosityLanding } from './curiosity-browser.mjs';
 import { chromium } from "@playwright/test";
 import fs from "node:fs";
 import http from "node:http";
@@ -14,6 +15,7 @@ const types = {
   ".json": "application/json",
   ".png": "image/png",
   ".jpg": "image/jpeg",
+  ".webp": "image/webp",
   ".bin": "application/octet-stream",
   ".md": "text/plain",
 };
@@ -126,7 +128,8 @@ try {
     await page.addInitScript(() => Object.defineProperty(crypto, "randomUUID", { value: undefined }));
   }
   await page.goto(url);
-    await page.locator('#start-free').click();
+  if (process.env.PRODUCTION_SMOKE === '1') await verifyCuriosityLanding(page, url);
+  await page.locator('#start-free').click();
   if (process.env.PRODUCTION_SMOKE !== '1') { await verifyScienceOrder(page, url); await verifyWalk(page, url); }
   if (process.env.PRODUCTION_SMOKE === "1") {
     await page.waitForFunction(() => !document.getElementById("pick-start").disabled);
@@ -218,6 +221,17 @@ try {
     assert(chartBounds.y + chartBounds.height <= mapBounds.y + mapBounds.height + 1);
     assert.equal(await profileToggle.getAttribute('aria-expanded'), 'true');
     await page.screenshot({path:'test-results/map-profile-desktop.png'});
+    const routeDistance = await page.locator('#path-distance').innerText();
+    await page.locator('#open-curiosity-demo').click();
+    await page.locator('#curiosity-reveal').click();
+    await page.locator('#curiosity-nasa-mark').waitFor();
+    await page.screenshot({path:'test-results/curiosity-demo-desktop.png'});
+    await page.locator('#curiosity-close').click();
+    await page.waitForFunction(() => document.activeElement?.id === 'open-curiosity-demo');
+    assert.equal(await destination.inputValue(), originalId);
+    assert.equal(await page.locator('#path-distance').innerText(), routeDistance);
+    assert(await chart.isVisible());
+    assert(await page.locator('#simulate').isEnabled());
     await profileToggle.click();
     assert(await chart.isHidden());
     await profileToggle.click();

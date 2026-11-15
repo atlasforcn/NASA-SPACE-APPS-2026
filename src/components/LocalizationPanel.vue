@@ -2,6 +2,7 @@
 import { inject } from "vue";
 import HorizonInput from "./HorizonInput.vue";
 import { missionKey } from "../useMission";
+defineEmits(['open-demo']);
 const m = inject(missionKey),
   s = m.state;
 </script>
@@ -17,6 +18,7 @@ const m = inject(missionKey),
         }}</span>
       </div>
       <p class="hint">比對眼前的山稜線與地形模型，找出自己可能所在的位置。山形不清楚時，可保留原估計並重掃。</p>
+      <a id="open-curiosity-demo" class="demo-entry" href="#dingo-gap" aria-haspopup="dialog" @click="$emit('open-demo', $event)">看好奇號實拍定位示範 <span aria-hidden="true">→</span></a>
       <label
         >模擬觀測品質<select id="observe-mode" v-model="s.scenario">
           <option value="good">360° 完整觀測</option>

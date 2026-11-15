@@ -894,6 +894,17 @@ canvas.navigation-risk-tile {
 .mode-menu strong { font-size:22px; }
 .mode-menu span { color:#c3d4d1; }
 .mode-menu b { color:var(--mint); }
+.demo-entry {
+  display: inline-flex;
+  align-items: center;
+  gap: .65rem;
+  min-height: 44px;
+  color: var(--mint);
+  font-weight: 650;
+  text-underline-offset: .24em;
+}
+.mode-menu .demo-entry { padding-inline: 4px; }
+.demo-entry:hover { color: #fff; }
 .mode-switch { float:right; padding:3px 6px; font-size:11px; }
 .region-actions { padding:12px 20px; border-bottom:1px solid var(--border); }
 .region-actions p { font-size:13px; margin-bottom:6px; }

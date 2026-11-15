@@ -1,8 +1,18 @@
-# 真實照片地平線驗證：目前結論未定
+# 真實照片地平線驗證
 
-目前沒有完成真實照片定位實驗，不能宣稱「真實照片的地平線已改善本專案定位」。現有同 DEM 模擬成功不能代替這個結論。
+## 好奇號在 Gale 的實拍比對
 
-## 優先資料
+公開示範採用好奇號第 538–539 個火星日在 Dingo Gap 西側的左導航相機全景。每隔 3° 從照片標出可辨的山稜，保留 210° 的有效觀測。比對程式在同一個 9.5 × 9.5 公里搜尋區內評估位置與朝向，使用數值地形推算各處會看到的山形。排序完成後才以第 26 站、第 708 次行駛的 NASA 定位紀錄量距。[NASA 原始全景](https://science.nasa.gov/resource/sol-0539-left-navigation-camera-cylindrical-projection/) · [PDS PLACES 站位紀錄](https://planetarydata.jpl.nasa.gov/img/data/msl/msl_places/data_localizations/)
+
+| 全景 | 網站 6 公里視距首選誤差 | 離線 90 公里視距首選誤差 |
+| --- | ---: | ---: |
+| 第 38 天，確認方法 | 4,016 m | 1,449 m |
+| 第 535 天，固定方法後盲測 | 3,868 m | 5,699 m |
+| 第 538–539 天，追加案例 | 3,148 m | 815 m |
+
+90 公里版本沿用相同的搜尋區與排序方法，將區域地形銜接到 200 m 格距的遠景地形。公開頁重播第 538–539 天的這組運算結果。候選輪廓的角度殘差為 0.378°，超過現有自動校正門檻 0.20°。815 m 是這一張的站位誤差，實景定位的一般精度仍待更多獨立站位驗證。[USGS 遠景高程資料](https://astrogeology.usgs.gov/search/map/mars_mgs_mola_mex_hrsc_blended_dem_global_200m)
+
+## 毅力號在 Jezero 的候選資料
 
 1. [Mastcam-Z 團隊全景資料集](https://mastcamz.asu.edu/mastcam-zs-360-panorama-collection/)：優先選 Panorama #1，Octavia E. Butler Landing，sols 3/11。來源提供自然色左右眼與投影資訊，照片致謝 NASA/JPL-Caltech/ASU/MSSS。全景由多個 sol 的影像組成，應逐一核對拍攝站位及姿態。應使用完整解析度產品，網頁縮圖只用於挑選資料。
 2. Panorama #2（sol 4）來源明示遠方山頂遭裁切，不適合作完整天際線真值。不能將影像頂端視為山頂。
@@ -50,7 +60,7 @@ reference: {x, y}（外部參考位置，僅搜尋結束後用於評分）
 
 只有測試組在考慮參考誤差後仍一致降低位置誤差，且錯誤校正受控，才能支持「在已測試條件下，真實照片地平線改善定位」。這仍不支持輪前避障、路線安全或火星所有地形適用。
 
-## 本次實拍篩選與逐筆結果
+## 毅力號實拍篩選與逐筆結果
 
 [產品清單](photo-sites.json) 保存三個獨立站位的四個產品、下載網址、投影資訊及 PLACES 前後兩筆定位紀錄。定位表採 planetocentric latitude、east longitude。相機光心、姿態與地形配準的不確定性仍待查證；車身 yaw 不能直接用作相機方位。多 sol 全景須追到各曝光才能確認 site/drive，檔名與目錄標示的 Van Zyl 結束 sol 也不一致（64 與 63）。
 
@@ -61,7 +71,7 @@ reference: {x, y}（外部參考位置，僅搜尋結束後用於評分）
 | Horizon 2 | 05.02 左眼自然色全景，sol 114 | 保留站 | 缺人工複核輪廓與相機高，排除 |
 | Horizon 2 | ZL0_0114_0677061671，單張，site 4／drive 1062 | 同一保留站 | 缺單張標定後視角、有效輪廓與遠山遮罩，排除 |
 
-可計分 0 筆。沒有可報告的先驗／候選位置誤差或誤認率。保留站包含其所有裁切。重建清單：
+這四份毅力號產品目前可計分 0 筆。保留站包含其所有裁切。重建清單：
 
 ```sh
 curl -fL https://mastcamz.asu.edu/mastcam-zs-360-panorama-collection/ -o /tmp/panoramas.html

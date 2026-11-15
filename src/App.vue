@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, provide, watch, nextTick } from "vue";
+import { computed, ref, provide, watch, nextTick, onMounted, onBeforeUnmount } from "vue";
 import { useMission, missionKey } from "./useMission";
 import regions from "../regions.mjs";
 import { asset } from "./asset";
@@ -9,6 +9,7 @@ import ExplorePanel from "./components/ExplorePanel.vue";
 import TaskPanel from "./components/TaskPanel.vue";
 import LayersPanel from "./components/LayersPanel.vue";
 import LocalizationPanel from "./components/LocalizationPanel.vue";
+import CuriosityDemo from "./components/CuriosityDemo.vue";
 const mission = useMission(),
   { state: s } = mission;
 const mola = {
@@ -17,6 +18,40 @@ const mola = {
 };
 const region = computed(() => regions.find(r => r.id === s.siteId) ?? mola);
 const choosing = ref(true);
+const demoHash = '#dingo-gap';
+const demoOpen = ref(window.location.hash === demoHash);
+let demoOpener = null;
+
+function openDemo(event) {
+  if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+  event.preventDefault();
+  demoOpener = event.currentTarget;
+  if (window.location.hash !== demoHash) {
+    history.pushState({ ...history.state, curiosityDemoEntry: true }, '', demoHash);
+  }
+  demoOpen.value = true;
+}
+function syncDemoFromUrl() {
+  const wasOpen = demoOpen.value;
+  demoOpen.value = window.location.hash === demoHash;
+  if (wasOpen && !demoOpen.value) {
+    nextTick(() => {
+      const target = demoOpener?.isConnected ? demoOpener : document.getElementById('curiosity-demo-entry');
+      target?.focus({ preventScroll: true });
+    });
+  }
+}
+function closeDemo() {
+  if (history.state?.curiosityDemoEntry) {
+    history.back();
+  } else {
+    history.replaceState(history.state, '', window.location.pathname + window.location.search);
+    syncDemoFromUrl();
+  }
+}
+onMounted(() => window.addEventListener('hashchange', syncDemoFromUrl));
+onBeforeUnmount(() => window.removeEventListener('hashchange', syncDemoFromUrl));
+
 function enterFree() {
   if (s.walk) mission.reset();
   s.tab = 'explore';
@@ -84,6 +119,7 @@ if (import.meta.env.MODE === "test") window.__mission = mission;
       <p class="eyebrow">Journey to the Mars</p><h1 id="mode-title" tabindex="-1">這次想怎麼探索火星？</h1>
       <button id="start-walk" :disabled="!s.ready || s.regionLoading" @click="enterWalk"><strong>Jezero 科學任務</strong><span>檢查基地到 A 的坡度、粗糙度與地形資料，決定可否前往或需要改道。</span><b>{{ s.walk ? '繼續科學任務' : '開始路線檢查' }} →</b></button>
       <button id="start-free" @click="enterFree"><strong>自由探索</strong><span>選一處隕石坑或峽谷，跟著當地問題讀圖。也可以自選起點和終點，再用山頂相儀找出自己的位置。</span><b>選擇探索區域 →</b></button>
+      <a id="curiosity-demo-entry" class="demo-entry" :href="demoHash" aria-haspopup="dialog" @click="openDemo">用好奇號實拍山稜找位置 <span aria-hidden="true">→</span></a>
       <p v-if="s.error" role="alert">{{ s.error }} <button @click="mission.boot">重試載入</button></p>
     </div>
   </section>
@@ -150,6 +186,7 @@ if (import.meta.env.MODE === "test") window.__mission = mission;
         </div>
       </div>
     </aside>
-    <LocalizationPanel v-if="!s.walk" v-show="s.localizationOpen" />
+    <LocalizationPanel v-if="!s.walk" v-show="s.localizationOpen" @open-demo="openDemo" />
   </main>
+  <CuriosityDemo v-if="demoOpen" @close="closeDemo" />
 </template>
